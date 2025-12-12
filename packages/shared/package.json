@@ -1,0 +1,19 @@
+{
+  "name": "@docflows/shared",
+  "version": "1.0.0",
+  "description": "Shared types, enums, and DTOs for Document Flow System",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "clean": "rimraf dist"
+  },
+  "keywords": ["types", "enums", "dto"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "typescript": "^5.6.3",
+    "rimraf": "^6.0.1"
+  }
+}

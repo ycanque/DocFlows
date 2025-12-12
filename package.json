@@ -1,0 +1,20 @@
+{
+  "name": "docflows",
+  "version": "1.0.0",
+  "description": "Document Flow System - Monorepo",
+  "private": true,
+  "workspaces": [
+    "apps/frontend",
+    "apps/backend",
+    "packages/shared"
+  ],
+  "scripts": {
+    "dev:db": "docker compose -f docker/docker-compose.yml up -d",
+    "dev": "npm run dev -w apps/backend & npm run dev -w apps/frontend",
+    "build": "npm run build -w apps/backend && npm run build -w apps/frontend",
+    "test": "npm test --workspaces"
+  },
+  "keywords": ["document-flow", "workflow", "approval"],
+  "author": "",
+  "license": "ISC"
+}

@@ -1,0 +1,18 @@
+# DocFlows AI Guide
+
+- Scope: monorepo with NestJS backend, Next.js frontend, shared TS types, and Prisma/PostgreSQL. See [README.md](README.md) for the quickstart commands and ports.
+- Run stack locally: `npm install`; `npm run dev:db` (brings up Postgres + pgAdmin via docker); `npm run dev` (starts backend on 5040 and frontend on 3000). Backend CORS origin defaults to `http://localhost:3000` in [apps/backend/src/main.ts](apps/backend/src/main.ts#L1-L16).
+- Database: PostgreSQL `document_flow` with default `postgres/postgres`. Prisma schema is the source of truth for workflows and statuses in [apps/backend/prisma/schema.prisma](apps/backend/prisma/schema.prisma). Table columns use `@map` snake_case; keep API/TS shapes camelCase.
+- Shared contract: enums and entity shapes for UI/API live in [packages/shared/src/enums.ts](packages/shared/src/enums.ts) and [packages/shared/src/types.ts](packages/shared/src/types.ts). Reuse these in both apps; do not redefine status strings or role names.
+- Model-first flow (preferred): update `/models` specs → align Prisma schema → run `npm run prisma:generate` and `npm run prisma:migrate` inside `apps/backend` → then code. Keep schema and shared types synchronized with any new fields/status enums.
+- Backend app state: currently only the Nest bootstrap + hello route. AppModule is empty beyond [apps/backend/src/app.module.ts](apps/backend/src/app.module.ts#L1-L10); add new feature modules there. Enable CORS/auth middlewares in main.ts when you introduce auth.
+- Prisma workflow: inside `apps/backend`, use `npm run prisma:migrate dev --name <change>` for new tables/columns; `npm run prisma:studio` to inspect data; `npm run prisma:seed` when seed script exists. Avoid manual SQL migrations—use Prisma migrations so the repo stays consistent.
+- Data model essentials: schema includes requisitions, approvals, payments, vouchers, checks, adjustments, materials, personnel requests, plane tickets, and cash advances with multi-level approval fields (`status`, `currentApprovalLevel`, approval records). Reference and extend existing enums in shared package when adding statuses.
+- Frontend state: still the create-next-app starter page at [apps/frontend/src/app/page.tsx](apps/frontend/src/app/page.tsx). When adding UI, import types from `packages/shared` and point API calls to `NEXT_PUBLIC_API_BASE_URL` (default `http://localhost:5040`).
+- Testing/build commands: root `npm test` runs workspace tests; `npm test -w apps/backend` for backend. Builds via root `npm run build`; individual app scripts live in respective package.json files.
+- Env vars: backend expects `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `CORS_ORIGIN`, `PORT`; frontend uses `NEXT_PUBLIC_API_BASE_URL`. Provide `.env` files locally; keep secrets out of git.
+- Docker: db stack lives in [docker/docker-compose.yml](docker/docker-compose.yml); use `docker compose up -d`/`down` from repo root. Dropping volumes will wipe data.
+- Conventions: camelCase in API/TS, snake_case in DB; always create approval records when workflows change state (see schema relations). Default admin credentials are in [README.md](README.md) for local use only—change in production.
+- When adding endpoints, prefer Nest providers/controllers with dependency injection over in-file logic; expose DTOs that align with shared types; validate incoming status transitions against enum constraints.
+- If you introduce new features, extend both Prisma schema and `packages/shared` enums/types together; regenerate Prisma client and bump shared package version if publishing.
+- Swagger is expected at `/api` once routes exist; register new modules/controllers there when implemented.

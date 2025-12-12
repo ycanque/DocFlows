@@ -1,0 +1,522 @@
+// This is your Prisma schema file
+// Learn more: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ============================================
+// Core Entities
+// ============================================
+
+enum UserRole {
+  ADMIN
+  USER
+  APPROVER
+  DEPARTMENT_HEAD
+  FINANCE
+  ACCOUNTING
+  TREASURY
+}
+
+model User {
+  id            String    @id @default(uuid()) @db.Uuid
+  email         String    @unique
+  password      String
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  role          UserRole  @default(USER)
+  departmentId  String?   @map("department_id") @db.Uuid
+  department    Department? @relation(fields: [departmentId], references: [id])
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  approverProfile      Approver?
+  requisitionSlips     RequisitionSlip[]
+  requisitionsForPayment RequisitionForPayment[]
+  approvalsGiven       ApprovalRecord[] @relation("ApprovedBy")
+  rejectionsGiven      ApprovalRecord[] @relation("RejectedBy")
+  adjustmentRequests   RequestForAdjustment[]
+  personnelRequests    PersonnelRequest[]
+  planeTicketRequests  PlaneTicketRequest[]
+  cashAdvanceAgreements CashAdvanceAgreement[]
+  
+  @@map("users")
+  @@index([email])
+  @@index([departmentId])
+}
+
+model Department {
+  id                  String    @id @default(uuid()) @db.Uuid
+  name                String    @unique
+  code                String    @unique
+  headOfDepartmentId  String?   @map("head_of_department_id") @db.Uuid
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  users               User[]
+  approvers           Approver[]
+  requisitionSlips    RequisitionSlip[]
+  requisitionsForPayment RequisitionForPayment[]
+  adjustmentRequests  RequestForAdjustment[]
+  personnelRequests   PersonnelRequest[]
+
+  @@map("departments")
+  @@index([code])
+}
+
+model Approver {
+  id              String      @id @default(uuid()) @db.Uuid
+  userId          String      @unique @map("user_id") @db.Uuid
+  user            User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  departmentId    String?     @map("department_id") @db.Uuid
+  department      Department? @relation(fields: [departmentId], references: [id])
+  approvalLevel   Int         @map("approval_level")
+  approvalLimit   Decimal     @map("approval_limit") @db.Decimal(15, 2)
+  isActive        Boolean     @default(true) @map("is_active")
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  @@map("approvers")
+  @@index([userId])
+  @@index([departmentId])
+  @@index([approvalLevel])
+}
+
+model ApprovalRecord {
+  id            String    @id @default(uuid()) @db.Uuid
+  entityType    String    @map("entity_type")
+  entityId      String    @map("entity_id") @db.Uuid
+  approvalLevel Int       @map("approval_level")
+  approvedBy    String?   @map("approved_by") @db.Uuid
+  approver      User?     @relation("ApprovedBy", fields: [approvedBy], references: [id])
+  rejectedBy    String?   @map("rejected_by") @db.Uuid
+  rejector      User?     @relation("RejectedBy", fields: [rejectedBy], references: [id])
+  comments      String?
+  timestamp     DateTime  @default(now())
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  @@map("approval_records")
+  @@index([entityType, entityId])
+  @@index([approvedBy])
+  @@index([rejectedBy])
+}
+
+// ============================================
+// Requisition Entities
+// ============================================
+
+enum RequisitionStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+  COMPLETED
+}
+
+model RequisitionSlip {
+  id                    String              @id @default(uuid()) @db.Uuid
+  requisitionNumber     String              @unique @map("requisition_number")
+  requesterId           String              @map("requester_id") @db.Uuid
+  requester             User                @relation(fields: [requesterId], references: [id])
+  departmentId          String              @map("department_id") @db.Uuid
+  department            Department          @relation(fields: [departmentId], references: [id])
+  dateRequested         DateTime            @map("date_requested") @db.Date
+  dateNeeded            DateTime            @map("date_needed") @db.Date
+  purpose               String
+  status                RequisitionStatus   @default(DRAFT)
+  currentApprovalLevel  Int                 @default(0) @map("current_approval_level")
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  items                 RequestItem[]
+  requisitionsForPayment RequisitionForPayment[]
+
+  @@map("requisition_slips")
+  @@index([requisitionNumber])
+  @@index([requesterId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+model RequestItem {
+  id                String          @id @default(uuid()) @db.Uuid
+  requisitionSlipId String          @map("requisition_slip_id") @db.Uuid
+  requisitionSlip   RequisitionSlip @relation(fields: [requisitionSlipId], references: [id], onDelete: Cascade)
+  quantity          Int
+  unit              String
+  particulars       String
+  estimatedCost     Decimal?        @map("estimated_cost") @db.Decimal(15, 2)
+  createdAt         DateTime        @default(now()) @map("created_at")
+  updatedAt         DateTime        @updatedAt @map("updated_at")
+
+  @@map("request_items")
+  @@index([requisitionSlipId])
+}
+
+// ============================================
+// Payment Entities
+// ============================================
+
+enum RFPStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  CV_GENERATED
+  CHECK_ISSUED
+  DISBURSED
+  REJECTED
+  CANCELLED
+}
+
+model RequisitionForPayment {
+  id                    String            @id @default(uuid()) @db.Uuid
+  rfpNumber             String            @unique @map("rfp_number")
+  requisitionSlipId     String?           @map("requisition_slip_id") @db.Uuid
+  requisitionSlip       RequisitionSlip?  @relation(fields: [requisitionSlipId], references: [id])
+  requesterId           String            @map("requester_id") @db.Uuid
+  requester             User              @relation(fields: [requesterId], references: [id])
+  departmentId          String            @map("department_id") @db.Uuid
+  department            Department        @relation(fields: [departmentId], references: [id])
+  seriesCode            String            @map("series_code")
+  dateNeeded            DateTime          @map("date_needed") @db.Date
+  payee                 String
+  particulars           String
+  amount                Decimal           @db.Decimal(15, 2)
+  status                RFPStatus         @default(DRAFT)
+  currentApprovalLevel  Int               @default(0) @map("current_approval_level")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  checkVoucher          CheckVoucher?
+
+  @@map("requisitions_for_payment")
+  @@index([rfpNumber])
+  @@index([requesterId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+enum CheckVoucherStatus {
+  DRAFT
+  PENDING_VERIFICATION
+  VERIFIED
+  APPROVED
+  CHECK_ISSUED
+  REJECTED
+}
+
+model CheckVoucher {
+  id                        String              @id @default(uuid()) @db.Uuid
+  cvNumber                  String              @unique @map("cv_number")
+  requisitionForPaymentId   String              @unique @map("requisition_for_payment_id") @db.Uuid
+  requisitionForPayment     RequisitionForPayment @relation(fields: [requisitionForPaymentId], references: [id], onDelete: Cascade)
+  payee                     String
+  amount                    Decimal             @db.Decimal(15, 2)
+  particulars               String
+  status                    CheckVoucherStatus  @default(DRAFT)
+  verifiedBy                String?             @map("verified_by") @db.Uuid
+  approvedBy                String?             @map("approved_by") @db.Uuid
+  createdAt                 DateTime            @default(now()) @map("created_at")
+  updatedAt                 DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  check                     Check?
+
+  @@map("check_vouchers")
+  @@index([cvNumber])
+  @@index([status])
+}
+
+enum CheckStatus {
+  ISSUED
+  CLEARED
+  VOIDED
+  CANCELLED
+}
+
+model Check {
+  id                String        @id @default(uuid()) @db.Uuid
+  checkNumber       String        @unique @map("check_number")
+  checkVoucherId    String        @unique @map("check_voucher_id") @db.Uuid
+  checkVoucher      CheckVoucher  @relation(fields: [checkVoucherId], references: [id], onDelete: Cascade)
+  bankAccountId     String        @map("bank_account_id") @db.Uuid
+  bankAccount       BankAccount   @relation(fields: [bankAccountId], references: [id])
+  payee             String
+  amount            Decimal       @db.Decimal(15, 2)
+  checkDate         DateTime      @map("check_date") @db.Date
+  status            CheckStatus   @default(ISSUED)
+  issuedBy          String?       @map("issued_by") @db.Uuid
+  disbursedBy       String?       @map("disbursed_by") @db.Uuid
+  disbursementDate  DateTime?     @map("disbursement_date") @db.Date
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @updatedAt @map("updated_at")
+
+  @@map("checks")
+  @@index([checkNumber])
+  @@index([bankAccountId])
+  @@index([status])
+}
+
+model BankAccount {
+  id            String    @id @default(uuid()) @db.Uuid
+  accountName   String    @map("account_name")
+  accountNumber String    @unique @map("account_number")
+  bankName      String    @map("bank_name")
+  isActive      Boolean   @default(true) @map("is_active")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  // Relations
+  checks        Check[]
+
+  @@map("bank_accounts")
+  @@index([accountNumber])
+}
+
+// ============================================
+// Adjustment Entities
+// ============================================
+
+enum AdjustmentStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+model RequestForAdjustment {
+  id                    String            @id @default(uuid()) @db.Uuid
+  rfaNumber             String            @unique @map("rfa_number")
+  requesterId           String            @map("requester_id") @db.Uuid
+  requester             User              @relation(fields: [requesterId], references: [id])
+  departmentId          String            @map("department_id") @db.Uuid
+  department            Department        @relation(fields: [departmentId], references: [id])
+  dateRequested         DateTime          @map("date_requested") @db.Date
+  purposeOfAdjustment   String            @map("purpose_of_adjustment")
+  detailsOfAdjustment   String            @map("details_of_adjustment")
+  status                AdjustmentStatus  @default(DRAFT)
+  currentApprovalLevel  Int               @default(0) @map("current_approval_level")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  // Relations
+  items                 AdjustmentItem[]
+
+  @@map("requests_for_adjustment")
+  @@index([rfaNumber])
+  @@index([requesterId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+model AdjustmentItem {
+  id                      String                @id @default(uuid()) @db.Uuid
+  requestForAdjustmentId  String                @map("request_for_adjustment_id") @db.Uuid
+  requestForAdjustment    RequestForAdjustment  @relation(fields: [requestForAdjustmentId], references: [id], onDelete: Cascade)
+  description             String
+  originalAmount          Decimal               @map("original_amount") @db.Decimal(15, 2)
+  adjustedAmount          Decimal               @map("adjusted_amount") @db.Decimal(15, 2)
+  difference              Decimal               @db.Decimal(15, 2)
+  remarks                 String?
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+
+  @@map("adjustment_items")
+  @@index([requestForAdjustmentId])
+}
+
+// ============================================
+// Material Entities
+// ============================================
+
+enum MaterialIssuanceStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  ISSUED
+  REJECTED
+  CANCELLED
+}
+
+model MaterialIssuanceSlip {
+  id            String                  @id @default(uuid()) @db.Uuid
+  slipNumber    String                  @unique @map("slip_number")
+  issuedById    String                  @map("issued_by_id") @db.Uuid
+  approvedById  String?                 @map("approved_by_id") @db.Uuid
+  receivedById  String                  @map("received_by_id") @db.Uuid
+  chargedTo     String                  @map("charged_to")
+  projectNumber String?                 @map("project_number")
+  date          DateTime                @db.Date
+  status        MaterialIssuanceStatus  @default(DRAFT)
+  createdAt     DateTime                @default(now()) @map("created_at")
+  updatedAt     DateTime                @updatedAt @map("updated_at")
+
+  // Relations
+  items         MaterialItem[]
+
+  @@map("material_issuance_slips")
+  @@index([slipNumber])
+  @@index([issuedById])
+  @@index([status])
+}
+
+model MaterialItem {
+  id                      String                @id @default(uuid()) @db.Uuid
+  materialIssuanceSlipId  String                @map("material_issuance_slip_id") @db.Uuid
+  materialIssuanceSlip    MaterialIssuanceSlip  @relation(fields: [materialIssuanceSlipId], references: [id], onDelete: Cascade)
+  description             String
+  uom                     String
+  requiredQuantity        Int                   @map("required_quantity")
+  issuedQuantity          Int                   @map("issued_quantity")
+  remarks                 String?
+  createdAt               DateTime              @default(now()) @map("created_at")
+  updatedAt               DateTime              @updatedAt @map("updated_at")
+
+  @@map("material_items")
+  @@index([materialIssuanceSlipId])
+}
+
+// ============================================
+// Personnel Entities
+// ============================================
+
+enum PersonnelStatus {
+  DRAFT
+  SUBMITTED
+  REVIEWED
+  SHORTLISTED
+  INTERVIEWED
+  SELECTED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum EmploymentType {
+  FULL_TIME
+  PART_TIME
+  CONTRACT
+  INTERNSHIP
+}
+
+model PersonnelRequest {
+  id                        String          @id @default(uuid()) @db.Uuid
+  requestNumber             String          @unique @map("request_number")
+  requesterId               String          @map("requester_id") @db.Uuid
+  requester                 User            @relation(fields: [requesterId], references: [id])
+  departmentId              String          @map("department_id") @db.Uuid
+  department                Department      @relation(fields: [departmentId], references: [id])
+  position                  String
+  numberOfPersonnel         Int             @map("number_of_personnel")
+  typeOfEmployment          EmploymentType  @map("type_of_employment")
+  qualifications            String[]
+  dutiesAndResponsibilities String[]        @map("duties_and_responsibilities")
+  status                    PersonnelStatus @default(DRAFT)
+  currentApprovalLevel      Int             @default(0) @map("current_approval_level")
+  createdAt                 DateTime        @default(now()) @map("created_at")
+  updatedAt                 DateTime        @updatedAt @map("updated_at")
+
+  @@map("personnel_requests")
+  @@index([requestNumber])
+  @@index([requesterId])
+  @@index([departmentId])
+  @@index([status])
+}
+
+// ============================================
+// Plane Ticket Entities
+// ============================================
+
+enum PlaneTicketStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  BOOKED
+  REJECTED
+  CANCELLED
+}
+
+enum TripType {
+  ONE_WAY
+  ROUND_TRIP
+}
+
+model PlaneTicketRequest {
+  id                    String            @id @default(uuid()) @db.Uuid
+  ticketNumber          String            @unique @map("ticket_number")
+  requesterId           String            @map("requester_id") @db.Uuid
+  requester             User              @relation(fields: [requesterId], references: [id])
+  firstName             String            @map("first_name")
+  middleName            String?           @map("middle_name")
+  familyName            String            @map("family_name")
+  contactNumber         String            @map("contact_number")
+  chargeTo              String            @map("charge_to")
+  tripType              TripType          @map("trip_type")
+  departure             String
+  returnDate            String?           @map("return_date")
+  baggage               String?
+  purposeOfTravel       String            @map("purpose_of_travel")
+  status                PlaneTicketStatus @default(DRAFT)
+  currentApprovalLevel  Int               @default(0) @map("current_approval_level")
+  bookingReference      String?           @map("booking_reference")
+  createdAt             DateTime          @default(now()) @map("created_at")
+  updatedAt             DateTime          @updatedAt @map("updated_at")
+
+  @@map("plane_ticket_requests")
+  @@index([ticketNumber])
+  @@index([requesterId])
+  @@index([status])
+}
+
+// ============================================
+// Cash Advance Entities
+// ============================================
+
+enum CashAdvanceStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  DISBURSED
+  REPAYING
+  COMPLETED
+  REJECTED
+  CANCELLED
+}
+
+model CashAdvanceAgreement {
+  id                    String              @id @default(uuid()) @db.Uuid
+  agreementNumber       String              @unique @map("agreement_number")
+  employeeId            String              @map("employee_id") @db.Uuid
+  employee              User                @relation(fields: [employeeId], references: [id])
+  employeeName          String              @map("employee_name")
+  cashAdvanceAmount     Decimal             @map("cash_advance_amount") @db.Decimal(15, 2)
+  repaymentAmount       Decimal             @map("repayment_amount") @db.Decimal(15, 2)
+  repaymentBalance      Decimal             @map("repayment_balance") @db.Decimal(15, 2)
+  signedDate            DateTime            @map("signed_date") @db.Date
+  status                CashAdvanceStatus   @default(DRAFT)
+  currentApprovalLevel  Int                 @default(0) @map("current_approval_level")
+  disbursementDate      DateTime?           @map("disbursement_date") @db.Date
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  @@map("cash_advance_agreements")
+  @@index([agreementNumber])
+  @@index([employeeId])
+  @@index([status])
+}

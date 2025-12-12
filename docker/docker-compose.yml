@@ -1,0 +1,40 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: docflow_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: document_flow
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - docflow-network
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: docflow_pgadmin
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@docflow.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    depends_on:
+      - postgres
+    networks:
+      - docflow-network
+
+volumes:
+  pgdata:
+
+networks:
+  docflow-network:
+    driver: bridge
