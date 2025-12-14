@@ -12,11 +12,51 @@ export class DepartmentsService {
   }
 
   findAll() {
-    return this.prisma.department.findMany();
+    return this.prisma.department.findMany({
+      include: {
+        _count: {
+          select: { users: true, approvers: true },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
   }
 
   async findOne(id: string) {
-    const department = await this.prisma.department.findUnique({ where: { id } });
+    const department = await this.prisma.department.findUnique({
+      where: { id },
+      include: {
+        users: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+            isActive: true,
+          },
+        },
+        approvers: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+              },
+            },
+          },
+        },
+        _count: {
+          select: {
+            users: true,
+            approvers: true,
+            requisitionSlips: true,
+          },
+        },
+      },
+    });
     if (!department) throw new NotFoundException('Department not found');
     return department;
   }

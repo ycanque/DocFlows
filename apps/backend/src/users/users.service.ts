@@ -32,28 +32,64 @@ export class UsersService {
   }
 
   async findAll() {
-    const users = await this.prisma.user.findMany();
+    const users = await this.prisma.user.findMany({
+      include: {
+        department: true,
+        approverProfile: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
     return users.map((user) => this.stripPassword(user));
   }
 
   async findOne(id: string) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      include: {
+        department: true,
+        approverProfile: true,
+      },
+    });
     if (!user) throw new NotFoundException('User not found');
     return this.stripPassword(user);
   }
 
   async update(id: string, dto: UpdateUserDto) {
+    await this.findOne(id); // Verify user exists
+    
     const data: Record<string, unknown> = { ...dto };
     if (dto.password) {
       data.password = await bcrypt.hash(dto.password, 10);
     }
 
-    const user = await this.prisma.user.update({ where: { id }, data });
+    const user = await this.prisma.user.update({
+      where: { id },
+      data,
+      include: {
+        department: true,
+        approverProfile: true,
+      },
+    });
     return this.stripPassword(user);
   }
 
   async remove(id: string) {
+    await this.findOne(id); // Verify user exists
     const user = await this.prisma.user.delete({ where: { id } });
     return this.stripPassword(user);
+  }
+
+  /**
+   * Find user by email - used for authentication
+   */
+  async findByEmail(email: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { email },
+      include: {
+        department: true,
+        approverProfile: true,
+      },
+    });
+    return user; // Return with password for auth validation
   }
 }

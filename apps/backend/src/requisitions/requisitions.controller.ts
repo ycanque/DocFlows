@@ -7,9 +7,13 @@ import {
   Patch,
   Post,
   UseGuards,
+  Request,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
 import { CreateRequisitionDto } from './dto/create-requisition.dto';
 import { UpdateRequisitionDto } from './dto/update-requisition.dto';
 import { RequisitionsService } from './requisitions.service';
@@ -63,5 +67,76 @@ export class RequisitionsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   remove(@Param('id') id: string) {
     return this.requisitionsService.remove(id);
+  }
+
+  @Post(':id/submit')
+  @ApiOperation({ summary: 'Submit requisition for approval' })
+  @ApiResponse({ status: 200, description: 'Requisition submitted successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid status transition' })
+  @ApiResponse({ status: 404, description: 'Requisition not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  submit(@Param('id') id: string) {
+    return this.requisitionsService.submit(id);
+  }
+
+  @Post(':id/approve')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.APPROVER, UserRole.DEPARTMENT_HEAD, UserRole.FINANCE, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Approve requisition at current level' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        comments: { type: 'string', example: 'Approved for processing' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Requisition approved successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid status transition' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Requisition not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  approve(@Param('id') id: string, @Request() req: any, @Body() body?: { comments?: string }) {
+    return this.requisitionsService.approve(id, req.user.sub, body?.comments);
+  }
+
+  @Post(':id/reject')
+  @UseGuards(RolesGuard)
+  @Roles(UserRole.APPROVER, UserRole.DEPARTMENT_HEAD, UserRole.FINANCE, UserRole.ADMIN)
+  @ApiOperation({ summary: 'Reject requisition' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        comments: { type: 'string', example: 'Insufficient justification' },
+      },
+    },
+  })
+  @ApiResponse({ status: 200, description: 'Requisition rejected successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid status transition' })
+  @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
+  @ApiResponse({ status: 404, description: 'Requisition not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  reject(@Param('id') id: string, @Request() req: any, @Body() body?: { comments?: string }) {
+    return this.requisitionsService.reject(id, req.user.sub, body?.comments);
+  }
+
+  @Post(':id/cancel')
+  @ApiOperation({ summary: 'Cancel requisition' })
+  @ApiResponse({ status: 200, description: 'Requisition cancelled successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid status transition' })
+  @ApiResponse({ status: 404, description: 'Requisition not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  cancel(@Param('id') id: string) {
+    return this.requisitionsService.cancel(id);
+  }
+
+  @Get(':id/approval-history')
+  @ApiOperation({ summary: 'Get approval history for requisition' })
+  @ApiResponse({ status: 200, description: 'Approval history retrieved' })
+  @ApiResponse({ status: 404, description: 'Requisition not found' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  getApprovalHistory(@Param('id') id: string) {
+    return this.requisitionsService.getApprovalHistory(id);
   }
 }

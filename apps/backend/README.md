@@ -23,11 +23,14 @@
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+DocFlows Backend - NestJS API server for document workflow management system.
 
-## Project setup
+**Status**: ✅ Core modules complete with full CRUD and approval workflows
+
+## Quick Start
 
 ```bash
+# From workspace root or backend directory
 $ npm install
 ```
 

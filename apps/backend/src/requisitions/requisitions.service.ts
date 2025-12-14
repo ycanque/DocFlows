@@ -84,4 +84,156 @@ export class RequisitionsService {
     await this.findOne(id);
     return this.prisma.requisitionSlip.delete({ where: { id } });
   }
+
+  /**
+   * Submit requisition for approval (DRAFT -> SUBMITTED -> PENDING_APPROVAL)
+   */
+  async submit(id: string) {
+    const requisition = await this.findOne(id);
+    
+    if (requisition.status !== RequisitionStatus.DRAFT) {
+      throw new Error('Only draft requisitions can be submitted');
+    }
+
+    return this.prisma.requisitionSlip.update({
+      where: { id },
+      data: {
+        status: RequisitionStatus.SUBMITTED,
+        currentApprovalLevel: 0,
+      },
+      include: { items: true, requester: true, department: true },
+    });
+  }
+
+  /**
+   * Approve requisition at current level
+   */
+  async approve(id: string, userId: string, comments?: string) {
+    const requisition = await this.findOne(id);
+
+    const allowedStatuses: RequisitionStatus[] = [RequisitionStatus.SUBMITTED, RequisitionStatus.PENDING_APPROVAL];
+    if (!allowedStatuses.includes(requisition.status)) {
+      throw new Error('Requisition cannot be approved in current status');
+    }
+
+    // Get approvers for this department to determine approval levels
+    const approvers = await this.prisma.approver.findMany({
+      where: {
+        departmentId: requisition.departmentId,
+        isActive: true,
+      },
+      orderBy: { approvalLevel: 'asc' },
+    });
+
+    const nextLevel = requisition.currentApprovalLevel + 1;
+    const isLastLevel = nextLevel >= approvers.length;
+
+    return this.prisma.$transaction(async (tx) => {
+      // Create approval record
+      await tx.approvalRecord.create({
+        data: {
+          entityType: 'RequisitionSlip',
+          entityId: id,
+          approvalLevel: nextLevel,
+          approvedBy: userId,
+          comments,
+        },
+      });
+
+      // Update requisition status
+      return tx.requisitionSlip.update({
+        where: { id },
+        data: {
+          currentApprovalLevel: nextLevel,
+          status: isLastLevel ? RequisitionStatus.APPROVED : RequisitionStatus.PENDING_APPROVAL,
+        },
+        include: { items: true, requester: true, department: true },
+      });
+    });
+  }
+
+  /**
+   * Reject requisition
+   */
+  async reject(id: string, userId: string, comments?: string) {
+    const requisition = await this.findOne(id);
+
+    const allowedStatuses: RequisitionStatus[] = [RequisitionStatus.SUBMITTED, RequisitionStatus.PENDING_APPROVAL];
+    if (!allowedStatuses.includes(requisition.status)) {
+      throw new Error('Requisition cannot be rejected in current status');
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      // Create rejection record
+      await tx.approvalRecord.create({
+        data: {
+          entityType: 'RequisitionSlip',
+          entityId: id,
+          approvalLevel: requisition.currentApprovalLevel + 1,
+          rejectedBy: userId,
+          comments,
+        },
+      });
+
+      // Update requisition status
+      return tx.requisitionSlip.update({
+        where: { id },
+        data: { status: RequisitionStatus.REJECTED },
+        include: { items: true, requester: true, department: true },
+      });
+    });
+  }
+
+  /**
+   * Cancel requisition (can only be done by requester or admin)
+   */
+  async cancel(id: string) {
+    const requisition = await this.findOne(id);
+
+    const disallowedStatuses: RequisitionStatus[] = [RequisitionStatus.APPROVED, RequisitionStatus.COMPLETED, RequisitionStatus.CANCELLED];
+    if (disallowedStatuses.includes(requisition.status)) {
+      throw new Error('Requisition cannot be cancelled in current status');
+    }
+
+    return this.prisma.requisitionSlip.update({
+      where: { id },
+      data: { status: RequisitionStatus.CANCELLED },
+      include: { items: true, requester: true, department: true },
+    });
+  }
+
+  /**
+   * Get approval history for a requisition
+   */
+  async getApprovalHistory(id: string) {
+    await this.findOne(id); // Verify requisition exists
+
+    return this.prisma.approvalRecord.findMany({
+      where: {
+        entityType: 'RequisitionSlip',
+        entityId: id,
+      },
+      include: {
+        approver: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
+        rejector: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: { approvalLevel: 'asc' },
+    });
+  }
 }

@@ -1,0 +1,405 @@
+import { PrismaClient, UserRole, RequisitionStatus } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import * as bcrypt from 'bcrypt';
+import { config } from 'dotenv';
+
+// Load environment variables
+config();
+
+// Ensure DATABASE_URL is set
+const databaseUrl = process.env.DATABASE_URL;
+if (!databaseUrl) {
+  throw new Error('DATABASE_URL is not set in environment variables');
+}
+
+// Create Prisma client with PostgreSQL adapter (Prisma 7)
+const pool = new Pool({ connectionString: databaseUrl });
+const adapter = new PrismaPg(pool);
+const prisma = new PrismaClient({ adapter });
+
+async function main() {
+  console.log('🌱 Starting database seed...');
+
+  // Clear existing data (in reverse order of dependencies)
+  console.log('🧹 Cleaning existing data...');
+  await prisma.approvalRecord.deleteMany();
+  await prisma.requestItem.deleteMany();
+  await prisma.requisitionSlip.deleteMany();
+  await prisma.approver.deleteMany();
+  await prisma.user.deleteMany();
+  await prisma.department.deleteMany();
+
+  // Create Departments
+  console.log('📁 Creating departments...');
+  const departments = await Promise.all([
+    prisma.department.create({
+      data: {
+        name: 'Administration',
+        code: 'ADMIN',
+      },
+    }),
+    prisma.department.create({
+      data: {
+        name: 'Finance',
+        code: 'FIN',
+      },
+    }),
+    prisma.department.create({
+      data: {
+        name: 'Operations',
+        code: 'OPS',
+      },
+    }),
+    prisma.department.create({
+      data: {
+        name: 'Human Resources',
+        code: 'HR',
+      },
+    }),
+    prisma.department.create({
+      data: {
+        name: 'IT Department',
+        code: 'IT',
+      },
+    }),
+  ]);
+
+  const [adminDept, financeDept, opsDept, hrDept, itDept] = departments;
+  console.log(`✅ Created ${departments.length} departments`);
+
+  // Create Users
+  console.log('👤 Creating users...');
+  const hashedPassword = await bcrypt.hash('password123', 10);
+
+  const adminUser = await prisma.user.create({
+    data: {
+      email: 'admin@docflow.com',
+      password: await bcrypt.hash('admin123', 10),
+      firstName: 'Admin',
+      lastName: 'User',
+      role: UserRole.ADMIN,
+      departmentId: adminDept.id,
+    },
+  });
+
+  const financeManager = await prisma.user.create({
+    data: {
+      email: 'finance.manager@docflow.com',
+      password: hashedPassword,
+      firstName: 'Finance',
+      lastName: 'Manager',
+      role: UserRole.FINANCE,
+      departmentId: financeDept.id,
+    },
+  });
+
+  const deptHead = await prisma.user.create({
+    data: {
+      email: 'dept.head@docflow.com',
+      password: hashedPassword,
+      firstName: 'Department',
+      lastName: 'Head',
+      role: UserRole.DEPARTMENT_HEAD,
+      departmentId: opsDept.id,
+    },
+  });
+
+  const approverUser = await prisma.user.create({
+    data: {
+      email: 'approver@docflow.com',
+      password: hashedPassword,
+      firstName: 'Approver',
+      lastName: 'One',
+      role: UserRole.APPROVER,
+      departmentId: opsDept.id,
+    },
+  });
+
+  const regularUser1 = await prisma.user.create({
+    data: {
+      email: 'user1@docflow.com',
+      password: hashedPassword,
+      firstName: 'John',
+      lastName: 'Doe',
+      role: UserRole.USER,
+      departmentId: opsDept.id,
+    },
+  });
+
+  const regularUser2 = await prisma.user.create({
+    data: {
+      email: 'user2@docflow.com',
+      password: hashedPassword,
+      firstName: 'Jane',
+      lastName: 'Smith',
+      role: UserRole.USER,
+      departmentId: itDept.id,
+    },
+  });
+
+  const hrManager = await prisma.user.create({
+    data: {
+      email: 'hr.manager@docflow.com',
+      password: hashedPassword,
+      firstName: 'HR',
+      lastName: 'Manager',
+      role: UserRole.DEPARTMENT_HEAD,
+      departmentId: hrDept.id,
+    },
+  });
+
+  console.log(`✅ Created 7 users`);
+
+  // Update departments with head of department
+  console.log('🔗 Updating department heads...');
+  await prisma.department.update({
+    where: { id: opsDept.id },
+    data: { headOfDepartmentId: deptHead.id },
+  });
+
+  await prisma.department.update({
+    where: { id: financeDept.id },
+    data: { headOfDepartmentId: financeManager.id },
+  });
+
+  await prisma.department.update({
+    where: { id: hrDept.id },
+    data: { headOfDepartmentId: hrManager.id },
+  });
+
+  // Create Approvers with hierarchy
+  // Note: Each user can only be one approver, but we set departmentId for context
+  console.log('✅ Creating approvers...');
+  await Promise.all([
+    // Level 1 approver for Operations
+    prisma.approver.create({
+      data: {
+        userId: approverUser.id,
+        departmentId: opsDept.id,
+        approvalLevel: 1,
+        approvalLimit: 50000, // $50,000 limit
+        isActive: true,
+      },
+    }),
+    // Level 2 approver (Department Head)
+    prisma.approver.create({
+      data: {
+        userId: deptHead.id,
+        departmentId: opsDept.id,
+        approvalLevel: 2,
+        approvalLimit: 200000, // $200,000 limit
+        isActive: true,
+      },
+    }),
+    // Level 3 approver (Finance Manager - highest authority)
+    prisma.approver.create({
+      data: {
+        userId: financeManager.id,
+        departmentId: opsDept.id,
+        approvalLevel: 3,
+        approvalLimit: 1000000, // $1,000,000 limit
+        isActive: true,
+      },
+    }),
+    // Admin user as approver for IT
+    prisma.approver.create({
+      data: {
+        userId: adminUser.id,
+        departmentId: itDept.id,
+        approvalLevel: 1,
+        approvalLimit: 100000, // $100,000 limit
+        isActive: true,
+      },
+    }),
+    // HR Manager as approver
+    prisma.approver.create({
+      data: {
+        userId: hrManager.id,
+        departmentId: hrDept.id,
+        approvalLevel: 1,
+        approvalLimit: 75000, // $75,000 limit
+        isActive: true,
+      },
+    }),
+  ]);
+
+  console.log(`✅ Created 5 approvers with hierarchy`);
+
+  // Create sample requisitions
+  console.log('📝 Creating sample requisitions...');
+  
+  // Draft requisition
+  const draftReq = await prisma.requisitionSlip.create({
+    data: {
+      requisitionNumber: 'REQ-2025-001',
+      requesterId: regularUser1.id,
+      departmentId: opsDept.id,
+      dateRequested: new Date(),
+      dateNeeded: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days from now
+      purpose: 'Office supplies for Q1 2025',
+      status: RequisitionStatus.DRAFT,
+      items: {
+        create: [
+          {
+            quantity: 10,
+            unit: 'boxes',
+            particulars: 'A4 Paper (500 sheets per box)',
+            estimatedCost: 250,
+          },
+          {
+            quantity: 5,
+            unit: 'pcs',
+            particulars: 'Whiteboard markers (black)',
+            estimatedCost: 75,
+          },
+        ],
+      },
+    },
+  });
+
+  // Submitted requisition
+  const submittedReq = await prisma.requisitionSlip.create({
+    data: {
+      requisitionNumber: 'REQ-2025-002',
+      requesterId: regularUser2.id,
+      departmentId: itDept.id,
+      dateRequested: new Date(),
+      dateNeeded: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
+      purpose: 'Computer equipment upgrade',
+      status: RequisitionStatus.SUBMITTED,
+      currentApprovalLevel: 0,
+      items: {
+        create: [
+          {
+            quantity: 3,
+            unit: 'units',
+            particulars: 'Dell Laptop - i7, 16GB RAM, 512GB SSD',
+            estimatedCost: 45000,
+          },
+          {
+            quantity: 3,
+            unit: 'units',
+            particulars: 'External Monitor 27" 4K',
+            estimatedCost: 9000,
+          },
+        ],
+      },
+    },
+  });
+
+  // Pending approval requisition with first level approved
+  const pendingReq = await prisma.requisitionSlip.create({
+    data: {
+      requisitionNumber: 'REQ-2025-003',
+      requesterId: regularUser1.id,
+      departmentId: opsDept.id,
+      dateRequested: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+      dateNeeded: new Date(Date.now() + 10 * 24 * 60 * 60 * 1000), // 10 days from now
+      purpose: 'Team building event supplies',
+      status: RequisitionStatus.PENDING_APPROVAL,
+      currentApprovalLevel: 1,
+      items: {
+        create: [
+          {
+            quantity: 1,
+            unit: 'lot',
+            particulars: 'Team building event package (50 pax)',
+            estimatedCost: 75000,
+          },
+          {
+            quantity: 50,
+            unit: 'pcs',
+            particulars: 'T-shirts with company logo',
+            estimatedCost: 15000,
+          },
+        ],
+      },
+    },
+  });
+
+  // Create approval record for the pending requisition
+  await prisma.approvalRecord.create({
+    data: {
+      entityType: 'RequisitionSlip',
+      entityId: pendingReq.id,
+      approvalLevel: 1,
+      approvedBy: approverUser.id,
+      comments: 'Approved - Good initiative for team morale',
+    },
+  });
+
+  // Approved requisition
+  const approvedReq = await prisma.requisitionSlip.create({
+    data: {
+      requisitionNumber: 'REQ-2025-004',
+      requesterId: regularUser2.id,
+      departmentId: itDept.id,
+      dateRequested: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
+      dateNeeded: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // 3 days from now
+      purpose: 'Network infrastructure maintenance',
+      status: RequisitionStatus.APPROVED,
+      currentApprovalLevel: 2,
+      items: {
+        create: [
+          {
+            quantity: 2,
+            unit: 'units',
+            particulars: 'Network Switch 48-port Gigabit',
+            estimatedCost: 35000,
+          },
+          {
+            quantity: 500,
+            unit: 'meters',
+            particulars: 'Cat6 Ethernet Cable',
+            estimatedCost: 8000,
+          },
+        ],
+      },
+    },
+  });
+
+  // Create approval records for approved requisition
+  await prisma.approvalRecord.createMany({
+    data: [
+      {
+        entityType: 'RequisitionSlip',
+        entityId: approvedReq.id,
+        approvalLevel: 1,
+        approvedBy: adminUser.id,
+        comments: 'Approved - Critical infrastructure',
+      },
+      {
+        entityType: 'RequisitionSlip',
+        entityId: approvedReq.id,
+        approvalLevel: 2,
+        approvedBy: financeManager.id,
+        comments: 'Final approval granted',
+      },
+    ],
+  });
+
+  console.log(`✅ Created 4 sample requisitions with different statuses`);
+
+  console.log('\n🎉 Seed completed successfully!\n');
+  console.log('📊 Summary:');
+  console.log(`   - Departments: ${departments.length}`);
+  console.log(`   - Users: 7`);
+  console.log(`   - Approvers: 5 (with 3-level hierarchy for Ops dept)`);
+  console.log(`   - Requisitions: 4 (various statuses)`);
+  console.log(`   - Approval Records: 3`);
+  console.log('\n🔐 Test Credentials:');
+  console.log('   Admin: admin@docflow.com / admin123');
+  console.log('   User: user1@docflow.com / password123');
+  console.log('   Approver: approver@docflow.com / password123');
+  console.log('   Finance Manager: finance.manager@docflow.com / password123');
+}
+
+main()
+  .catch((e) => {
+    console.error('❌ Error seeding database:', e);
+    process.exit(1);
+  })
+  .finally(async () => {
+    await prisma.$disconnect();
+  });
