@@ -11,7 +11,7 @@ interface LoginCredentials {
 }
 
 interface LoginResponse {
-  access_token: string;
+  accessToken: string;
   user: User;
 }
 
@@ -66,10 +66,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       // Call login endpoint
       const response = await api.post<LoginResponse>('/auth/login', credentials);
-      const { access_token, user: userData } = response.data;
+      const { accessToken, user: userData } = response.data;
 
       // Store token and user
-      setAuthToken(access_token);
+      setAuthToken(accessToken);
       localStorage.setItem('user', JSON.stringify(userData));
       setUser(userData);
 

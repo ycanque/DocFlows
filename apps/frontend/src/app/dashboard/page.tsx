@@ -37,9 +37,7 @@ export default function DashboardPage() {
 
   const systemInfo = [
     { label: 'Department', value: user?.department?.name },
-    { label: 'Position', value: user?.position },
     { label: 'Role', value: user?.role?.replace('_', ' ') },
-    { label: 'Employee ID', value: user?.employeeId },
   ];
 
   return (
@@ -60,7 +58,7 @@ export default function DashboardPage() {
           >
             <div className="p-4 sm:p-8">
               <h1 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-50">
-                Welcome back, {user?.role === 'SYSTEM_ADMIN' ? 'System' : user?.firstName}!
+                Welcome back, {user?.firstName}!
               </h1>
               <div className="mb-4">
                 <p className="text-zinc-600 dark:text-zinc-400">
@@ -110,7 +108,7 @@ export default function DashboardPage() {
                 {/* Quick Actions and System Info */}
                 <div className="flex flex-col gap-6">
                   <QuickActionCard actions={quickActions} />
-                  <SystemInfoCard items={systemInfo} small />
+                  <SystemInfoCard items={systemInfo} />
                 </div>
               </div>
             </div>

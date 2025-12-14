@@ -1,9 +1,33 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
 
 export default function ThemeToggle() {
-  const { theme, toggleTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+  
+  // Don't call useTheme during SSR
+  let theme: 'light' | 'dark' = 'light';
+  let toggleTheme = () => {};
+  
+  try {
+    const themeContext = useTheme();
+    theme = themeContext.theme;
+    toggleTheme = themeContext.toggleTheme;
+  } catch (error) {
+    // ThemeProvider not available during SSR
+  }
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Prevent SSR issues
+  if (!mounted) {
+    return (
+      <div className="rounded-md p-2 w-9 h-9" />
+    );
+  }
 
   return (
     <button
