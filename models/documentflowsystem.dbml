@@ -1,0 +1,1953 @@
+(* Generated DBML Model for DocumentFlowSystem *)
+(* Version: 1.0.0 *)
+(* Generated: 2025-12-11T02:43:49.381Z *)
+(* Grammar: DBML v3.1 - Fully Compliant *)
+
+dbml model DocumentFlowSystem {
+
+  (* ===== ENUMERATIONS ===== *)
+
+  enum UserRole {
+    REQUESTER = 1;
+    APPROVER = 2;
+    FINANCE_STAFF = 3;
+    ACCOUNTING_HEAD = 4;
+    DEPARTMENT_HEAD = 5;
+    ADMIN = 6;
+    SYSTEM_ADMIN = 7;
+  }
+
+  enum RequisitionStatus {
+    DRAFT = 1;
+    SUBMITTED = 2;
+    PENDING_APPROVAL = 3;
+    APPROVED = 4;
+    REJECTED = 5;
+    CANCELLED = 6;
+    COMPLETED = 7;
+  }
+
+  enum PaymentStatus {
+    DRAFT = 1;
+    SUBMITTED = 2;
+    PENDING_APPROVAL = 3;
+    APPROVED = 4;
+    REJECTED = 5;
+    CV_GENERATED = 6;
+    CHECK_ISSUED = 7;
+    DISBURSED = 8;
+    CANCELLED = 9;
+  }
+
+  enum CVStatus {
+    GENERATED = 1;
+    VERIFIED = 2;
+    APPROVED = 3;
+    ISSUED = 4;
+    DISBURSED = 5;
+    CANCELLED = 6;
+  }
+
+  enum CheckStatus {
+    ISSUED = 1;
+    DISBURSED = 2;
+    CLEARED = 3;
+    CANCELLED = 4;
+    VOIDED = 5;
+  }
+
+  enum AdjustmentStatus {
+    PENDING = 1;
+    APPROVED = 2;
+    REJECTED = 3;
+  }
+
+  enum MaterialIssuanceStatus {
+    PENDING = 1;
+    APPROVED = 2;
+    REJECTED = 3;
+    ISSUED = 4;
+  }
+
+  enum PersonnelRequestStatus {
+    DRAFT = 1;
+    SUBMITTED = 2;
+    REVIEWED = 3;
+    SHORTLISTED = 4;
+    INTERVIEWED = 5;
+    SELECTED = 6;
+    APPROVED = 7;
+    REJECTED = 8;
+    CANCELLED = 9;
+  }
+
+  enum PlaneTicketStatus {
+    DRAFT = 1;
+    SUBMITTED = 2;
+    APPROVED = 3;
+    REJECTED = 4;
+    BOOKED = 5;
+    CANCELLED = 6;
+  }
+
+  enum CashAdvanceStatus {
+    DRAFT = 1;
+    SUBMITTED = 2;
+    APPROVED = 3;
+    REJECTED = 4;
+    DISBURSED = 5;
+    REPAYING = 6;
+    COMPLETED = 7;
+    CANCELLED = 8;
+  }
+
+  enum ProjectStatus {
+    ACTIVE = 1;
+    INACTIVE = 2;
+    COMPLETED = 3;
+  }
+
+  enum BusinessUnitStatus {
+    ACTIVE = 1;
+    INACTIVE = 2;
+  }
+
+  enum CostCenterType {
+    PROJECT = 1;
+    BUSINESS_UNIT = 2;
+    DIVISION = 3;
+  }
+
+  enum ApprovalAction {
+    SUBMITTED = 1;
+    APPROVED = 2;
+    REJECTED = 3;
+    RETURNED = 4;
+    CANCELLED = 5;
+  }
+
+  (* ===== ROLES ===== *)
+
+  role Requester {
+    label = "Can create and submit requests";
+  }
+
+  role Approver {
+    label = "Can approve or reject requests at designated levels";
+  }
+
+  role FinanceStaff {
+    label = "Handles payment processing and check voucher generation";
+  }
+
+  role AccountingHead {
+    label = "Approves check vouchers and oversees accounting operations";
+  }
+
+  role DepartmentHead {
+    label = "Approves department requests and manages team";
+  }
+
+  role Admin {
+    label = "System administrator with full access";
+  }
+
+  role SystemAdmin {
+    label = "Super administrator for system configuration";
+  }
+
+  (* ===== DOMAIN CONTEXT ===== *)
+
+  context DocumentFlowSystemContext {
+    label = "Main domain context for DocumentFlowSystem";
+
+    entity User {
+      label = "System user with role-based access control";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field email: string {
+        required = true;
+        unique = true;
+      }
+      field password: string {
+        required = true;
+      }
+      field firstName: string {
+        required = true;
+      }
+      field lastName: string {
+        required = true;
+      }
+      field role: UserRole {
+        required = true;
+      }
+      field departmentId: uuid;
+      field isActive: boolean {
+        default = true;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation department {
+        from = User;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation userBusinessUnits {
+        from = User;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity Division {
+      label = "Organizational division grouping departments";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field code: string {
+        required = true;
+        unique = true;
+      }
+      field name: string {
+        required = true;
+        unique = true;
+      }
+      field description: string;
+      field isActive: boolean {
+        default = true;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation departments {
+        from = Division;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation costCenters {
+        from = Division;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity Department {
+      label = "Department within a division";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field name: string {
+        required = true;
+        unique = true;
+      }
+      field code: string {
+        required = true;
+        unique = true;
+      }
+      field divisionId: uuid;
+      field headOfDepartmentId: uuid;
+      field isActive: boolean {
+        default = true;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation division {
+        from = Department;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation users {
+        from = Department;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation requisitions {
+        from = Department;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation payments {
+        from = Department;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity BusinessUnit {
+      label = "Business unit for budget and project tracking";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field unitCode: string {
+        required = true;
+        unique = true;
+      }
+      field name: string {
+        required = true;
+      }
+      field description: string;
+      field status: BusinessUnitStatus {
+        default = "ACTIVE";
+      }
+      field managerUserId: uuid;
+      field budgetAmount: decimal {
+        precision = 15;
+        scale = 2;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation manager {
+        from = BusinessUnit;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation projects {
+        from = BusinessUnit;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation costCenters {
+        from = BusinessUnit;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation requisitionSlips {
+        from = BusinessUnit;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity Project {
+      label = "Project for cost tracking and budgeting";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field projectCode: string {
+        required = true;
+        unique = true;
+      }
+      field name: string {
+        required = true;
+      }
+      field description: string;
+      field status: ProjectStatus {
+        default = "ACTIVE";
+      }
+      field businessUnitId: uuid {
+        required = true;
+      }
+      field startDate: date;
+      field endDate: date;
+      field budgetAmount: decimal {
+        precision = 15;
+        scale = 2;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation businessUnit {
+        from = Project;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation costCenters {
+        from = Project;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation requisitionSlips {
+        from = Project;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity CostCenter {
+      label = "Cost center for expense allocation";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field type: CostCenterType {
+        required = true;
+      }
+      field projectId: uuid;
+      field businessUnitId: uuid;
+      field divisionId: uuid;
+      field code: string {
+        required = true;
+        unique = true;
+      }
+      field name: string {
+        required = true;
+      }
+      field description: string;
+      field isActive: boolean {
+        default = true;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation project {
+        from = CostCenter;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation businessUnit {
+        from = CostCenter;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation division {
+        from = CostCenter;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation requisitionSlips {
+        from = CostCenter;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity UserBusinessUnit {
+      label = "User to Business Unit assignment with approval permissions";
+      category = master;
+      kind = junction;
+
+      field id: uuid;
+      field userId: uuid {
+        required = true;
+      }
+      field businessUnitId: uuid {
+        required = true;
+      }
+      field isPrimary: boolean {
+        default = false;
+      }
+      field canApprove: boolean {
+        default = false;
+      }
+      field assignedAt: datetime;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation user {
+        from = UserBusinessUnit;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation businessUnit {
+        from = UserBusinessUnit;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity BankAccount {
+      label = "Bank account for check issuance";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field bankName: string {
+        required = true;
+      }
+      field accountNumber: string {
+        required = true;
+        unique = true;
+      }
+      field accountName: string {
+        required = true;
+      }
+      field branch: string;
+      field isActive: boolean {
+        default = true;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation checks {
+        from = BankAccount;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity RequisitionSlip {
+      label = "Requisition slip for requesting goods or services";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field requisitionNumber: string {
+        required = true;
+        unique = true;
+      }
+      field requesterId: uuid {
+        required = true;
+      }
+      field departmentId: uuid {
+        required = true;
+      }
+      field costCenterId: uuid;
+      field projectId: uuid;
+      field businessUnitId: uuid;
+      field dateRequested: date {
+        required = true;
+      }
+      field dateNeeded: date {
+        required = true;
+      }
+      field purpose: string {
+        required = true;
+      }
+      field status: RequisitionStatus {
+        default = "DRAFT";
+      }
+      field currentApprovalLevel: integer {
+        default = 0;
+      }
+      field totalAmount: decimal {
+        default = 0;
+        precision = 15;
+        scale = 2;
+      }
+      field currency: string {
+        default = "PHP";
+      }
+      field submittedAt: datetime;
+      field approvedAt: datetime;
+      field rejectedAt: datetime;
+      field cancelledAt: datetime;
+      field completedAt: datetime;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation requester {
+        from = RequisitionSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation department {
+        from = RequisitionSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation costCenter {
+        from = RequisitionSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation project {
+        from = RequisitionSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation businessUnit {
+        from = RequisitionSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation items {
+        from = RequisitionSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use RequisitionSlipLifecycle;
+
+      behavior {
+        rule AmountLimitApproval {
+          when "Requisition is submitted";
+          when "totalAmount > 50000";
+          do RequireAccountingHeadapproval;
+        }
+        rule DepartmentHeadRequired {
+          when "Requisition is submitted";
+          when "status == SUBMITTED";
+          do RoutetoDepartmentHeadforapproval;
+        }
+      }
+    }
+
+    entity RequestItem {
+      label = "Line item in a requisition slip";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field requisitionSlipId: uuid {
+        required = true;
+      }
+      field description: string {
+        required = true;
+      }
+      field quantity: integer {
+        required = true;
+      }
+      field unit: string {
+        required = true;
+      }
+      field unitPrice: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field totalPrice: decimal {
+        computed = true;
+        precision = 15;
+        scale = 2;
+      }
+      field specification: string;
+
+      relation requisitionSlip {
+        from = RequestItem;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity RequisitionForPayment {
+      label = "Request for payment to a payee";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field paymentNumber: string {
+        required = true;
+        unique = true;
+      }
+      field requesterId: uuid {
+        required = true;
+      }
+      field departmentId: uuid {
+        required = true;
+      }
+      field payee: string {
+        required = true;
+      }
+      field dateRequested: date {
+        required = true;
+      }
+      field dateNeeded: date {
+        required = true;
+      }
+      field particulars: string {
+        required = true;
+      }
+      field amount: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field currency: string {
+        default = "PHP";
+      }
+      field seriesCode: string {
+        required = true;
+      }
+      field status: PaymentStatus {
+        default = "DRAFT";
+      }
+      field currentApprovalLevel: integer {
+        default = 0;
+      }
+      field submittedAt: datetime;
+      field approvedAt: datetime;
+      field rejectedAt: datetime;
+      field cancelledAt: datetime;
+      field cvGeneratedAt: datetime;
+      field checkIssuedAt: datetime;
+      field disbursedAt: datetime;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation requester {
+        from = RequisitionForPayment;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation department {
+        from = RequisitionForPayment;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation checkVoucher {
+        from = RequisitionForPayment;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use RequisitionForPaymentLifecycle;
+    }
+
+    entity CheckVoucher {
+      label = "Check voucher generated from approved payment request";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field voucherNumber: string {
+        required = true;
+        unique = true;
+      }
+      field requisitionForPaymentId: uuid {
+        required = true;
+        unique = true;
+      }
+      field payee: string {
+        required = true;
+      }
+      field amount: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field currency: string {
+        default = "PHP";
+      }
+      field particulars: string {
+        required = true;
+      }
+      field status: CVStatus {
+        default = "GENERATED";
+      }
+      field generatedDate: date {
+        required = true;
+      }
+      field verifiedDate: date;
+      field verifiedById: uuid;
+      field approvedDate: date;
+      field approvedById: uuid;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation requisitionForPayment {
+        from = CheckVoucher;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation verifiedBy {
+        from = CheckVoucher;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation approvedBy {
+        from = CheckVoucher;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation check {
+        from = CheckVoucher;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use CheckVoucherLifecycle;
+
+      behavior {
+        rule CVRequiresVerification {
+          when "Check voucher is generated";
+          when "status == GENERATED";
+          do RequireverificationbyFinanceStaff;
+        }
+      }
+    }
+
+    entity Check {
+      label = "Check issued for payment disbursement";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field checkNumber: string {
+        required = true;
+        unique = true;
+      }
+      field checkVoucherId: uuid {
+        required = true;
+        unique = true;
+      }
+      field bankAccountId: uuid {
+        required = true;
+      }
+      field payee: string {
+        required = true;
+      }
+      field amount: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field currency: string {
+        default = "PHP";
+      }
+      field status: CheckStatus {
+        default = "ISSUED";
+      }
+      field issuedDate: date {
+        required = true;
+      }
+      field issuedAt: datetime;
+      field issuedById: uuid;
+      field disbursedDate: date;
+      field disbursedAt: datetime;
+      field disbursedById: uuid;
+      field clearedDate: date;
+      field clearedAt: datetime;
+      field cancelledAt: datetime;
+      field voidedAt: datetime;
+      field recipientName: string;
+      field recipientId: string;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation checkVoucher {
+        from = Check;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation bankAccount {
+        from = Check;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation issuedBy {
+        from = Check;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation disbursedBy {
+        from = Check;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use CheckLifecycle;
+
+      behavior {
+        rule CheckRequiresBankAccount {
+          when "Check is issued";
+          when "bankAccountId IS NOT NULL";
+          do Allowcheckissuance;
+        }
+      }
+    }
+
+    entity RequestForAdjustment {
+      label = "Request to adjust amounts on existing transactions";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field adjustmentNumber: string {
+        required = true;
+        unique = true;
+      }
+      field requesterId: uuid {
+        required = true;
+      }
+      field dateRequested: date {
+        required = true;
+      }
+      field purposeOfAdjustment: string {
+        required = true;
+      }
+      field detailsOfAdjustment: string {
+        required = true;
+      }
+      field amountAdjusted: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field currency: string {
+        default = "PHP";
+      }
+      field status: AdjustmentStatus {
+        default = "PENDING";
+      }
+      field submittedAt: datetime;
+      field approvedAt: datetime;
+      field rejectedAt: datetime;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation requester {
+        from = RequestForAdjustment;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation items {
+        from = RequestForAdjustment;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use RequestForAdjustmentLifecycle;
+    }
+
+    entity AdjustmentItem {
+      label = "Line item in an adjustment request";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field adjustmentId: uuid {
+        required = true;
+      }
+      field description: string {
+        required = true;
+      }
+      field originalAmount: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field adjustedAmount: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field reason: string {
+        required = true;
+      }
+
+      relation adjustment {
+        from = AdjustmentItem;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity MaterialIssuanceSlip {
+      label = "Material issuance from warehouse";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field issuanceNumber: string {
+        required = true;
+        unique = true;
+      }
+      field requesterId: uuid {
+        required = true;
+      }
+      field chargedTo: string {
+        required = true;
+      }
+      field projectNumber: string;
+      field dateIssued: date {
+        required = true;
+      }
+      field status: MaterialIssuanceStatus {
+        default = "PENDING";
+      }
+      field submittedAt: datetime;
+      field approvedAt: datetime;
+      field rejectedAt: datetime;
+      field issuedAt: datetime;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation requester {
+        from = MaterialIssuanceSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation items {
+        from = MaterialIssuanceSlip;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use MaterialIssuanceSlipLifecycle;
+    }
+
+    entity MaterialItem {
+      label = "Line item in a material issuance slip";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field materialIssuanceId: uuid {
+        required = true;
+      }
+      field description: string {
+        required = true;
+      }
+      field uom: string {
+        required = true;
+      }
+      field requiredQuantity: integer {
+        required = true;
+      }
+      field issuedQuantity: integer {
+        default = 0;
+      }
+      field remarks: string;
+
+      relation materialIssuance {
+        from = MaterialItem;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity PersonnelRequest {
+      label = "Request for new personnel hire";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field requestNumber: string {
+        required = true;
+        unique = true;
+      }
+      field requesterId: uuid {
+        required = true;
+      }
+      field positionTitle: string {
+        required = true;
+      }
+      field numberOfPersonnel: integer {
+        required = true;
+      }
+      field dateNeeded: date {
+        required = true;
+      }
+      field status: PersonnelRequestStatus {
+        default = "DRAFT";
+      }
+      field submittedAt: datetime;
+      field reviewedAt: datetime;
+      field shortlistedAt: datetime;
+      field interviewedAt: datetime;
+      field selectedAt: datetime;
+      field approvedAt: datetime;
+      field rejectedAt: datetime;
+      field cancelledAt: datetime;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation requester {
+        from = PersonnelRequest;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use PersonnelRequestLifecycle;
+    }
+
+    entity PlaneTicketRequest {
+      label = "Request for plane ticket booking";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field requestNumber: string {
+        required = true;
+        unique = true;
+      }
+      field requesterId: uuid {
+        required = true;
+      }
+      field firstName: string {
+        required = true;
+      }
+      field middleName: string;
+      field familyName: string {
+        required = true;
+      }
+      field contactNumber: string {
+        required = true;
+      }
+      field chargeTo: string {
+        required = true;
+      }
+      field tripType: string {
+        required = true;
+      }
+      field departureDate: date {
+        required = true;
+      }
+      field departureFrom: string {
+        required = true;
+      }
+      field departureTo: string {
+        required = true;
+      }
+      field returnDate: date;
+      field returnFrom: string;
+      field returnTo: string;
+      field baggage: string;
+      field purposeOfTravel: string {
+        required = true;
+      }
+      field estimatedCost: decimal {
+        precision = 15;
+        scale = 2;
+      }
+      field currency: string {
+        default = "PHP";
+      }
+      field status: PlaneTicketStatus {
+        default = "DRAFT";
+      }
+      field bookingReference: string;
+      field submittedAt: datetime;
+      field approvedAt: datetime;
+      field rejectedAt: datetime;
+      field bookedAt: datetime;
+      field cancelledAt: datetime;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation requester {
+        from = PlaneTicketRequest;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use PlaneTicketRequestLifecycle;
+    }
+
+    entity CashAdvanceAgreement {
+      label = "Employee cash advance agreement";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field agreementNumber: string {
+        required = true;
+        unique = true;
+      }
+      field employeeId: uuid {
+        required = true;
+      }
+      field employeeName: string {
+        required = true;
+      }
+      field cashAdvanceAmount: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field repaymentAmount: decimal {
+        required = true;
+        precision = 15;
+        scale = 2;
+      }
+      field repaymentBalance: decimal {
+        default = 0;
+        computed = true;
+        precision = 15;
+        scale = 2;
+      }
+      field currency: string {
+        default = "PHP";
+      }
+      field repaymentTerms: string;
+      field signedDate: date {
+        required = true;
+      }
+      field status: CashAdvanceStatus {
+        default = "DRAFT";
+      }
+      field submittedAt: datetime;
+      field approvedAt: datetime;
+      field rejectedAt: datetime;
+      field disbursedAt: datetime;
+      field completedAt: datetime;
+      field cancelledAt: datetime;
+      field approvedById: uuid;
+      field approvedDate: date;
+      field disbursementDate: date;
+      field disbursementMethod: string;
+      field createdAt: datetime;
+      field updatedAt: datetime;
+
+      relation employee {
+        from = CashAdvanceAgreement;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+      relation approvedBy {
+        from = CashAdvanceAgreement;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+
+      lifecycle use CashAdvanceAgreementLifecycle;
+    }
+
+    entity ApprovalRecord {
+      label = "Audit trail for all approval actions";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field entityType: string {
+        required = true;
+      }
+      field entityId: uuid {
+        required = true;
+      }
+      field approverId: uuid {
+        required = true;
+      }
+      field approvalLevel: integer {
+        required = true;
+      }
+      field action: ApprovalAction {
+        required = true;
+      }
+      field comments: string;
+      field actionDate: datetime {
+        required = true;
+      }
+      field processingDurationSeconds: integer;
+      field createdAt: datetime;
+
+      relation approver {
+        from = ApprovalRecord;
+        to = Unknown;
+        kind = association;
+        cardinality = many-to-one;
+      }
+    }
+
+    entity UnitOfMeasure {
+      label = "Standard unit of measure reference";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field code: string {
+        required = true;
+        unique = true;
+      }
+      field name: string {
+        required = true;
+      }
+      field description: string;
+      field isActive: boolean {
+        default = true;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+    }
+
+    entity SystemSetting {
+      label = "System configuration settings";
+      category = master;
+      kind = root;
+
+      field id: uuid;
+      field category: string {
+        required = true;
+      }
+      field settingKey: string {
+        required = true;
+        unique = true;
+      }
+      field settingValue: string {
+        required = true;
+      }
+      field dataType: string {
+        default = "string";
+      }
+      field description: string;
+      field isEditable: boolean {
+        default = true;
+      }
+      field createdAt: datetime;
+      field updatedAt: datetime;
+    }
+
+  }
+
+  (* ===== LIFECYCLES ===== *)
+
+  lifecycle RequisitionLifecycle {
+    entity = RequisitionSlip;
+
+    state DRAFT {
+      initial = true;
+    }
+    state SUBMITTED {
+    }
+    state PENDING_APPROVAL {
+    }
+    state APPROVED {
+    }
+    state REJECTED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+    state COMPLETED {
+      final = true;
+    }
+  }
+
+  lifecycle PaymentLifecycle {
+    entity = RequisitionForPayment;
+
+    state DRAFT {
+      initial = true;
+    }
+    state SUBMITTED {
+    }
+    state PENDING_APPROVAL {
+    }
+    state APPROVED {
+    }
+    state REJECTED {
+      final = true;
+    }
+    state CV_GENERATED {
+    }
+    state CHECK_ISSUED {
+    }
+    state DISBURSED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+  }
+
+  lifecycle CheckVoucherLifecycle {
+    entity = CheckVoucher;
+
+    state GENERATED {
+      initial = true;
+    }
+    state VERIFIED {
+    }
+    state APPROVED {
+    }
+    state ISSUED {
+    }
+    state DISBURSED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+  }
+
+  lifecycle CheckLifecycle {
+    entity = Check;
+
+    state ISSUED {
+      initial = true;
+    }
+    state DISBURSED {
+    }
+    state CLEARED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+    state VOIDED {
+      final = true;
+    }
+  }
+
+  lifecycle CashAdvanceLifecycle {
+    entity = CashAdvanceAgreement;
+
+    state DRAFT {
+      initial = true;
+    }
+    state SUBMITTED {
+    }
+    state APPROVED {
+    }
+    state REJECTED {
+      final = true;
+    }
+    state DISBURSED {
+    }
+    state REPAYING {
+    }
+    state COMPLETED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+  }
+
+  (* ===== WORKFLOWS ===== *)
+
+  workflow RequisitionWorkflow {
+    entity = RequisitionSlip;
+    state-field = status;
+
+    state DRAFT {
+      initial = true;
+    }
+    state SUBMITTED {
+    }
+    state PENDING_APPROVAL {
+    }
+    state APPROVED {
+    }
+    state REJECTED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+    state COMPLETED {
+      final = true;
+    }
+
+    transition submit {
+      from = DRAFT;
+      to = SUBMITTED;
+    }
+    transition startApproval {
+      from = SUBMITTED;
+      to = PENDING_APPROVAL;
+    }
+    transition approve {
+      from = PENDING_APPROVAL;
+      to = APPROVED;
+    }
+    transition reject {
+      from = PENDING_APPROVAL;
+      to = REJECTED;
+    }
+    transition cancel {
+      from = DRAFT;
+      to = CANCELLED;
+    }
+    transition cancel {
+      from = SUBMITTED;
+      to = CANCELLED;
+    }
+    transition complete {
+      from = APPROVED;
+      to = COMPLETED;
+    }
+  }
+
+  workflow PaymentWorkflow {
+    entity = RequisitionForPayment;
+    state-field = status;
+
+    state DRAFT {
+      initial = true;
+    }
+    state SUBMITTED {
+    }
+    state PENDING_APPROVAL {
+    }
+    state APPROVED {
+    }
+    state REJECTED {
+      final = true;
+    }
+    state CV_GENERATED {
+    }
+    state CHECK_ISSUED {
+    }
+    state DISBURSED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+
+    transition submit {
+      from = DRAFT;
+      to = SUBMITTED;
+    }
+    transition startApproval {
+      from = SUBMITTED;
+      to = PENDING_APPROVAL;
+    }
+    transition approve {
+      from = PENDING_APPROVAL;
+      to = APPROVED;
+    }
+    transition reject {
+      from = PENDING_APPROVAL;
+      to = REJECTED;
+    }
+    transition generateCV {
+      from = APPROVED;
+      to = CV_GENERATED;
+    }
+    transition issueCheck {
+      from = CV_GENERATED;
+      to = CHECK_ISSUED;
+    }
+    transition disburse {
+      from = CHECK_ISSUED;
+      to = DISBURSED;
+    }
+    transition cancel {
+      from = DRAFT;
+      to = CANCELLED;
+    }
+  }
+
+  workflow CheckVoucherWorkflow {
+    entity = CheckVoucher;
+    state-field = status;
+
+    state GENERATED {
+      initial = true;
+    }
+    state VERIFIED {
+    }
+    state APPROVED {
+    }
+    state ISSUED {
+    }
+    state DISBURSED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+
+    transition verify {
+      from = GENERATED;
+      to = VERIFIED;
+    }
+    transition approve {
+      from = VERIFIED;
+      to = APPROVED;
+    }
+    transition issue {
+      from = APPROVED;
+      to = ISSUED;
+    }
+    transition disburse {
+      from = ISSUED;
+      to = DISBURSED;
+    }
+    transition cancel {
+      from = GENERATED;
+      to = CANCELLED;
+    }
+    transition cancel {
+      from = VERIFIED;
+      to = CANCELLED;
+    }
+  }
+
+  workflow CheckWorkflow {
+    entity = Check;
+    state-field = status;
+
+    state ISSUED {
+      initial = true;
+    }
+    state DISBURSED {
+    }
+    state CLEARED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+    state VOIDED {
+      final = true;
+    }
+
+    transition disburse {
+      from = ISSUED;
+      to = DISBURSED;
+    }
+    transition clear {
+      from = DISBURSED;
+      to = CLEARED;
+    }
+    transition cancel {
+      from = ISSUED;
+      to = CANCELLED;
+    }
+    transition void {
+      from = ISSUED;
+      to = VOIDED;
+    }
+  }
+
+  workflow CashAdvanceWorkflow {
+    entity = CashAdvanceAgreement;
+    state-field = status;
+
+    state DRAFT {
+      initial = true;
+    }
+    state SUBMITTED {
+    }
+    state APPROVED {
+    }
+    state REJECTED {
+      final = true;
+    }
+    state DISBURSED {
+    }
+    state REPAYING {
+    }
+    state COMPLETED {
+      final = true;
+    }
+    state CANCELLED {
+      final = true;
+    }
+
+    transition submit {
+      from = DRAFT;
+      to = SUBMITTED;
+    }
+    transition approve {
+      from = SUBMITTED;
+      to = APPROVED;
+    }
+    transition reject {
+      from = SUBMITTED;
+      to = REJECTED;
+    }
+    transition disburse {
+      from = APPROVED;
+      to = DISBURSED;
+    }
+    transition startRepayment {
+      from = DISBURSED;
+      to = REPAYING;
+    }
+    transition complete {
+      from = REPAYING;
+      to = COMPLETED;
+    }
+    transition cancel {
+      from = DRAFT;
+      to = CANCELLED;
+    }
+  }
+
+  workflow RequestForAdjustmentApprovalWorkflow {
+    entity = RequestForAdjustment;
+    state-field = status;
+
+    state Draft {
+      initial = true;
+    }
+    state Submitted {
+    }
+    state PendingLevel1 {
+    }
+    state PendingLevel2 {
+    }
+    state PendingLevel3 {
+    }
+    state Approved {
+      final = true;
+    }
+    state Rejected {
+      final = true;
+    }
+    state Cancelled {
+      final = true;
+    }
+
+    transition submit {
+      from = Draft;
+      to = Submitted;
+    }
+    transition startApproval {
+      from = Submitted;
+      to = PendingLevel1;
+    }
+    transition approveLevel1 {
+      from = PendingLevel1;
+      to = PendingLevel2;
+    }
+    transition approveLevel2 {
+      from = PendingLevel2;
+      to = PendingLevel3;
+    }
+    transition approveLevel3 {
+      from = PendingLevel3;
+      to = Approved;
+    }
+    transition rejectLevel1 {
+      from = PendingLevel1;
+      to = Rejected;
+    }
+    transition rejectLevel2 {
+      from = PendingLevel2;
+      to = Rejected;
+    }
+    transition rejectLevel3 {
+      from = PendingLevel3;
+      to = Rejected;
+    }
+    transition cancel {
+      from = Submitted;
+      to = Cancelled;
+    }
+  }
+
+  workflow MaterialIssuanceSlipApprovalWorkflow {
+    entity = MaterialIssuanceSlip;
+    state-field = status;
+
+    state Draft {
+      initial = true;
+    }
+    state Submitted {
+    }
+    state PendingLevel1 {
+    }
+    state PendingLevel2 {
+    }
+    state PendingLevel3 {
+    }
+    state Approved {
+      final = true;
+    }
+    state Rejected {
+      final = true;
+    }
+    state Cancelled {
+      final = true;
+    }
+
+    transition submit {
+      from = Draft;
+      to = Submitted;
+    }
+    transition startApproval {
+      from = Submitted;
+      to = PendingLevel1;
+    }
+    transition approveLevel1 {
+      from = PendingLevel1;
+      to = PendingLevel2;
+    }
+    transition approveLevel2 {
+      from = PendingLevel2;
+      to = PendingLevel3;
+    }
+    transition approveLevel3 {
+      from = PendingLevel3;
+      to = Approved;
+    }
+    transition rejectLevel1 {
+      from = PendingLevel1;
+      to = Rejected;
+    }
+    transition rejectLevel2 {
+      from = PendingLevel2;
+      to = Rejected;
+    }
+    transition rejectLevel3 {
+      from = PendingLevel3;
+      to = Rejected;
+    }
+    transition cancel {
+      from = Submitted;
+      to = Cancelled;
+    }
+  }
+
+  workflow PersonnelRequestApprovalWorkflow {
+    entity = PersonnelRequest;
+    state-field = status;
+
+    state Draft {
+      initial = true;
+    }
+    state Submitted {
+    }
+    state PendingLevel1 {
+    }
+    state PendingLevel2 {
+    }
+    state PendingLevel3 {
+    }
+    state Approved {
+      final = true;
+    }
+    state Rejected {
+      final = true;
+    }
+    state Cancelled {
+      final = true;
+    }
+
+    transition submit {
+      from = Draft;
+      to = Submitted;
+    }
+    transition startApproval {
+      from = Submitted;
+      to = PendingLevel1;
+    }
+    transition approveLevel1 {
+      from = PendingLevel1;
+      to = PendingLevel2;
+    }
+    transition approveLevel2 {
+      from = PendingLevel2;
+      to = PendingLevel3;
+    }
+    transition approveLevel3 {
+      from = PendingLevel3;
+      to = Approved;
+    }
+    transition rejectLevel1 {
+      from = PendingLevel1;
+      to = Rejected;
+    }
+    transition rejectLevel2 {
+      from = PendingLevel2;
+      to = Rejected;
+    }
+    transition rejectLevel3 {
+      from = PendingLevel3;
+      to = Rejected;
+    }
+    transition cancel {
+      from = Submitted;
+      to = Cancelled;
+    }
+  }
+
+  workflow PlaneTicketRequestApprovalWorkflow {
+    entity = PlaneTicketRequest;
+    state-field = status;
+
+    state Draft {
+      initial = true;
+    }
+    state Submitted {
+    }
+    state PendingLevel1 {
+    }
+    state PendingLevel2 {
+    }
+    state PendingLevel3 {
+    }
+    state Approved {
+      final = true;
+    }
+    state Rejected {
+      final = true;
+    }
+    state Cancelled {
+      final = true;
+    }
+
+    transition submit {
+      from = Draft;
+      to = Submitted;
+    }
+    transition startApproval {
+      from = Submitted;
+      to = PendingLevel1;
+    }
+    transition approveLevel1 {
+      from = PendingLevel1;
+      to = PendingLevel2;
+    }
+    transition approveLevel2 {
+      from = PendingLevel2;
+      to = PendingLevel3;
+    }
+    transition approveLevel3 {
+      from = PendingLevel3;
+      to = Approved;
+    }
+    transition rejectLevel1 {
+      from = PendingLevel1;
+      to = Rejected;
+    }
+    transition rejectLevel2 {
+      from = PendingLevel2;
+      to = Rejected;
+    }
+    transition rejectLevel3 {
+      from = PendingLevel3;
+      to = Rejected;
+    }
+    transition cancel {
+      from = Submitted;
+      to = Cancelled;
+    }
+  }
+
+}

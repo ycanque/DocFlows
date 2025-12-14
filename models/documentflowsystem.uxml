@@ -1,0 +1,3848 @@
+(* UXML Model: DocumentFlowSystem *)
+(* Version: 1.0.0 *)
+(* Generated: 2025-12-11T02:43:49.384Z *)
+
+uxml model DocumentFlowSystem {
+  (* ----- CHANNELS ----- *)
+
+  channel WebApp {
+    label = "Web Application";
+    kind = web-app;
+    entry-view = Dashboard;
+  }
+
+  channel AdminConsole {
+    label = "Administration Console";
+    kind = admin-console;
+    entry-view = AdminDashboard;
+  }
+
+  (* ----- THEMES ----- *)
+
+  theme LightTheme {
+    label = "Light Theme";
+
+    token primaryColor {
+      kind = color;
+      value = "#1e293b";
+    }
+    token accentColor {
+      kind = color;
+      value = "#3b82f6";
+    }
+    token backgroundColor {
+      kind = color;
+      value = "#ffffff";
+    }
+    token surfaceColor {
+      kind = color;
+      value = "#f8fafc";
+    }
+    token textPrimary {
+      kind = color;
+      value = "#1e293b";
+    }
+    token textSecondary {
+      kind = color;
+      value = "#64748b";
+    }
+    token borderColor {
+      kind = color;
+      value = "#e2e8f0";
+    }
+    token successColor {
+      kind = color;
+      value = "#10b981";
+    }
+    token warningColor {
+      kind = color;
+      value = "#f59e0b";
+    }
+    token errorColor {
+      kind = color;
+      value = "#ef4444";
+    }
+    token infoColor {
+      kind = color;
+      value = "#3b82f6";
+    }
+
+    token spacingXs {
+      kind = spacing;
+      value = "0.25rem";
+    }
+    token spacingSm {
+      kind = spacing;
+      value = "0.5rem";
+    }
+    token spacingMd {
+      kind = spacing;
+      value = "1rem";
+    }
+    token spacingLg {
+      kind = spacing;
+      value = "1.5rem";
+    }
+    token spacingXl {
+      kind = spacing;
+      value = "2rem";
+    }
+
+    token fontFamily {
+      kind = font;
+      value = "Inter, system-ui, sans-serif";
+    }
+
+    token borderRadius {
+      kind = radius;
+      value = "0.5rem";
+    }
+  }
+
+  theme DarkTheme {
+    label = "Dark Theme";
+    token backgroundColor = "#0f172a";
+    token surfaceColor = "#1e293b";
+    token textPrimary = "#f8fafc";
+    token textSecondary = "#94a3b8";
+    token borderColor = "#334155";
+  }
+
+  (* ----- LAYOUTS ----- *)
+
+  layout MainShell {
+    label = "Main Application Shell";
+    kind = shell;
+
+    slot header {
+      region = "top";
+      default-component = AppHeader;
+    }
+    slot sidebar {
+      region = "left";
+      default-component = SideNavigation;
+    }
+    slot main {
+      region = "center";
+    }
+  }
+
+  layout PageLayout {
+    label = "Standard Page Layout";
+    kind = page;
+
+    slot pageHeader {
+      region = "top";
+    }
+    slot content {
+      region = "center";
+    }
+    slot actions {
+      region = "bottom";
+    }
+  }
+
+  layout DialogLayout {
+    label = "Modal Dialog Layout";
+    kind = dialog;
+
+    slot dialogContent {
+      region = "center";
+    }
+    slot dialogActions {
+      region = "bottom";
+    }
+  }
+
+  (* ----- REUSABLE COMPONENTS ----- *)
+
+  component AppHeader {
+    label = "Application Header";
+    kind = toolbar;
+
+    prop title: string;
+    prop showSearch: boolean;
+    prop showNotifications: boolean;
+  }
+
+  component SideNavigation {
+    label = "Side Navigation";
+    kind = custom;
+
+    prop collapsed: boolean;
+    prop activeItem: string;
+  }
+
+  component DataTable {
+    label = "Data Table";
+    kind = table;
+
+    prop columns: json;
+    prop pageSize {
+      type = number;
+      default = 25;
+    }
+    prop sortable {
+      type = boolean;
+      default = true;
+    }
+    prop filterable {
+      type = boolean;
+      default = true;
+    }
+  }
+
+  component FormField {
+    label = "Form Field";
+    kind = field;
+
+    prop fieldName: string;
+    prop fieldLabel: string;
+    prop fieldType: string;
+    prop required: boolean;
+    prop placeholder: string;
+  }
+
+  component StatusBadge {
+    label = "Status Badge";
+    kind = badge;
+
+    prop status: string;
+    prop variant: string;
+  }
+
+  component ActionButton {
+    label = "Action Button";
+    kind = button;
+
+    prop label: string;
+    prop variant: string;
+    prop icon: string;
+    prop disabled: boolean;
+  }
+
+  component FilterBar {
+    label = "Filter Bar";
+    kind = filter-bar;
+
+    prop filters: json;
+    prop showSearch: boolean;
+  }
+
+  component Card {
+    label = "Card";
+    kind = card;
+
+    prop title: string;
+    prop subtitle: string;
+    slot cardContent {
+      label = "Card Content";
+    }
+  }
+
+  (* ----- VIEWS ----- *)
+
+  view Dashboard {
+    label = "Dashboard";
+    kind = dashboard;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+    }
+    region content {
+      label = "Dashboard Content";
+      slot = content;
+      use component Card;
+    }
+  }
+
+  view AdminDashboard {
+    label = "Admin Dashboard";
+    kind = dashboard;
+    layout = PageLayout;
+
+    guard AdminOnly {
+      when = "user.role != ADMIN";
+      redirect-to = Dashboard;
+      message = "Access denied. Admin role required.";
+    }
+  }
+
+  view UserList {
+    label = "User List";
+    kind = list;
+    entity = User;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = UserFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view UserDetail {
+    label = "User Details";
+    kind = detail;
+    entity = User;
+    layout = PageLayout;
+
+    bind email {
+      to = User.email;
+      mode = read;
+    }
+    bind password {
+      to = User.password;
+      mode = read;
+    }
+    bind firstName {
+      to = User.firstName;
+      mode = read;
+    }
+    bind lastName {
+      to = User.lastName;
+      mode = read;
+    }
+    bind role {
+      to = User.role;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = UserFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = UserFlow.delete;
+      }
+    }
+  }
+
+  view UserForm {
+    label = "User Form";
+    kind = form;
+    entity = User;
+    layout = PageLayout;
+
+    bind email {
+      to = User.email;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind password {
+      to = User.password;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind firstName {
+      to = User.firstName;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind lastName {
+      to = User.lastName;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind role {
+      to = User.role;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind departmentId {
+      to = User.departmentId;
+      mode = two-way;
+    }
+    bind isActive {
+      to = User.isActive;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = UserFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = UserFlow.cancel;
+      }
+    }
+  }
+
+  view DivisionList {
+    label = "Division List";
+    kind = list;
+    entity = Division;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = DivisionFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view DivisionDetail {
+    label = "Division Details";
+    kind = detail;
+    entity = Division;
+    layout = PageLayout;
+
+    bind code {
+      to = Division.code;
+      mode = read;
+    }
+    bind name {
+      to = Division.name;
+      mode = read;
+    }
+    bind description {
+      to = Division.description;
+      mode = read;
+    }
+    bind isActive {
+      to = Division.isActive;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = DivisionFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = DivisionFlow.delete;
+      }
+    }
+  }
+
+  view DivisionForm {
+    label = "Division Form";
+    kind = form;
+    entity = Division;
+    layout = PageLayout;
+
+    bind code {
+      to = Division.code;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind name {
+      to = Division.name;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind description {
+      to = Division.description;
+      mode = two-way;
+    }
+    bind isActive {
+      to = Division.isActive;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = DivisionFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = DivisionFlow.cancel;
+      }
+    }
+  }
+
+  view DepartmentList {
+    label = "Department List";
+    kind = list;
+    entity = Department;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = DepartmentFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view DepartmentDetail {
+    label = "Department Details";
+    kind = detail;
+    entity = Department;
+    layout = PageLayout;
+
+    bind name {
+      to = Department.name;
+      mode = read;
+    }
+    bind code {
+      to = Department.code;
+      mode = read;
+    }
+    bind divisionId {
+      to = Department.divisionId;
+      mode = read;
+    }
+    bind headOfDepartmentId {
+      to = Department.headOfDepartmentId;
+      mode = read;
+    }
+    bind isActive {
+      to = Department.isActive;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = DepartmentFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = DepartmentFlow.delete;
+      }
+    }
+  }
+
+  view DepartmentForm {
+    label = "Department Form";
+    kind = form;
+    entity = Department;
+    layout = PageLayout;
+
+    bind name {
+      to = Department.name;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind code {
+      to = Department.code;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind divisionId {
+      to = Department.divisionId;
+      mode = two-way;
+    }
+    bind headOfDepartmentId {
+      to = Department.headOfDepartmentId;
+      mode = two-way;
+    }
+    bind isActive {
+      to = Department.isActive;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = DepartmentFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = DepartmentFlow.cancel;
+      }
+    }
+  }
+
+  view BusinessUnitList {
+    label = "BusinessUnit List";
+    kind = list;
+    entity = BusinessUnit;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = BusinessUnitFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view BusinessUnitDetail {
+    label = "BusinessUnit Details";
+    kind = detail;
+    entity = BusinessUnit;
+    layout = PageLayout;
+
+    bind unitCode {
+      to = BusinessUnit.unitCode;
+      mode = read;
+    }
+    bind name {
+      to = BusinessUnit.name;
+      mode = read;
+    }
+    bind description {
+      to = BusinessUnit.description;
+      mode = read;
+    }
+    bind status {
+      to = BusinessUnit.status;
+      mode = read;
+    }
+    bind managerUserId {
+      to = BusinessUnit.managerUserId;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = BusinessUnitFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = BusinessUnitFlow.delete;
+      }
+    }
+  }
+
+  view BusinessUnitForm {
+    label = "BusinessUnit Form";
+    kind = form;
+    entity = BusinessUnit;
+    layout = PageLayout;
+
+    bind unitCode {
+      to = BusinessUnit.unitCode;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind name {
+      to = BusinessUnit.name;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind description {
+      to = BusinessUnit.description;
+      mode = two-way;
+    }
+    bind status {
+      to = BusinessUnit.status;
+      mode = two-way;
+    }
+    bind managerUserId {
+      to = BusinessUnit.managerUserId;
+      mode = two-way;
+    }
+    bind budgetAmount {
+      to = BusinessUnit.budgetAmount;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = BusinessUnitFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = BusinessUnitFlow.cancel;
+      }
+    }
+  }
+
+  view ProjectList {
+    label = "Project List";
+    kind = list;
+    entity = Project;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = ProjectFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view ProjectDetail {
+    label = "Project Details";
+    kind = detail;
+    entity = Project;
+    layout = PageLayout;
+
+    bind projectCode {
+      to = Project.projectCode;
+      mode = read;
+    }
+    bind name {
+      to = Project.name;
+      mode = read;
+    }
+    bind description {
+      to = Project.description;
+      mode = read;
+    }
+    bind status {
+      to = Project.status;
+      mode = read;
+    }
+    bind businessUnitId {
+      to = Project.businessUnitId;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = ProjectFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = ProjectFlow.delete;
+      }
+    }
+  }
+
+  view ProjectForm {
+    label = "Project Form";
+    kind = form;
+    entity = Project;
+    layout = PageLayout;
+
+    bind projectCode {
+      to = Project.projectCode;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind name {
+      to = Project.name;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind description {
+      to = Project.description;
+      mode = two-way;
+    }
+    bind status {
+      to = Project.status;
+      mode = two-way;
+    }
+    bind businessUnitId {
+      to = Project.businessUnitId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind startDate {
+      to = Project.startDate;
+      mode = two-way;
+    }
+    bind endDate {
+      to = Project.endDate;
+      mode = two-way;
+    }
+    bind budgetAmount {
+      to = Project.budgetAmount;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = ProjectFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = ProjectFlow.cancel;
+      }
+    }
+  }
+
+  view CostCenterList {
+    label = "CostCenter List";
+    kind = list;
+    entity = CostCenter;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = CostCenterFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view CostCenterDetail {
+    label = "CostCenter Details";
+    kind = detail;
+    entity = CostCenter;
+    layout = PageLayout;
+
+    bind type {
+      to = CostCenter.type;
+      mode = read;
+    }
+    bind projectId {
+      to = CostCenter.projectId;
+      mode = read;
+    }
+    bind businessUnitId {
+      to = CostCenter.businessUnitId;
+      mode = read;
+    }
+    bind divisionId {
+      to = CostCenter.divisionId;
+      mode = read;
+    }
+    bind code {
+      to = CostCenter.code;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = CostCenterFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = CostCenterFlow.delete;
+      }
+    }
+  }
+
+  view CostCenterForm {
+    label = "CostCenter Form";
+    kind = form;
+    entity = CostCenter;
+    layout = PageLayout;
+
+    bind type {
+      to = CostCenter.type;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind projectId {
+      to = CostCenter.projectId;
+      mode = two-way;
+    }
+    bind businessUnitId {
+      to = CostCenter.businessUnitId;
+      mode = two-way;
+    }
+    bind divisionId {
+      to = CostCenter.divisionId;
+      mode = two-way;
+    }
+    bind code {
+      to = CostCenter.code;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind name {
+      to = CostCenter.name;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind description {
+      to = CostCenter.description;
+      mode = two-way;
+    }
+    bind isActive {
+      to = CostCenter.isActive;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = CostCenterFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = CostCenterFlow.cancel;
+      }
+    }
+  }
+
+  view BankAccountList {
+    label = "BankAccount List";
+    kind = list;
+    entity = BankAccount;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = BankAccountFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view BankAccountDetail {
+    label = "BankAccount Details";
+    kind = detail;
+    entity = BankAccount;
+    layout = PageLayout;
+
+    bind bankName {
+      to = BankAccount.bankName;
+      mode = read;
+    }
+    bind accountNumber {
+      to = BankAccount.accountNumber;
+      mode = read;
+    }
+    bind accountName {
+      to = BankAccount.accountName;
+      mode = read;
+    }
+    bind branch {
+      to = BankAccount.branch;
+      mode = read;
+    }
+    bind isActive {
+      to = BankAccount.isActive;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = BankAccountFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = BankAccountFlow.delete;
+      }
+    }
+  }
+
+  view BankAccountForm {
+    label = "BankAccount Form";
+    kind = form;
+    entity = BankAccount;
+    layout = PageLayout;
+
+    bind bankName {
+      to = BankAccount.bankName;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind accountNumber {
+      to = BankAccount.accountNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind accountName {
+      to = BankAccount.accountName;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind branch {
+      to = BankAccount.branch;
+      mode = two-way;
+    }
+    bind isActive {
+      to = BankAccount.isActive;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = BankAccountFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = BankAccountFlow.cancel;
+      }
+    }
+  }
+
+  view RequisitionSlipList {
+    label = "RequisitionSlip List";
+    kind = list;
+    entity = RequisitionSlip;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = RequisitionSlipFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view RequisitionSlipDetail {
+    label = "RequisitionSlip Details";
+    kind = detail;
+    entity = RequisitionSlip;
+    layout = PageLayout;
+
+    bind requisitionNumber {
+      to = RequisitionSlip.requisitionNumber;
+      mode = read;
+    }
+    bind requesterId {
+      to = RequisitionSlip.requesterId;
+      mode = read;
+    }
+    bind departmentId {
+      to = RequisitionSlip.departmentId;
+      mode = read;
+    }
+    bind costCenterId {
+      to = RequisitionSlip.costCenterId;
+      mode = read;
+    }
+    bind projectId {
+      to = RequisitionSlip.projectId;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = RequisitionSlipFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = RequisitionSlipFlow.delete;
+      }
+    }
+  }
+
+  view RequisitionSlipForm {
+    label = "RequisitionSlip Form";
+    kind = form;
+    entity = RequisitionSlip;
+    layout = PageLayout;
+
+    bind requisitionNumber {
+      to = RequisitionSlip.requisitionNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind requesterId {
+      to = RequisitionSlip.requesterId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind departmentId {
+      to = RequisitionSlip.departmentId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind costCenterId {
+      to = RequisitionSlip.costCenterId;
+      mode = two-way;
+    }
+    bind projectId {
+      to = RequisitionSlip.projectId;
+      mode = two-way;
+    }
+    bind businessUnitId {
+      to = RequisitionSlip.businessUnitId;
+      mode = two-way;
+    }
+    bind dateRequested {
+      to = RequisitionSlip.dateRequested;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind dateNeeded {
+      to = RequisitionSlip.dateNeeded;
+      mode = two-way;
+      required-if = "true";
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = RequisitionSlipFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = RequisitionSlipFlow.cancel;
+      }
+    }
+  }
+
+  view RequisitionForPaymentList {
+    label = "RequisitionForPayment List";
+    kind = list;
+    entity = RequisitionForPayment;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = RequisitionForPaymentFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view RequisitionForPaymentDetail {
+    label = "RequisitionForPayment Details";
+    kind = detail;
+    entity = RequisitionForPayment;
+    layout = PageLayout;
+
+    bind paymentNumber {
+      to = RequisitionForPayment.paymentNumber;
+      mode = read;
+    }
+    bind requesterId {
+      to = RequisitionForPayment.requesterId;
+      mode = read;
+    }
+    bind departmentId {
+      to = RequisitionForPayment.departmentId;
+      mode = read;
+    }
+    bind payee {
+      to = RequisitionForPayment.payee;
+      mode = read;
+    }
+    bind dateRequested {
+      to = RequisitionForPayment.dateRequested;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = RequisitionForPaymentFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = RequisitionForPaymentFlow.delete;
+      }
+    }
+  }
+
+  view RequisitionForPaymentForm {
+    label = "RequisitionForPayment Form";
+    kind = form;
+    entity = RequisitionForPayment;
+    layout = PageLayout;
+
+    bind paymentNumber {
+      to = RequisitionForPayment.paymentNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind requesterId {
+      to = RequisitionForPayment.requesterId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind departmentId {
+      to = RequisitionForPayment.departmentId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind payee {
+      to = RequisitionForPayment.payee;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind dateRequested {
+      to = RequisitionForPayment.dateRequested;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind dateNeeded {
+      to = RequisitionForPayment.dateNeeded;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind particulars {
+      to = RequisitionForPayment.particulars;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind amount {
+      to = RequisitionForPayment.amount;
+      mode = two-way;
+      required-if = "true";
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = RequisitionForPaymentFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = RequisitionForPaymentFlow.cancel;
+      }
+    }
+  }
+
+  view CheckVoucherList {
+    label = "CheckVoucher List";
+    kind = list;
+    entity = CheckVoucher;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = CheckVoucherFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view CheckVoucherDetail {
+    label = "CheckVoucher Details";
+    kind = detail;
+    entity = CheckVoucher;
+    layout = PageLayout;
+
+    bind voucherNumber {
+      to = CheckVoucher.voucherNumber;
+      mode = read;
+    }
+    bind requisitionForPaymentId {
+      to = CheckVoucher.requisitionForPaymentId;
+      mode = read;
+    }
+    bind payee {
+      to = CheckVoucher.payee;
+      mode = read;
+    }
+    bind amount {
+      to = CheckVoucher.amount;
+      mode = read;
+    }
+    bind currency {
+      to = CheckVoucher.currency;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = CheckVoucherFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = CheckVoucherFlow.delete;
+      }
+    }
+  }
+
+  view CheckVoucherForm {
+    label = "CheckVoucher Form";
+    kind = form;
+    entity = CheckVoucher;
+    layout = PageLayout;
+
+    bind voucherNumber {
+      to = CheckVoucher.voucherNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind requisitionForPaymentId {
+      to = CheckVoucher.requisitionForPaymentId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind payee {
+      to = CheckVoucher.payee;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind amount {
+      to = CheckVoucher.amount;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind currency {
+      to = CheckVoucher.currency;
+      mode = two-way;
+    }
+    bind particulars {
+      to = CheckVoucher.particulars;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind status {
+      to = CheckVoucher.status;
+      mode = two-way;
+    }
+    bind generatedDate {
+      to = CheckVoucher.generatedDate;
+      mode = two-way;
+      required-if = "true";
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = CheckVoucherFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = CheckVoucherFlow.cancel;
+      }
+    }
+  }
+
+  view CheckList {
+    label = "Check List";
+    kind = list;
+    entity = Check;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = CheckFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view CheckDetail {
+    label = "Check Details";
+    kind = detail;
+    entity = Check;
+    layout = PageLayout;
+
+    bind checkNumber {
+      to = Check.checkNumber;
+      mode = read;
+    }
+    bind checkVoucherId {
+      to = Check.checkVoucherId;
+      mode = read;
+    }
+    bind bankAccountId {
+      to = Check.bankAccountId;
+      mode = read;
+    }
+    bind payee {
+      to = Check.payee;
+      mode = read;
+    }
+    bind amount {
+      to = Check.amount;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = CheckFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = CheckFlow.delete;
+      }
+    }
+  }
+
+  view CheckForm {
+    label = "Check Form";
+    kind = form;
+    entity = Check;
+    layout = PageLayout;
+
+    bind checkNumber {
+      to = Check.checkNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind checkVoucherId {
+      to = Check.checkVoucherId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind bankAccountId {
+      to = Check.bankAccountId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind payee {
+      to = Check.payee;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind amount {
+      to = Check.amount;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind currency {
+      to = Check.currency;
+      mode = two-way;
+    }
+    bind status {
+      to = Check.status;
+      mode = two-way;
+    }
+    bind issuedDate {
+      to = Check.issuedDate;
+      mode = two-way;
+      required-if = "true";
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = CheckFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = CheckFlow.cancel;
+      }
+    }
+  }
+
+  view RequestForAdjustmentList {
+    label = "RequestForAdjustment List";
+    kind = list;
+    entity = RequestForAdjustment;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = RequestForAdjustmentFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view RequestForAdjustmentDetail {
+    label = "RequestForAdjustment Details";
+    kind = detail;
+    entity = RequestForAdjustment;
+    layout = PageLayout;
+
+    bind adjustmentNumber {
+      to = RequestForAdjustment.adjustmentNumber;
+      mode = read;
+    }
+    bind requesterId {
+      to = RequestForAdjustment.requesterId;
+      mode = read;
+    }
+    bind dateRequested {
+      to = RequestForAdjustment.dateRequested;
+      mode = read;
+    }
+    bind purposeOfAdjustment {
+      to = RequestForAdjustment.purposeOfAdjustment;
+      mode = read;
+    }
+    bind detailsOfAdjustment {
+      to = RequestForAdjustment.detailsOfAdjustment;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = RequestForAdjustmentFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = RequestForAdjustmentFlow.delete;
+      }
+    }
+  }
+
+  view RequestForAdjustmentForm {
+    label = "RequestForAdjustment Form";
+    kind = form;
+    entity = RequestForAdjustment;
+    layout = PageLayout;
+
+    bind adjustmentNumber {
+      to = RequestForAdjustment.adjustmentNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind requesterId {
+      to = RequestForAdjustment.requesterId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind dateRequested {
+      to = RequestForAdjustment.dateRequested;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind purposeOfAdjustment {
+      to = RequestForAdjustment.purposeOfAdjustment;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind detailsOfAdjustment {
+      to = RequestForAdjustment.detailsOfAdjustment;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind amountAdjusted {
+      to = RequestForAdjustment.amountAdjusted;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind currency {
+      to = RequestForAdjustment.currency;
+      mode = two-way;
+    }
+    bind status {
+      to = RequestForAdjustment.status;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = RequestForAdjustmentFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = RequestForAdjustmentFlow.cancel;
+      }
+    }
+  }
+
+  view MaterialIssuanceSlipList {
+    label = "MaterialIssuanceSlip List";
+    kind = list;
+    entity = MaterialIssuanceSlip;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = MaterialIssuanceSlipFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view MaterialIssuanceSlipDetail {
+    label = "MaterialIssuanceSlip Details";
+    kind = detail;
+    entity = MaterialIssuanceSlip;
+    layout = PageLayout;
+
+    bind issuanceNumber {
+      to = MaterialIssuanceSlip.issuanceNumber;
+      mode = read;
+    }
+    bind requesterId {
+      to = MaterialIssuanceSlip.requesterId;
+      mode = read;
+    }
+    bind chargedTo {
+      to = MaterialIssuanceSlip.chargedTo;
+      mode = read;
+    }
+    bind projectNumber {
+      to = MaterialIssuanceSlip.projectNumber;
+      mode = read;
+    }
+    bind dateIssued {
+      to = MaterialIssuanceSlip.dateIssued;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = MaterialIssuanceSlipFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = MaterialIssuanceSlipFlow.delete;
+      }
+    }
+  }
+
+  view MaterialIssuanceSlipForm {
+    label = "MaterialIssuanceSlip Form";
+    kind = form;
+    entity = MaterialIssuanceSlip;
+    layout = PageLayout;
+
+    bind issuanceNumber {
+      to = MaterialIssuanceSlip.issuanceNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind requesterId {
+      to = MaterialIssuanceSlip.requesterId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind chargedTo {
+      to = MaterialIssuanceSlip.chargedTo;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind projectNumber {
+      to = MaterialIssuanceSlip.projectNumber;
+      mode = two-way;
+    }
+    bind dateIssued {
+      to = MaterialIssuanceSlip.dateIssued;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind status {
+      to = MaterialIssuanceSlip.status;
+      mode = two-way;
+    }
+    bind submittedAt {
+      to = MaterialIssuanceSlip.submittedAt;
+      mode = two-way;
+    }
+    bind approvedAt {
+      to = MaterialIssuanceSlip.approvedAt;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = MaterialIssuanceSlipFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = MaterialIssuanceSlipFlow.cancel;
+      }
+    }
+  }
+
+  view PersonnelRequestList {
+    label = "PersonnelRequest List";
+    kind = list;
+    entity = PersonnelRequest;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = PersonnelRequestFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view PersonnelRequestDetail {
+    label = "PersonnelRequest Details";
+    kind = detail;
+    entity = PersonnelRequest;
+    layout = PageLayout;
+
+    bind requestNumber {
+      to = PersonnelRequest.requestNumber;
+      mode = read;
+    }
+    bind requesterId {
+      to = PersonnelRequest.requesterId;
+      mode = read;
+    }
+    bind positionTitle {
+      to = PersonnelRequest.positionTitle;
+      mode = read;
+    }
+    bind numberOfPersonnel {
+      to = PersonnelRequest.numberOfPersonnel;
+      mode = read;
+    }
+    bind dateNeeded {
+      to = PersonnelRequest.dateNeeded;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = PersonnelRequestFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = PersonnelRequestFlow.delete;
+      }
+    }
+  }
+
+  view PersonnelRequestForm {
+    label = "PersonnelRequest Form";
+    kind = form;
+    entity = PersonnelRequest;
+    layout = PageLayout;
+
+    bind requestNumber {
+      to = PersonnelRequest.requestNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind requesterId {
+      to = PersonnelRequest.requesterId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind positionTitle {
+      to = PersonnelRequest.positionTitle;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind numberOfPersonnel {
+      to = PersonnelRequest.numberOfPersonnel;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind dateNeeded {
+      to = PersonnelRequest.dateNeeded;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind status {
+      to = PersonnelRequest.status;
+      mode = two-way;
+    }
+    bind submittedAt {
+      to = PersonnelRequest.submittedAt;
+      mode = two-way;
+    }
+    bind reviewedAt {
+      to = PersonnelRequest.reviewedAt;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = PersonnelRequestFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = PersonnelRequestFlow.cancel;
+      }
+    }
+  }
+
+  view PlaneTicketRequestList {
+    label = "PlaneTicketRequest List";
+    kind = list;
+    entity = PlaneTicketRequest;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = PlaneTicketRequestFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view PlaneTicketRequestDetail {
+    label = "PlaneTicketRequest Details";
+    kind = detail;
+    entity = PlaneTicketRequest;
+    layout = PageLayout;
+
+    bind requestNumber {
+      to = PlaneTicketRequest.requestNumber;
+      mode = read;
+    }
+    bind requesterId {
+      to = PlaneTicketRequest.requesterId;
+      mode = read;
+    }
+    bind firstName {
+      to = PlaneTicketRequest.firstName;
+      mode = read;
+    }
+    bind middleName {
+      to = PlaneTicketRequest.middleName;
+      mode = read;
+    }
+    bind familyName {
+      to = PlaneTicketRequest.familyName;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = PlaneTicketRequestFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = PlaneTicketRequestFlow.delete;
+      }
+    }
+  }
+
+  view PlaneTicketRequestForm {
+    label = "PlaneTicketRequest Form";
+    kind = form;
+    entity = PlaneTicketRequest;
+    layout = PageLayout;
+
+    bind requestNumber {
+      to = PlaneTicketRequest.requestNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind requesterId {
+      to = PlaneTicketRequest.requesterId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind firstName {
+      to = PlaneTicketRequest.firstName;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind middleName {
+      to = PlaneTicketRequest.middleName;
+      mode = two-way;
+    }
+    bind familyName {
+      to = PlaneTicketRequest.familyName;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind contactNumber {
+      to = PlaneTicketRequest.contactNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind chargeTo {
+      to = PlaneTicketRequest.chargeTo;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind tripType {
+      to = PlaneTicketRequest.tripType;
+      mode = two-way;
+      required-if = "true";
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = PlaneTicketRequestFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = PlaneTicketRequestFlow.cancel;
+      }
+    }
+  }
+
+  view CashAdvanceAgreementList {
+    label = "CashAdvanceAgreement List";
+    kind = list;
+    entity = CashAdvanceAgreement;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = CashAdvanceAgreementFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view CashAdvanceAgreementDetail {
+    label = "CashAdvanceAgreement Details";
+    kind = detail;
+    entity = CashAdvanceAgreement;
+    layout = PageLayout;
+
+    bind agreementNumber {
+      to = CashAdvanceAgreement.agreementNumber;
+      mode = read;
+    }
+    bind employeeId {
+      to = CashAdvanceAgreement.employeeId;
+      mode = read;
+    }
+    bind employeeName {
+      to = CashAdvanceAgreement.employeeName;
+      mode = read;
+    }
+    bind cashAdvanceAmount {
+      to = CashAdvanceAgreement.cashAdvanceAmount;
+      mode = read;
+    }
+    bind repaymentAmount {
+      to = CashAdvanceAgreement.repaymentAmount;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = CashAdvanceAgreementFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = CashAdvanceAgreementFlow.delete;
+      }
+    }
+  }
+
+  view CashAdvanceAgreementForm {
+    label = "CashAdvanceAgreement Form";
+    kind = form;
+    entity = CashAdvanceAgreement;
+    layout = PageLayout;
+
+    bind agreementNumber {
+      to = CashAdvanceAgreement.agreementNumber;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind employeeId {
+      to = CashAdvanceAgreement.employeeId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind employeeName {
+      to = CashAdvanceAgreement.employeeName;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind cashAdvanceAmount {
+      to = CashAdvanceAgreement.cashAdvanceAmount;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind repaymentAmount {
+      to = CashAdvanceAgreement.repaymentAmount;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind repaymentBalance {
+      to = CashAdvanceAgreement.repaymentBalance;
+      mode = two-way;
+    }
+    bind currency {
+      to = CashAdvanceAgreement.currency;
+      mode = two-way;
+    }
+    bind repaymentTerms {
+      to = CashAdvanceAgreement.repaymentTerms;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = CashAdvanceAgreementFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = CashAdvanceAgreementFlow.cancel;
+      }
+    }
+  }
+
+  view ApprovalRecordList {
+    label = "ApprovalRecord List";
+    kind = list;
+    entity = ApprovalRecord;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = ApprovalRecordFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view ApprovalRecordDetail {
+    label = "ApprovalRecord Details";
+    kind = detail;
+    entity = ApprovalRecord;
+    layout = PageLayout;
+
+    bind entityType {
+      to = ApprovalRecord.entityType;
+      mode = read;
+    }
+    bind entityId {
+      to = ApprovalRecord.entityId;
+      mode = read;
+    }
+    bind approverId {
+      to = ApprovalRecord.approverId;
+      mode = read;
+    }
+    bind approvalLevel {
+      to = ApprovalRecord.approvalLevel;
+      mode = read;
+    }
+    bind action {
+      to = ApprovalRecord.action;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = ApprovalRecordFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = ApprovalRecordFlow.delete;
+      }
+    }
+  }
+
+  view ApprovalRecordForm {
+    label = "ApprovalRecord Form";
+    kind = form;
+    entity = ApprovalRecord;
+    layout = PageLayout;
+
+    bind entityType {
+      to = ApprovalRecord.entityType;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind entityId {
+      to = ApprovalRecord.entityId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind approverId {
+      to = ApprovalRecord.approverId;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind approvalLevel {
+      to = ApprovalRecord.approvalLevel;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind action {
+      to = ApprovalRecord.action;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind comments {
+      to = ApprovalRecord.comments;
+      mode = two-way;
+    }
+    bind actionDate {
+      to = ApprovalRecord.actionDate;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind processingDurationSeconds {
+      to = ApprovalRecord.processingDurationSeconds;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = ApprovalRecordFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = ApprovalRecordFlow.cancel;
+      }
+    }
+  }
+
+  view UnitOfMeasureList {
+    label = "UnitOfMeasure List";
+    kind = list;
+    entity = UnitOfMeasure;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = UnitOfMeasureFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view UnitOfMeasureDetail {
+    label = "UnitOfMeasure Details";
+    kind = detail;
+    entity = UnitOfMeasure;
+    layout = PageLayout;
+
+    bind code {
+      to = UnitOfMeasure.code;
+      mode = read;
+    }
+    bind name {
+      to = UnitOfMeasure.name;
+      mode = read;
+    }
+    bind description {
+      to = UnitOfMeasure.description;
+      mode = read;
+    }
+    bind isActive {
+      to = UnitOfMeasure.isActive;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = UnitOfMeasureFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = UnitOfMeasureFlow.delete;
+      }
+    }
+  }
+
+  view UnitOfMeasureForm {
+    label = "UnitOfMeasure Form";
+    kind = form;
+    entity = UnitOfMeasure;
+    layout = PageLayout;
+
+    bind code {
+      to = UnitOfMeasure.code;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind name {
+      to = UnitOfMeasure.name;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind description {
+      to = UnitOfMeasure.description;
+      mode = two-way;
+    }
+    bind isActive {
+      to = UnitOfMeasure.isActive;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = UnitOfMeasureFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = UnitOfMeasureFlow.cancel;
+      }
+    }
+  }
+
+  view SystemSettingList {
+    label = "SystemSetting List";
+    kind = list;
+    entity = SystemSetting;
+    layout = PageLayout;
+
+    region header {
+      label = "Page Header";
+      slot = pageHeader;
+      use component FilterBar;
+    }
+    region content {
+      label = "List Content";
+      slot = content;
+      use component DataTable;
+    }
+    actions {
+      action create {
+        label = "Create New";
+        icon = "plus";
+        invoke = SystemSettingFlow.create;
+        variant = "primary";
+      }
+    }
+  }
+
+  view SystemSettingDetail {
+    label = "SystemSetting Details";
+    kind = detail;
+    entity = SystemSetting;
+    layout = PageLayout;
+
+    bind category {
+      to = SystemSetting.category;
+      mode = read;
+    }
+    bind settingKey {
+      to = SystemSetting.settingKey;
+      mode = read;
+    }
+    bind settingValue {
+      to = SystemSetting.settingValue;
+      mode = read;
+    }
+    bind dataType {
+      to = SystemSetting.dataType;
+      mode = read;
+    }
+    bind description {
+      to = SystemSetting.description;
+      mode = read;
+    }
+    actions {
+      action edit {
+        label = "Edit";
+        icon = "edit";
+        invoke = SystemSettingFlow.edit;
+      }
+      action delete {
+        label = "Delete";
+        icon = "trash";
+        variant = "danger";
+        invoke = SystemSettingFlow.delete;
+      }
+    }
+  }
+
+  view SystemSettingForm {
+    label = "SystemSetting Form";
+    kind = form;
+    entity = SystemSetting;
+    layout = PageLayout;
+
+    bind category {
+      to = SystemSetting.category;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind settingKey {
+      to = SystemSetting.settingKey;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind settingValue {
+      to = SystemSetting.settingValue;
+      mode = two-way;
+      required-if = "true";
+    }
+    bind dataType {
+      to = SystemSetting.dataType;
+      mode = two-way;
+    }
+    bind description {
+      to = SystemSetting.description;
+      mode = two-way;
+    }
+    bind isEditable {
+      to = SystemSetting.isEditable;
+      mode = two-way;
+    }
+    actions {
+      action save {
+        label = "Save";
+        icon = "check";
+        variant = "primary";
+        invoke = SystemSettingFlow.save;
+      }
+      action cancel {
+        label = "Cancel";
+        icon = "x";
+        invoke = SystemSettingFlow.cancel;
+      }
+    }
+  }
+
+
+  (* ----- FLOWS ----- *)
+
+  flow UserFlow {
+    label = "User Flow";
+    entry = UserList;
+
+    step list {
+      label = "View List";
+      view = UserList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = UserForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = UserDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = UserForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow DivisionFlow {
+    label = "Division Flow";
+    entry = DivisionList;
+
+    step list {
+      label = "View List";
+      view = DivisionList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = DivisionForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = DivisionDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = DivisionForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow DepartmentFlow {
+    label = "Department Flow";
+    entry = DepartmentList;
+
+    step list {
+      label = "View List";
+      view = DepartmentList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = DepartmentForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = DepartmentDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = DepartmentForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow BusinessUnitFlow {
+    label = "BusinessUnit Flow";
+    entry = BusinessUnitList;
+
+    step list {
+      label = "View List";
+      view = BusinessUnitList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = BusinessUnitForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = BusinessUnitDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = BusinessUnitForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow ProjectFlow {
+    label = "Project Flow";
+    entry = ProjectList;
+
+    step list {
+      label = "View List";
+      view = ProjectList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = ProjectForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = ProjectDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = ProjectForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow CostCenterFlow {
+    label = "CostCenter Flow";
+    entry = CostCenterList;
+
+    step list {
+      label = "View List";
+      view = CostCenterList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = CostCenterForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = CostCenterDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = CostCenterForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow BankAccountFlow {
+    label = "BankAccount Flow";
+    entry = BankAccountList;
+
+    step list {
+      label = "View List";
+      view = BankAccountList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = BankAccountForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = BankAccountDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = BankAccountForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow RequisitionSlipFlow {
+    label = "RequisitionSlip Flow";
+    entry = RequisitionSlipList;
+
+    step list {
+      label = "View List";
+      view = RequisitionSlipList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = RequisitionSlipForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = RequisitionSlipDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = RequisitionSlipForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow RequisitionForPaymentFlow {
+    label = "RequisitionForPayment Flow";
+    entry = RequisitionForPaymentList;
+
+    step list {
+      label = "View List";
+      view = RequisitionForPaymentList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = RequisitionForPaymentForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = RequisitionForPaymentDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = RequisitionForPaymentForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow CheckVoucherFlow {
+    label = "CheckVoucher Flow";
+    entry = CheckVoucherList;
+
+    step list {
+      label = "View List";
+      view = CheckVoucherList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = CheckVoucherForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = CheckVoucherDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = CheckVoucherForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow CheckFlow {
+    label = "Check Flow";
+    entry = CheckList;
+
+    step list {
+      label = "View List";
+      view = CheckList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = CheckForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = CheckDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = CheckForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow RequestForAdjustmentFlow {
+    label = "RequestForAdjustment Flow";
+    entry = RequestForAdjustmentList;
+
+    step list {
+      label = "View List";
+      view = RequestForAdjustmentList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = RequestForAdjustmentForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = RequestForAdjustmentDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = RequestForAdjustmentForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow MaterialIssuanceSlipFlow {
+    label = "MaterialIssuanceSlip Flow";
+    entry = MaterialIssuanceSlipList;
+
+    step list {
+      label = "View List";
+      view = MaterialIssuanceSlipList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = MaterialIssuanceSlipForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = MaterialIssuanceSlipDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = MaterialIssuanceSlipForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow PersonnelRequestFlow {
+    label = "PersonnelRequest Flow";
+    entry = PersonnelRequestList;
+
+    step list {
+      label = "View List";
+      view = PersonnelRequestList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = PersonnelRequestForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = PersonnelRequestDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = PersonnelRequestForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow PlaneTicketRequestFlow {
+    label = "PlaneTicketRequest Flow";
+    entry = PlaneTicketRequestList;
+
+    step list {
+      label = "View List";
+      view = PlaneTicketRequestList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = PlaneTicketRequestForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = PlaneTicketRequestDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = PlaneTicketRequestForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow CashAdvanceAgreementFlow {
+    label = "CashAdvanceAgreement Flow";
+    entry = CashAdvanceAgreementList;
+
+    step list {
+      label = "View List";
+      view = CashAdvanceAgreementList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = CashAdvanceAgreementForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = CashAdvanceAgreementDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = CashAdvanceAgreementForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow ApprovalRecordFlow {
+    label = "ApprovalRecord Flow";
+    entry = ApprovalRecordList;
+
+    step list {
+      label = "View List";
+      view = ApprovalRecordList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = ApprovalRecordForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = ApprovalRecordDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = ApprovalRecordForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow UnitOfMeasureFlow {
+    label = "UnitOfMeasure Flow";
+    entry = UnitOfMeasureList;
+
+    step list {
+      label = "View List";
+      view = UnitOfMeasureList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = UnitOfMeasureForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = UnitOfMeasureDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = UnitOfMeasureForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow SystemSettingFlow {
+    label = "SystemSetting Flow";
+    entry = SystemSettingList;
+
+    step list {
+      label = "View List";
+      view = SystemSettingList;
+      kind = screen;
+    }
+    step create {
+      label = "Create New";
+      view = SystemSettingForm;
+      kind = screen;
+    }
+    step view {
+      label = "View Details";
+      view = SystemSettingDetail;
+      kind = screen;
+    }
+    step edit {
+      label = "Edit";
+      view = SystemSettingForm;
+      kind = screen;
+    }
+    step delete {
+      label = "Confirm Delete";
+      kind = decision;
+    }
+
+    transition toCreate {
+      from = list;
+      to = create;
+      via-action = create;
+    }
+    transition toView {
+      from = list;
+      to = view;
+      via-action = select;
+    }
+    transition toEdit {
+      from = view;
+      to = edit;
+      via-action = edit;
+    }
+    transition saveToView {
+      from = edit;
+      to = view;
+      via-action = save;
+    }
+    transition createToList {
+      from = create;
+      to = list;
+      via-action = save;
+    }
+    transition cancelToList {
+      from = create;
+      to = list;
+      via-action = cancel;
+    }
+  }
+
+  flow ApprovalFlow {
+    label = "Approval Workflow";
+    entry = pendingApprovals;
+
+    step pendingApprovals {
+      label = "Pending Approvals";
+      kind = screen;
+    }
+    step review {
+      label = "Review Request";
+      kind = screen;
+    }
+    step approve {
+      label = "Approve";
+      kind = decision;
+    }
+    step reject {
+      label = "Reject";
+      kind = decision;
+    }
+
+    transition toReview {
+      from = pendingApprovals;
+      to = review;
+      via-action = select;
+    }
+    transition approveRequest {
+      from = review;
+      to = approve;
+      via-action = approve;
+    }
+    transition rejectRequest {
+      from = review;
+      to = reject;
+      via-action = reject;
+    }
+  }
+
+
+  (* ----- FEATURES ----- *)
+
+  feature MasterFeature {
+    label = "Master Management";
+
+    use view UserList;
+    use view UserDetail;
+    use view UserForm;
+    use flow UserFlow;
+    use view DivisionList;
+    use view DivisionDetail;
+    use view DivisionForm;
+    use flow DivisionFlow;
+    use view DepartmentList;
+    use view DepartmentDetail;
+    use view DepartmentForm;
+    use flow DepartmentFlow;
+    use view BusinessUnitList;
+    use view BusinessUnitDetail;
+    use view BusinessUnitForm;
+    use flow BusinessUnitFlow;
+    use view ProjectList;
+    use view ProjectDetail;
+    use view ProjectForm;
+    use flow ProjectFlow;
+  }
+
+  feature TransactionFeature {
+    label = "Transaction Management";
+
+    use view RequisitionSlipList;
+    use view RequisitionSlipDetail;
+    use view RequisitionSlipForm;
+    use flow RequisitionSlipFlow;
+    use view RequisitionForPaymentList;
+    use view RequisitionForPaymentDetail;
+    use view RequisitionForPaymentForm;
+    use flow RequisitionForPaymentFlow;
+    use view CheckVoucherList;
+    use view CheckVoucherDetail;
+    use view CheckVoucherForm;
+    use flow CheckVoucherFlow;
+    use view CheckList;
+    use view CheckDetail;
+    use view CheckForm;
+    use flow CheckFlow;
+    use view RequestForAdjustmentList;
+    use view RequestForAdjustmentDetail;
+    use view RequestForAdjustmentForm;
+    use flow RequestForAdjustmentFlow;
+  }
+
+
+  (* ----- APPLICATION ----- *)
+
+  app DocumentFlowSystemApp {
+    label = "DocumentFlowSystem";
+
+    channel use WebApp;
+    channel use AdminConsole;
+
+    layout use MainShell;
+    layout use PageLayout;
+    layout use DialogLayout;
+
+    theme use LightTheme;
+    theme use DarkTheme;
+
+    view use Dashboard;
+    view use AdminDashboard;
+
+    view use UserList;
+    flow use UserFlow;
+    view use DivisionList;
+    flow use DivisionFlow;
+    view use DepartmentList;
+    flow use DepartmentFlow;
+    view use BusinessUnitList;
+    flow use BusinessUnitFlow;
+    view use ProjectList;
+    flow use ProjectFlow;
+    view use CostCenterList;
+    flow use CostCenterFlow;
+    view use BankAccountList;
+    flow use BankAccountFlow;
+    view use RequisitionSlipList;
+    flow use RequisitionSlipFlow;
+    view use RequisitionForPaymentList;
+    flow use RequisitionForPaymentFlow;
+    view use CheckVoucherList;
+    flow use CheckVoucherFlow;
+
+    setting defaultTheme = "LightTheme";
+    setting defaultLocale = "en-US";
+  }
+}

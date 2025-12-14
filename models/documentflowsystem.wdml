@@ -1,0 +1,1499 @@
+(* WDML Model: DocumentFlowSystem *)
+(* Version: 1.0.0 *)
+(* Generated: 2025-12-11T02:43:49.385Z *)
+
+wdml model DocumentFlowSystem {
+  (* ==================== DESIGN SYSTEM ==================== *)
+
+  designSystem DocumentFlowSystemDS {
+    meta {
+      title: "DocumentFlowSystem Design System";
+      description: "Document Flow System - Multi-level approval workflow for requisitions, payments, checks, and operational requests";
+      brand: "DocumentFlowSystem";
+      version: "1.0.0";
+    }
+
+    (* ----- COLOR TOKENS ----- *)
+
+    color primary {
+      role: primary;
+      value: "#1e293b";
+      usage: "Primary brand color for buttons and interactive elements";
+    }
+
+    color primarySoft {
+      role: primarySoft;
+      value: "#334155";
+      usage: "Softer variant of primary for hover states";
+    }
+
+    color secondary {
+      role: secondary;
+      value: "#475569";
+      usage: "Secondary actions and less prominent elements";
+    }
+
+    color accent {
+      role: accent;
+      value: "#3b82f6";
+      usage: "Links, highlights, and accent elements";
+    }
+
+    color success {
+      role: success;
+      value: "#10b981";
+      usage: "Success states and positive actions";
+    }
+
+    color warning {
+      role: warning;
+      value: "#f59e0b";
+      usage: "Warning states and caution indicators";
+    }
+
+    color danger {
+      role: danger;
+      value: "#ef4444";
+      usage: "Error states and destructive actions";
+    }
+
+    color info {
+      role: info;
+      value: "#3b82f6";
+      usage: "Informational messages and hints";
+    }
+
+    color background {
+      role: background;
+      value: "#ffffff";
+      usage: "Page background";
+    }
+
+    color surface {
+      role: surface;
+      value: "#f8fafc";
+      usage: "Card and component backgrounds";
+    }
+
+    color textPrimary {
+      role: textPrimary;
+      value: "#1e293b";
+      usage: "Primary text content";
+    }
+
+    color textSecondary {
+      role: textSecondary;
+      value: "#64748b";
+      usage: "Secondary and muted text";
+    }
+
+    color primaryHover {
+      role: primary;
+      state: hover;
+      value: "#334155";
+    }
+
+    color primaryActive {
+      role: primary;
+      state: active;
+      value: "#0f172a";
+    }
+
+    color primaryDisabled {
+      role: primary;
+      state: disabled;
+      value: "#94a3b8";
+    }
+
+
+    (* ----- SPACING TOKENS ----- *)
+
+    space space0 {
+      step: 0;
+      usage: "No spacing";
+    }
+
+    space space1 {
+      step: 1;
+      usage: "0.25rem - Tight spacing";
+    }
+
+    space space2 {
+      step: 2;
+      usage: "0.5rem - Small spacing";
+    }
+
+    space space3 {
+      step: 3;
+      usage: "0.75rem - Compact spacing";
+    }
+
+    space space4 {
+      step: 4;
+      usage: "1rem - Default spacing";
+    }
+
+    space space5 {
+      step: 5;
+      usage: "1.25rem - Comfortable spacing";
+    }
+
+    space space6 {
+      step: 6;
+      usage: "1.5rem - Relaxed spacing";
+    }
+
+    space space8 {
+      step: 8;
+      usage: "2rem - Section spacing";
+    }
+
+    space space10 {
+      step: 10;
+      usage: "2.5rem - Large spacing";
+    }
+
+    space space12 {
+      step: 12;
+      usage: "3rem - Extra large spacing";
+    }
+
+    space space16 {
+      step: 16;
+      usage: "4rem - Page section spacing";
+    }
+
+
+    (* ----- RADIUS TOKENS ----- *)
+
+    radius radiusNone {
+      value: 0;
+      usage: "No border radius";
+    }
+
+    radius radiusSm {
+      value: 0.125;
+      usage: "Small radius for subtle rounding";
+    }
+
+    radius radiusMd {
+      value: 0.375;
+      usage: "Medium radius for inputs and buttons";
+    }
+
+    radius radiusLg {
+      value: 0.5;
+      usage: "Large radius for cards";
+    }
+
+    radius radiusXl {
+      value: 0.75;
+      usage: "Extra large radius for modals";
+    }
+
+    radius radiusFull {
+      value: 9999;
+      usage: "Full radius for pills and avatars";
+    }
+
+
+    (* ----- SHADOW TOKENS ----- *)
+
+    shadow shadowNone {
+      value: "none";
+      usage: "No shadow";
+    }
+
+    shadow shadowSm {
+      value: "0 1px 2px 0 rgb(0 0 0 / 0.05)";
+      usage: "Subtle shadow for flat elements";
+    }
+
+    shadow shadowMd {
+      value: "0 4px 6px -1px rgb(0 0 0 / 0.1)";
+      usage: "Medium shadow for cards";
+    }
+
+    shadow shadowLg {
+      value: "0 10px 15px -3px rgb(0 0 0 / 0.1)";
+      usage: "Large shadow for dropdowns";
+    }
+
+    shadow shadowXl {
+      value: "0 20px 25px -5px rgb(0 0 0 / 0.1)";
+      usage: "Extra large shadow for modals";
+    }
+
+
+    (* ----- TYPOGRAPHY ----- *)
+
+    fontFamily fontSans {
+      stack: "Inter, system-ui, sans-serif";
+      usage: "Primary font for UI text";
+    }
+
+    fontFamily fontMono {
+      stack: "JetBrains Mono, Consolas, monospace";
+      usage: "Monospace font for code";
+    }
+
+    typeScale defaultScale {
+      baseSize: 16;
+      ratio: 1.25;
+    }
+
+    textStyle textDisplay {
+      role: display;
+      font: fontSans;
+      size: 48;
+      weight: 700;
+      lineHeight: 1.1;
+    }
+
+    textStyle textH1 {
+      role: h1;
+      font: fontSans;
+      size: 36;
+      weight: 700;
+      lineHeight: 1.2;
+    }
+
+    textStyle textH2 {
+      role: h2;
+      font: fontSans;
+      size: 30;
+      weight: 600;
+      lineHeight: 1.25;
+    }
+
+    textStyle textH3 {
+      role: h3;
+      font: fontSans;
+      size: 24;
+      weight: 600;
+      lineHeight: 1.3;
+    }
+
+    textStyle textH4 {
+      role: h4;
+      font: fontSans;
+      size: 20;
+      weight: 600;
+      lineHeight: 1.4;
+    }
+
+    textStyle textH5 {
+      role: h5;
+      font: fontSans;
+      size: 18;
+      weight: 600;
+      lineHeight: 1.4;
+    }
+
+    textStyle textH6 {
+      role: h6;
+      font: fontSans;
+      size: 16;
+      weight: 600;
+      lineHeight: 1.5;
+    }
+
+    textStyle textBody {
+      role: body;
+      font: fontSans;
+      size: 16;
+      weight: 400;
+      lineHeight: 1.5;
+    }
+
+    textStyle textBodyStrong {
+      role: bodyStrong;
+      font: fontSans;
+      size: 16;
+      weight: 600;
+      lineHeight: 1.5;
+    }
+
+    textStyle textCaption {
+      role: caption;
+      font: fontSans;
+      size: 12;
+      weight: 400;
+      lineHeight: 1.4;
+    }
+
+    textStyle textLabel {
+      role: label;
+      font: fontSans;
+      size: 14;
+      weight: 500;
+      lineHeight: 1.4;
+    }
+
+    textStyle textCode {
+      role: code;
+      font: fontSans;
+      size: 14;
+      weight: 400;
+      lineHeight: 1.5;
+    }
+
+
+    (* ----- BREAKPOINTS ----- *)
+
+    breakpoint breakpointSm {
+      alias: "sm";
+      minWidth: 640;
+    }
+
+    breakpoint breakpointMd {
+      alias: "md";
+      minWidth: 768;
+    }
+
+    breakpoint breakpointLg {
+      alias: "lg";
+      minWidth: 1024;
+    }
+
+    breakpoint breakpointXl {
+      alias: "xl";
+      minWidth: 1280;
+    }
+
+    breakpoint breakpoint2xl {
+      alias: "2xl";
+      minWidth: 1536;
+    }
+
+
+    (* ----- LAYOUT PATTERNS ----- *)
+
+    layoutPattern layoutStack {
+      kind: stack;
+      gap: space4;
+      notes: "Vertical stack layout";
+    }
+
+    layoutPattern layoutColumns2 {
+      kind: columns;
+      columns: 2;
+      gap: space6;
+      notes: "Two-column layout";
+    }
+
+    layoutPattern layoutColumns3 {
+      kind: columns;
+      columns: 3;
+      gap: space6;
+      notes: "Three-column layout";
+    }
+
+    layoutPattern layoutGrid {
+      kind: grid;
+      columns: 12;
+      gap: space4;
+      notes: "12-column grid layout";
+    }
+
+    layoutPattern layoutSidebar {
+      kind: sidebar;
+      gap: undefined;
+      maxWidth: 1280;
+      notes: "Sidebar with content area";
+    }
+
+    layoutPattern layoutCardGrid {
+      kind: cardGrid;
+      columns: 3;
+      gap: space6;
+      notes: "Grid of cards";
+    }
+
+    layoutPattern layoutForm {
+      kind: formLayout;
+      gap: space4;
+      maxWidth: 640;
+      notes: "Form layout with max width";
+    }
+
+
+    (* ----- DENSITY PROFILES ----- *)
+
+    densityProfile densityCompact {
+      level: compact;
+      description: "For data-dense interfaces";
+    }
+
+    densityProfile densityComfortable {
+      level: comfortable;
+      description: "Default balanced density";
+    }
+
+    densityProfile densitySpacious {
+      level: spacious;
+      description: "For content-focused pages";
+    }
+
+
+    (* ----- COMPONENT THEMES ----- *)
+
+    componentTheme buttonPrimary {
+      target: button;
+      variant: "primary";
+      background: primary;
+      foreground: background;
+      borderRadius: radiusMd;
+      padding: space3;
+      textStyle: textLabel;
+
+      stateStyle hover {
+        background: primaryHover;
+      }
+
+      stateStyle active {
+        background: primaryActive;
+      }
+
+      stateStyle disabled {
+        background: primaryDisabled;
+      }
+    }
+
+    componentTheme buttonSecondary {
+      target: button;
+      variant: "secondary";
+      background: surface;
+      foreground: textPrimary;
+      borderRadius: radiusMd;
+      padding: space3;
+    }
+
+    componentTheme cardDefault {
+      target: card;
+      background: background;
+      foreground: textPrimary;
+      borderRadius: radiusLg;
+      shadow: shadowMd;
+      padding: space6;
+    }
+
+    componentTheme badgeDefault {
+      target: badge;
+      background: surface;
+      foreground: textPrimary;
+      borderRadius: radiusFull;
+      padding: space1;
+      textStyle: textCaption;
+    }
+
+    componentTheme inputDefault {
+      target: input;
+      background: background;
+      foreground: textPrimary;
+      borderRadius: radiusMd;
+      padding: space2;
+
+      stateStyle focus {
+        shadow: shadowSm;
+      }
+    }
+
+    componentTheme tableDefault {
+      target: table;
+      background: background;
+      foreground: textPrimary;
+      borderRadius: radiusLg;
+    }
+
+    componentTheme navItemDefault {
+      target: navItem;
+      foreground: textSecondary;
+      padding: space2;
+      borderRadius: radiusMd;
+
+      stateStyle hover {
+        background: surface;
+      }
+
+      stateStyle active {
+        background: primary;
+        foreground: background;
+      }
+    }
+  }
+
+  (* ==================== SITE STRUCTURE ==================== *)
+
+  site DocumentFlowSystemSite {
+    meta {
+      title: "DocumentFlowSystem";
+      description: "Document Flow System - Multi-level approval workflow for requisitions, payments, checks, and operational requests";
+      brandTagline: "Enterprise Asset Management System";
+      baseUrl: "/";
+      favicon: "/favicon.ico";
+      audience: "Enterprise Users";
+    }
+
+    (* ----- BUSINESS GOALS ----- *)
+
+    bizGoal goalEfficiency {
+      statement: "Improve operational efficiency through streamlined workflows";
+      metric: "Reduce processing time by 30%";
+      priority: 1;
+    }
+
+    bizGoal goalVisibility {
+      statement: "Provide real-time visibility into asset status";
+      metric: "Dashboard refresh every 5 minutes";
+      priority: 2;
+    }
+
+    bizGoal goalCompliance {
+      statement: "Ensure regulatory compliance through proper documentation";
+      metric: "100% audit trail coverage";
+      priority: 3;
+    }
+
+
+    designSystem: DocumentFlowSystemDS;
+
+    (* ----- NAVIGATION ----- *)
+
+    navItem navDashboard {
+      label: "Dashboard";
+      view: Dashboard;
+      kind: primary;
+      icon: "home";
+    }
+
+    navItem navMaster {
+      label: "Master";
+      view: UserList;
+      kind: primary;
+      icon: "folder";
+    }
+
+    navItem navTransaction {
+      label: "Transaction";
+      view: RequisitionSlipList;
+      kind: primary;
+      icon: "folder";
+    }
+
+    navItem navSettings {
+      label: "Settings";
+      href: "/settings";
+      kind: utility;
+      icon: "settings";
+    }
+
+    (* ----- APP LAYOUT ----- *)
+
+    appLayout mainLayout {
+      kind: sidebar;
+      routePrefix: "/app";
+      layoutPattern: layoutSidebar;
+
+      region sidebarRegion {
+        role: sidebar;
+        navItems { navDashboard navSettings };
+      }
+
+      region contentRegion {
+        role: content;
+        notes: "Main content area for views";
+      }
+    }
+
+    (* ----- FORMS ----- *)
+
+    form userForm {
+      title: "User Form";
+      description: "Create or edit User";
+      layoutPattern: layoutForm;
+      bind-view: UserForm;
+      submission: submitUser;
+    }
+
+    form divisionForm {
+      title: "Division Form";
+      description: "Create or edit Division";
+      layoutPattern: layoutForm;
+      bind-view: DivisionForm;
+      submission: submitDivision;
+    }
+
+    form departmentForm {
+      title: "Department Form";
+      description: "Create or edit Department";
+      layoutPattern: layoutForm;
+      bind-view: DepartmentForm;
+      submission: submitDepartment;
+    }
+
+    form businessUnitForm {
+      title: "BusinessUnit Form";
+      description: "Create or edit BusinessUnit";
+      layoutPattern: layoutForm;
+      bind-view: BusinessUnitForm;
+      submission: submitBusinessUnit;
+    }
+
+    form projectForm {
+      title: "Project Form";
+      description: "Create or edit Project";
+      layoutPattern: layoutForm;
+      bind-view: ProjectForm;
+      submission: submitProject;
+    }
+
+    form costCenterForm {
+      title: "CostCenter Form";
+      description: "Create or edit CostCenter";
+      layoutPattern: layoutForm;
+      bind-view: CostCenterForm;
+      submission: submitCostCenter;
+    }
+
+    form bankAccountForm {
+      title: "BankAccount Form";
+      description: "Create or edit BankAccount";
+      layoutPattern: layoutForm;
+      bind-view: BankAccountForm;
+      submission: submitBankAccount;
+    }
+
+    form requisitionSlipForm {
+      title: "RequisitionSlip Form";
+      description: "Create or edit RequisitionSlip";
+      layoutPattern: layoutForm;
+      bind-view: RequisitionSlipForm;
+      submission: submitRequisitionSlip;
+    }
+
+    form requisitionForPaymentForm {
+      title: "RequisitionForPayment Form";
+      description: "Create or edit RequisitionForPayment";
+      layoutPattern: layoutForm;
+      bind-view: RequisitionForPaymentForm;
+      submission: submitRequisitionForPayment;
+    }
+
+    form checkVoucherForm {
+      title: "CheckVoucher Form";
+      description: "Create or edit CheckVoucher";
+      layoutPattern: layoutForm;
+      bind-view: CheckVoucherForm;
+      submission: submitCheckVoucher;
+    }
+
+
+    (* ----- DATA TABLES ----- *)
+
+    dataTable userTable {
+      title: "User List";
+      bind-entity: User;
+      pagination: true;
+      rowInteraction: viewRowUser;
+
+      columns {
+        column email {
+          header: "email";
+          field: "email";
+          type: string;
+        }
+        column password {
+          header: "password";
+          field: "password";
+          type: string;
+        }
+        column firstName {
+          header: "firstName";
+          field: "firstName";
+          type: string;
+        }
+        column lastName {
+          header: "lastName";
+          field: "lastName";
+          type: string;
+        }
+        column role {
+          header: "role";
+          field: "role";
+          type: string;
+        }
+      }
+
+      actions {
+        tableAction createUser {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateUser;
+        }
+        tableAction editUser {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteUser {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable divisionTable {
+      title: "Division List";
+      bind-entity: Division;
+      pagination: true;
+      rowInteraction: viewRowDivision;
+
+      columns {
+        column code {
+          header: "code";
+          field: "code";
+          type: string;
+        }
+        column name {
+          header: "name";
+          field: "name";
+          type: string;
+        }
+        column description {
+          header: "description";
+          field: "description";
+          type: string;
+        }
+        column isActive {
+          header: "isActive";
+          field: "isActive";
+          type: boolean;
+        }
+        column createdAt {
+          header: "createdAt";
+          field: "createdAt";
+          type: date;
+        }
+      }
+
+      actions {
+        tableAction createDivision {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateDivision;
+        }
+        tableAction editDivision {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteDivision {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable departmentTable {
+      title: "Department List";
+      bind-entity: Department;
+      pagination: true;
+      rowInteraction: viewRowDepartment;
+
+      columns {
+        column name {
+          header: "name";
+          field: "name";
+          type: string;
+        }
+        column code {
+          header: "code";
+          field: "code";
+          type: string;
+        }
+        column divisionId {
+          header: "divisionId";
+          field: "divisionId";
+          type: string;
+        }
+        column headOfDepartmentId {
+          header: "headOfDepartmentId";
+          field: "headOfDepartmentId";
+          type: string;
+        }
+        column isActive {
+          header: "isActive";
+          field: "isActive";
+          type: boolean;
+        }
+      }
+
+      actions {
+        tableAction createDepartment {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateDepartment;
+        }
+        tableAction editDepartment {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteDepartment {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable businessUnitTable {
+      title: "BusinessUnit List";
+      bind-entity: BusinessUnit;
+      pagination: true;
+      rowInteraction: viewRowBusinessUnit;
+
+      columns {
+        column unitCode {
+          header: "unitCode";
+          field: "unitCode";
+          type: string;
+        }
+        column name {
+          header: "name";
+          field: "name";
+          type: string;
+        }
+        column description {
+          header: "description";
+          field: "description";
+          type: string;
+        }
+        column status {
+          header: "status";
+          field: "status";
+          type: string;
+        }
+        column managerUserId {
+          header: "managerUserId";
+          field: "managerUserId";
+          type: string;
+        }
+      }
+
+      actions {
+        tableAction createBusinessUnit {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateBusinessUnit;
+        }
+        tableAction editBusinessUnit {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteBusinessUnit {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable projectTable {
+      title: "Project List";
+      bind-entity: Project;
+      pagination: true;
+      rowInteraction: viewRowProject;
+
+      columns {
+        column projectCode {
+          header: "projectCode";
+          field: "projectCode";
+          type: string;
+        }
+        column name {
+          header: "name";
+          field: "name";
+          type: string;
+        }
+        column description {
+          header: "description";
+          field: "description";
+          type: string;
+        }
+        column status {
+          header: "status";
+          field: "status";
+          type: string;
+        }
+        column businessUnitId {
+          header: "businessUnitId";
+          field: "businessUnitId";
+          type: string;
+        }
+      }
+
+      actions {
+        tableAction createProject {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateProject;
+        }
+        tableAction editProject {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteProject {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable costCenterTable {
+      title: "CostCenter List";
+      bind-entity: CostCenter;
+      pagination: true;
+      rowInteraction: viewRowCostCenter;
+
+      columns {
+        column type {
+          header: "type";
+          field: "type";
+          type: string;
+        }
+        column projectId {
+          header: "projectId";
+          field: "projectId";
+          type: string;
+        }
+        column businessUnitId {
+          header: "businessUnitId";
+          field: "businessUnitId";
+          type: string;
+        }
+        column divisionId {
+          header: "divisionId";
+          field: "divisionId";
+          type: string;
+        }
+        column code {
+          header: "code";
+          field: "code";
+          type: string;
+        }
+      }
+
+      actions {
+        tableAction createCostCenter {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateCostCenter;
+        }
+        tableAction editCostCenter {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteCostCenter {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable bankAccountTable {
+      title: "BankAccount List";
+      bind-entity: BankAccount;
+      pagination: true;
+      rowInteraction: viewRowBankAccount;
+
+      columns {
+        column bankName {
+          header: "bankName";
+          field: "bankName";
+          type: string;
+        }
+        column accountNumber {
+          header: "accountNumber";
+          field: "accountNumber";
+          type: string;
+        }
+        column accountName {
+          header: "accountName";
+          field: "accountName";
+          type: string;
+        }
+        column branch {
+          header: "branch";
+          field: "branch";
+          type: string;
+        }
+        column isActive {
+          header: "isActive";
+          field: "isActive";
+          type: boolean;
+        }
+      }
+
+      actions {
+        tableAction createBankAccount {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateBankAccount;
+        }
+        tableAction editBankAccount {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteBankAccount {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable requisitionSlipTable {
+      title: "RequisitionSlip List";
+      bind-entity: RequisitionSlip;
+      pagination: true;
+      rowInteraction: viewRowRequisitionSlip;
+
+      columns {
+        column requisitionNumber {
+          header: "requisitionNumber";
+          field: "requisitionNumber";
+          type: string;
+        }
+        column requesterId {
+          header: "requesterId";
+          field: "requesterId";
+          type: string;
+        }
+        column departmentId {
+          header: "departmentId";
+          field: "departmentId";
+          type: string;
+        }
+        column costCenterId {
+          header: "costCenterId";
+          field: "costCenterId";
+          type: string;
+        }
+        column projectId {
+          header: "projectId";
+          field: "projectId";
+          type: string;
+        }
+      }
+
+      actions {
+        tableAction createRequisitionSlip {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateRequisitionSlip;
+        }
+        tableAction editRequisitionSlip {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteRequisitionSlip {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable requisitionForPaymentTable {
+      title: "RequisitionForPayment List";
+      bind-entity: RequisitionForPayment;
+      pagination: true;
+      rowInteraction: viewRowRequisitionForPayment;
+
+      columns {
+        column paymentNumber {
+          header: "paymentNumber";
+          field: "paymentNumber";
+          type: string;
+        }
+        column requesterId {
+          header: "requesterId";
+          field: "requesterId";
+          type: string;
+        }
+        column departmentId {
+          header: "departmentId";
+          field: "departmentId";
+          type: string;
+        }
+        column payee {
+          header: "payee";
+          field: "payee";
+          type: string;
+        }
+        column dateRequested {
+          header: "dateRequested";
+          field: "dateRequested";
+          type: date;
+        }
+      }
+
+      actions {
+        tableAction createRequisitionForPayment {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateRequisitionForPayment;
+        }
+        tableAction editRequisitionForPayment {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteRequisitionForPayment {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+    dataTable checkVoucherTable {
+      title: "CheckVoucher List";
+      bind-entity: CheckVoucher;
+      pagination: true;
+      rowInteraction: viewRowCheckVoucher;
+
+      columns {
+        column voucherNumber {
+          header: "voucherNumber";
+          field: "voucherNumber";
+          type: string;
+        }
+        column requisitionForPaymentId {
+          header: "requisitionForPaymentId";
+          field: "requisitionForPaymentId";
+          type: string;
+        }
+        column payee {
+          header: "payee";
+          field: "payee";
+          type: string;
+        }
+        column amount {
+          header: "amount";
+          field: "amount";
+          type: number;
+        }
+        column currency {
+          header: "currency";
+          field: "currency";
+          type: string;
+        }
+      }
+
+      actions {
+        tableAction createCheckVoucher {
+          label: "Create New";
+          kind: primary;
+          icon: "plus";
+          interaction: openCreateCheckVoucher;
+        }
+        tableAction editCheckVoucher {
+          label: "Edit";
+          kind: row;
+          icon: "edit";
+        }
+        tableAction deleteCheckVoucher {
+          label: "Delete";
+          kind: row;
+          icon: "trash";
+        }
+      }
+    }
+
+
+    (* ----- MODALS ----- *)
+
+    modal confirmDeleteModal {
+      title: "Confirm Delete";
+      size: sm;
+      primaryAction: confirmDelete;
+      secondaryAction: cancelAction;
+    }
+
+    modal successModal {
+      title: "Success";
+      size: sm;
+      primaryAction: closeModal;
+    }
+
+    (* ----- INTERACTIONS ----- *)
+
+    interaction confirmDelete {
+      trigger: "confirmButton.click";
+      action deleteItem {
+        kind: uxml;
+        invoke-uxml: deleteAction;
+      }
+    }
+
+    interaction cancelAction {
+      trigger: "cancelButton.click";
+      action close {
+        kind: closeModal;
+      }
+    }
+
+    interaction closeModal {
+      trigger: "closeButton.click";
+      action close {
+        kind: closeModal;
+      }
+    }
+
+    interaction showSuccessToast {
+      trigger: "form.submitSuccess";
+      action toast {
+        kind: showToast;
+        toast: "Operation completed successfully";
+      }
+    }
+
+    (* ----- PAGE DESIGNS ----- *)
+
+    pageDesign dashboardPage {
+      meta {
+        title: "Dashboard";
+        description: "System overview and key metrics";
+        seoIndex: false;
+        audience: "All Users";
+      }
+
+      route: "/dashboard";
+      layoutPattern: layoutStack;
+      bind-feature: DashboardFeature;
+
+      section statsSection {
+        kind: stats;
+        layoutPattern: layoutColumns3;
+
+        heading statsHeading {
+          text: "Overview";
+          style: textH2;
+          level: 2;
+        }
+
+        data dashboardStats {
+          kind: statBlock;
+          item totalAssets {
+            label: "Total Assets";
+            value: "1,234";
+            icon: "box";
+          }
+          item activeOrders {
+            label: "Active Orders";
+            value: "56";
+            icon: "clipboard";
+          }
+          item pendingApprovals {
+            label: "Pending Approvals";
+            value: "12";
+            icon: "clock";
+          }
+        }
+      }
+
+      section recentActivity {
+        kind: dataTable;
+        layoutPattern: layoutStack;
+
+        heading activityHeading {
+          text: "Recent Activity";
+          style: textH3;
+          level: 3;
+        }
+      }
+
+      implementation reactImpl {
+        framework: react;
+        css: tailwind;
+      }
+    }
+
+    pageDesign userListPage {
+      meta {
+        title: "User List";
+        description: "View and manage User records";
+        seoIndex: false;
+      }
+
+      route: "/user";
+      layoutPattern: layoutStack;
+
+      section headerSection {
+        kind: custom;
+
+        heading pageTitle {
+          text: "User";
+          style: textH1;
+          level: 1;
+        }
+
+        cta createButton {
+          label: "Create New";
+          intent: "primary";
+        }
+      }
+
+      section tableSection {
+        kind: dataTable;
+        dataTableRef: userTable;
+      }
+    }
+
+    pageDesign divisionListPage {
+      meta {
+        title: "Division List";
+        description: "View and manage Division records";
+        seoIndex: false;
+      }
+
+      route: "/division";
+      layoutPattern: layoutStack;
+
+      section headerSection {
+        kind: custom;
+
+        heading pageTitle {
+          text: "Division";
+          style: textH1;
+          level: 1;
+        }
+
+        cta createButton {
+          label: "Create New";
+          intent: "primary";
+        }
+      }
+
+      section tableSection {
+        kind: dataTable;
+        dataTableRef: divisionTable;
+      }
+    }
+
+    pageDesign departmentListPage {
+      meta {
+        title: "Department List";
+        description: "View and manage Department records";
+        seoIndex: false;
+      }
+
+      route: "/department";
+      layoutPattern: layoutStack;
+
+      section headerSection {
+        kind: custom;
+
+        heading pageTitle {
+          text: "Department";
+          style: textH1;
+          level: 1;
+        }
+
+        cta createButton {
+          label: "Create New";
+          intent: "primary";
+        }
+      }
+
+      section tableSection {
+        kind: dataTable;
+        dataTableRef: departmentTable;
+      }
+    }
+
+    pageDesign businessUnitListPage {
+      meta {
+        title: "BusinessUnit List";
+        description: "View and manage BusinessUnit records";
+        seoIndex: false;
+      }
+
+      route: "/businessUnit";
+      layoutPattern: layoutStack;
+
+      section headerSection {
+        kind: custom;
+
+        heading pageTitle {
+          text: "BusinessUnit";
+          style: textH1;
+          level: 1;
+        }
+
+        cta createButton {
+          label: "Create New";
+          intent: "primary";
+        }
+      }
+
+      section tableSection {
+        kind: dataTable;
+        dataTableRef: businessUnitTable;
+      }
+    }
+
+    pageDesign projectListPage {
+      meta {
+        title: "Project List";
+        description: "View and manage Project records";
+        seoIndex: false;
+      }
+
+      route: "/project";
+      layoutPattern: layoutStack;
+
+      section headerSection {
+        kind: custom;
+
+        heading pageTitle {
+          text: "Project";
+          style: textH1;
+          level: 1;
+        }
+
+        cta createButton {
+          label: "Create New";
+          intent: "primary";
+        }
+      }
+
+      section tableSection {
+        kind: dataTable;
+        dataTableRef: projectTable;
+      }
+    }
+
+  }
+}

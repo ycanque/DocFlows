@@ -1,0 +1,520 @@
+(* SDML Model: DocumentFlowSystem *)
+(* Version: 1.0.0 *)
+(* Generated: 2025-12-11T02:43:49.383Z *)
+
+model DocumentFlowSystem {
+  (* ----- SYSTEM BOUNDARY ----- *)
+
+  system DocumentFlowSystem {
+    description: "Document Flow System - Multi-level approval workflow for requisitions, payments, checks, and operational requests";
+    owner: "Enterprise";
+    boundary: "application";
+    components: [master, junction, transaction];
+  }
+
+  (* ----- DATA ASSETS ----- *)
+
+  asset User {
+    type: data;
+    criticality: medium;
+    confidentiality: high;
+    integrity: high;
+    availability: moderate;
+    description: "System user with role-based access control";
+  }
+
+  asset Division {
+    type: data;
+    criticality: medium;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: moderate;
+    description: "Organizational division grouping departments";
+  }
+
+  asset Department {
+    type: data;
+    criticality: medium;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: moderate;
+    description: "Department within a division";
+  }
+
+  asset BusinessUnit {
+    type: data;
+    criticality: medium;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: moderate;
+    description: "Business unit for budget and project tracking";
+  }
+
+  asset Project {
+    type: data;
+    criticality: medium;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: moderate;
+    description: "Project for cost tracking and budgeting";
+  }
+
+  asset CostCenter {
+    type: data;
+    criticality: medium;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: moderate;
+    description: "Cost center for expense allocation";
+  }
+
+  asset BankAccount {
+    type: data;
+    criticality: medium;
+    confidentiality: high;
+    integrity: high;
+    availability: moderate;
+    description: "Bank account for check issuance";
+  }
+
+  asset RequisitionSlip {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Requisition slip for requesting goods or services";
+  }
+
+  asset RequestItem {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Line item in a requisition slip";
+  }
+
+  asset RequisitionForPayment {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Request for payment to a payee";
+  }
+
+  asset CheckVoucher {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Check voucher generated from approved payment request";
+  }
+
+  asset Check {
+    type: data;
+    criticality: high;
+    confidentiality: high;
+    integrity: high;
+    availability: high;
+    description: "Check issued for payment disbursement";
+  }
+
+  asset RequestForAdjustment {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Request to adjust amounts on existing transactions";
+  }
+
+  asset AdjustmentItem {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Line item in an adjustment request";
+  }
+
+  asset MaterialIssuanceSlip {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Material issuance from warehouse";
+  }
+
+  asset MaterialItem {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Line item in a material issuance slip";
+  }
+
+  asset PersonnelRequest {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Request for new personnel hire";
+  }
+
+  asset PlaneTicketRequest {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Request for plane ticket booking";
+  }
+
+  asset CashAdvanceAgreement {
+    type: data;
+    criticality: high;
+    confidentiality: high;
+    integrity: high;
+    availability: high;
+    description: "Employee cash advance agreement";
+  }
+
+  asset ApprovalRecord {
+    type: data;
+    criticality: high;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: high;
+    description: "Audit trail for all approval actions";
+  }
+
+  asset UnitOfMeasure {
+    type: data;
+    criticality: medium;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: moderate;
+    description: "Standard unit of measure reference";
+  }
+
+  asset SystemSetting {
+    type: data;
+    criticality: medium;
+    confidentiality: moderate;
+    integrity: moderate;
+    availability: moderate;
+    description: "System configuration settings";
+  }
+
+  asset UserCredentials {
+    type: identity;
+    criticality: high;
+    confidentiality: high;
+    integrity: high;
+    availability: high;
+    description: "User authentication credentials and tokens";
+  }
+
+  (* ----- THREAT MODEL ----- *)
+
+  threat UnauthorizedAccess {
+    vector: credential;
+    description: "Unauthorized access to system resources";
+    targets: [UserCredentials];
+    likelihood: high;
+  }
+
+  threat DataBreach {
+    vector: network;
+    description: "Exfiltration of sensitive data";
+    targets: [RequisitionSlip, RequisitionForPayment, CheckVoucher, Check, RequestForAdjustment];
+    likelihood: medium;
+  }
+
+  threat InsiderThreat {
+    vector: insider;
+    description: "Malicious or negligent insider actions";
+    targets: [UserCredentials];
+    likelihood: medium;
+  }
+
+  threat PrivilegeEscalation {
+    vector: software;
+    description: "Unauthorized elevation of user privileges";
+    targets: [UserCredentials];
+    likelihood: medium;
+  }
+
+  threat SessionHijacking {
+    vector: network;
+    description: "Theft or hijacking of user sessions";
+    targets: [UserCredentials];
+    likelihood: medium;
+  }
+
+  threat SQLInjection {
+    vector: software;
+    description: "SQL injection attacks on data layer";
+    targets: [RequisitionSlip, RequestItem, RequisitionForPayment];
+    likelihood: medium;
+  }
+
+  threat CrossSiteScripting {
+    vector: software;
+    description: "XSS attacks through user input";
+    targets: [UserCredentials];
+    likelihood: medium;
+  }
+
+  threat DenialOfService {
+    vector: network;
+    description: "Service disruption through resource exhaustion";
+    targets: [DocumentFlowSystem];
+    likelihood: low;
+  }
+
+
+  (* ----- RISK ASSESSMENT ----- *)
+
+  risk CredentialCompromise {
+    description: "Risk of credential theft leading to unauthorized access";
+    threat: UnauthorizedAccess;
+    asset: UserCredentials;
+    impact: high;
+    likelihood: medium;
+    level: high;
+    mitigations: [JWTAuthentication, AccessControl, AuditLogging];
+  }
+
+  risk DataExfiltration {
+    description: "Risk of sensitive data being extracted from the system";
+    threat: DataBreach;
+    asset: RequisitionSlip;
+    impact: high;
+    likelihood: medium;
+    level: high;
+    mitigations: [AccessControl, DataEncryption, AuditLogging];
+  }
+
+  risk SystemDowntime {
+    description: "Risk of service unavailability affecting operations";
+    threat: DenialOfService;
+    asset: DocumentFlowSystem;
+    impact: medium;
+    likelihood: low;
+    level: medium;
+    mitigations: [RateLimiting, InputValidation];
+  }
+
+  risk PrivilegeAbuse {
+    description: "Risk of users accessing unauthorized resources";
+    threat: PrivilegeEscalation;
+    asset: UserCredentials;
+    impact: high;
+    likelihood: medium;
+    level: high;
+    mitigations: [RBACAuthorization, AccessControl];
+  }
+
+
+  (* ----- SECURITY CONTROLS (NIST CSF) ----- *)
+
+  control JWTAuthentication {
+    function: PROTECT;
+    category: PR_AC;
+    subcategory: AC1;
+    applies_to_entities: [UserCredentials];
+    implementation: "JWT-based authentication with 15m token expiry";
+    owner: "Security Team";
+  }
+
+  control RBACAuthorization {
+    function: PROTECT;
+    category: PR_AC;
+    subcategory: AC2;
+    applies_to_entities: [Requester, Approver, FinanceStaff, AccountingHead, DepartmentHead];
+    implementation: "Role-based access control with default deny policy";
+    owner: "Security Team";
+  }
+
+  control AccessControl {
+    function: PROTECT;
+    category: PR_AC;
+    subcategory: AC3;
+    applies_to_entities: [RequisitionSlip, RequisitionForPayment, CheckVoucher, Check, RequestForAdjustment];
+    implementation: "Entity-level access control based on user roles and ownership";
+    owner: "Security Team";
+  }
+
+  control DataEncryption {
+    function: PROTECT;
+    category: PR_DS;
+    subcategory: DS1;
+    applies_to_entities: [UserCredentials];
+    implementation: "Encryption of sensitive data at rest and in transit";
+    owner: "Infrastructure Team";
+  }
+
+  control InputValidation {
+    function: PROTECT;
+    category: PR_DS;
+    subcategory: DS5;
+    applies_to_entities: [User, Division, Department, BusinessUnit, Project, CostCenter, UserBusinessUnit, BankAccount, RequisitionSlip, RequestItem];
+    implementation: "Server-side validation of all user inputs using DTOs";
+    owner: "Development Team";
+  }
+
+  control AuditLogging {
+    function: DETECT;
+    category: DE_AE;
+    subcategory: AE1;
+    applies_to_entities: [RequisitionSlip, RequestItem, RequisitionForPayment, CheckVoucher, Check, RequestForAdjustment, AdjustmentItem, MaterialIssuanceSlip, MaterialItem, PersonnelRequest];
+    implementation: "Comprehensive audit logging of security-relevant events";
+    owner: "Security Team";
+  }
+
+  control RateLimiting {
+    function: PROTECT;
+    category: PR_IP;
+    subcategory: IP4;
+    applies_to_entities: [DocumentFlowSystem];
+    implementation: "Rate limiting on API endpoints to prevent abuse";
+    owner: "Infrastructure Team";
+  }
+
+  control SessionManagement {
+    function: PROTECT;
+    category: PR_AC;
+    subcategory: AC4;
+    applies_to_entities: [UserCredentials];
+    implementation: "Secure session management with 7d refresh token expiry";
+    owner: "Security Team";
+  }
+
+
+  (* ----- SECURITY POLICIES ----- *)
+
+  policy AccessControlPolicy {
+    description: "Defines access control requirements for all system resources";
+    applies_to_entities: [User, Division, Department, BusinessUnit, Project, CostCenter, UserBusinessUnit, BankAccount, RequisitionSlip, RequestItem];
+    requirements: [
+      "All access must be authenticated",
+      "Authorization decisions must be role-based",
+      "Default deny policy must be enforced",
+    ];
+  }
+
+  policy DataProtectionPolicy {
+    description: "Defines data protection requirements for sensitive information";
+    applies_to_entities: [RequisitionSlip, RequisitionForPayment, CheckVoucher, Check, RequestForAdjustment];
+    requirements: [
+      "Sensitive data must be encrypted at rest",
+      "Data in transit must use TLS",
+      "Access to sensitive data must be logged",
+    ];
+  }
+
+  policy AuditPolicy {
+    description: "Defines audit logging requirements for system activities";
+    applies_to_entities: [RequisitionSlip, RequestItem, RequisitionForPayment, CheckVoucher, Check];
+    requirements: [
+      "All create operations must be logged",
+      "All update operations must be logged",
+      "All delete operations must be logged",
+      "Audit logs must be retained for compliance",
+    ];
+  }
+
+  policy PasswordPolicy {
+    description: "Defines password requirements for user authentication";
+    applies_to_entities: [UserCredentials];
+    requirements: [
+      "Passwords must be hashed using bcrypt",
+      "Password complexity requirements must be enforced",
+      "Failed login attempts must be tracked",
+    ];
+  }
+
+
+  (* ----- CONTROL MAPPINGS ----- *)
+
+  mapping CredentialCompromiseMapping {
+    risk: CredentialCompromise;
+    controls: [JWTAuthentication, SessionManagement, AuditLogging];
+    coverage: full;
+    residual_risk: low;
+  }
+
+  mapping DataExfiltrationMapping {
+    risk: DataExfiltration;
+    controls: [AccessControl, DataEncryption, AuditLogging];
+    coverage: full;
+    residual_risk: low;
+  }
+
+  mapping SystemDowntimeMapping {
+    risk: SystemDowntime;
+    controls: [RateLimiting, InputValidation];
+    coverage: partial;
+    residual_risk: medium;
+  }
+
+  mapping PrivilegeAbuseMapping {
+    risk: PrivilegeAbuse;
+    controls: [RBACAuthorization, AccessControl, AuditLogging];
+    coverage: full;
+    residual_risk: low;
+  }
+
+
+  (* ----- SECURITY WORKFLOWS ----- *)
+
+  workflow IncidentResponse {
+    description: "Security incident response workflow";
+    trigger: "Security incident detected";
+    steps: [
+      step 1: "Identify and classify incident",
+      step 2: "Contain affected systems",
+      step 3: "Investigate root cause",
+      step 4: "Eradicate threat",
+      step 5: "Recover systems",
+      step 6: "Document lessons learned",
+    ];
+    roles: [SecurityTeam, IncidentResponder, SystemAdmin];
+  }
+
+  workflow AccessReview {
+    description: "Periodic access rights review workflow";
+    trigger: "Quarterly access review scheduled";
+    steps: [
+      step 1: "Generate access report",
+      step 2: "Review user permissions",
+      step 3: "Identify excessive privileges",
+      step 4: "Request manager approval",
+      step 5: "Revoke unnecessary access",
+      step 6: "Document changes",
+    ];
+    roles: [SecurityTeam, Manager, HRAdmin];
+  }
+
+  workflow VulnerabilityManagement {
+    description: "Vulnerability assessment and remediation workflow";
+    trigger: "Vulnerability scan completed";
+    steps: [
+      step 1: "Review vulnerability report",
+      step 2: "Prioritize by severity",
+      step 3: "Assign remediation tasks",
+      step 4: "Apply patches or mitigations",
+      step 5: "Verify remediation",
+      step 6: "Update security posture",
+    ];
+    roles: [SecurityTeam, DevOps, SystemAdmin];
+  }
+
+}
