@@ -1,36 +1,112 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DocFlows Frontend
 
-## Getting Started
+Next.js 16 application for the DocFlows document workflow management system.
 
-First, run the development server:
+## 🚀 Quick Start
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**Development Server**: http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 📦 Tech Stack
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4
+- **HTTP Client**: Axios
+- **State Management**: React Context API
 
-## Learn More
+## 🏗️ Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+src/
+├── app/                   # Next.js pages (App Router)
+│   ├── layout.tsx        # Root layout with AuthProvider
+│   ├── page.tsx          # Home (redirects)
+│   ├── login/page.tsx    # Login page
+│   └── dashboard/page.tsx # Dashboard (protected)
+├── components/            # Reusable components
+│   └── ProtectedRoute.tsx # Route protection
+├── contexts/              # React contexts
+│   └── AuthContext.tsx   # Auth state
+├── lib/                   # Utilities
+│   └── api.ts            # Axios instance
+└── services/              # API layer (coming)
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🔐 Authentication
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Login**: `POST /auth/login` → Store JWT in localStorage
+- **Protected Routes**: Wrap pages with `<ProtectedRoute>`
+- **Token**: Auto-injected via Axios interceptor
+- **Logout**: Clears token and redirects to login
 
-## Deploy on Vercel
+## 🎨 Styling
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Using Tailwind CSS 4 with zinc color palette:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```tsx
+// Primary button
+<button className="bg-zinc-900 text-white px-4 py-2 rounded-md">
+  Click Me
+</button>
+
+// Input field
+<input className="border border-zinc-300 rounded-md px-3 py-2" />
+```
+
+## 🔌 API Integration
+
+```typescript
+import api from "@/lib/api";
+
+// API calls (token auto-injected)
+const users = await api.get("/users");
+const newUser = await api.post("/users", data);
+```
+
+## 🧪 Test Credentials
+
+```
+Admin: admin@docflow.com / admin123
+User: user1@docflow.com / password123
+```
+
+## 🌐 Environment Variables
+
+Create `.env.local`:
+
+```env
+NEXT_PUBLIC_API_BASE_URL=http://localhost:5040
+```
+
+## 📚 Documentation
+
+- [FRONTEND_SETUP_COMPLETE.md](../../docs/FRONTEND_SETUP_COMPLETE.md)
+- [QUICK_START.md](../../docs/QUICK_START.md)
+
+## ✅ Current Status
+
+**Implemented**:
+
+- ✅ Authentication flow
+- ✅ Protected routes
+- ✅ Dashboard with user profile
+- ✅ Responsive design + dark mode
+
+**Coming Soon**:
+
+- ⏳ Requisitions management
+- ⏳ Users/Departments pages
+- ⏳ Shared components
+
+---
+
+**Status**: Frontend infrastructure complete  
+**Next**: Requisitions management UI
