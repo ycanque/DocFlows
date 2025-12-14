@@ -1,3 +1,99 @@
+:root {
+  --header-height: 56px; /* 14 * 4px = 56px, matches h-14 */
+}
+/* Custom Sidebar Scrollbar */
+
+
+.sidebar-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-zinc-300) transparent;
+  scrollbar-gutter: stable;
+  /* Use overlay scrollbars for auto-hide where supported */
+  overscroll-behavior: contain;
+}
+
+/* Webkit browsers: hide scrollbar by default, show on hover */
+
+/* Hide scrollbar by default, show on hover (Chrome/WebKit) */
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s;
+}
+.sidebar-scrollbar:hover::-webkit-scrollbar {
+  opacity: 1;
+  pointer-events: auto;
+}
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-300);
+  border-radius: 6px;
+  border: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.sidebar-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-400);
+  opacity: 1;
+}
+
+.dark .sidebar-scrollbar {
+  scrollbar-color: var(--color-zinc-700) transparent;
+}
+.dark .sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-700);
+}
+.dark .sidebar-scrollbar:hover::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-600);
+}
+
+.dark .sidebar-scrollbar {
+  scrollbar-color: var(--color-zinc-700) transparent;
+}
+
+.dark .sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-700);
+}
+
+.dark .sidebar-scrollbar:hover::-webkit-scrollbar-thumb,
+.dark .sidebar-scrollbar:focus::-webkit-scrollbar-thumb,
+.dark .sidebar-scrollbar:active::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-600);
+  opacity: 1;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-300);
+  border-radius: 6px;
+  border: none;
+}
+
+.sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-zinc-400);
+}
+
+.dark .sidebar-scrollbar {
+  scrollbar-color: var(--color-zinc-700) transparent;
+}
+
+.dark .sidebar-scrollbar::-webkit-scrollbar {
+  background: transparent;
+}
+
+.dark .sidebar-scrollbar::-webkit-scrollbar-thumb {
+  background: var(--color-zinc-700);
+  border: none;
+}
+
+.dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: var(--color-zinc-600);
+}
 @import "tailwindcss";
 
 @variant dark (&:where(.dark, .dark *));

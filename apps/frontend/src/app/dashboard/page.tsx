@@ -1,144 +1,121 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import ThemeToggle from '@/components/ThemeToggle';
+import Sidebar from '@/components/layout/Sidebar';
+
+import StatCard from '@/components/dashboard/StatCard';
+import QuickActionCard from '@/components/dashboard/QuickActionCard';
+import SystemInfoCard from '@/components/dashboard/SystemInfoCard';
+import { FileText, DollarSign, CreditCard, TrendingUp, BarChart2 } from 'lucide-react';
+
+import TopBar from '@/components/layout/TopBar';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
+  const [currentView, setCurrentView] = useState('dashboard');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  const quickActions = [
+    {
+      title: 'Create Requisition Slip',
+      description: 'Submit a new requisition request',
+      onClick: () => setCurrentView('requisitions'),
+    },
+    {
+      title: 'Request Payment',
+      description: 'Create a new payment request',
+      onClick: () => setCurrentView('payments'),
+    },
+    {
+      title: 'View Pending Approvals',
+      description: 'Review items awaiting approval',
+      onClick: () => console.log('View approvals'),
+    },
+  ];
+
+  const systemInfo = [
+    { label: 'Department', value: user?.department?.name },
+    { label: 'Position', value: user?.position },
+    { label: 'Role', value: user?.role?.replace('_', ' ') },
+    { label: 'Employee ID', value: user?.employeeId },
+  ];
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-900">
-        {/* Header */}
-        <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-800">
-          <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-            <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-              DocFlows Dashboard
-            </h1>
-            
-            <div className="flex items-center gap-4">
-              <div className="text-right">
-                <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-                  {user?.firstName} {user?.lastName}
+      <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+        <Sidebar 
+          currentView={currentView} 
+          onNavigate={setCurrentView}
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+          <main 
+            className="flex-1 overflow-y-auto"
+            role="main"
+            aria-label="Main content"
+          >
+            <div className="p-4 sm:p-8">
+              <h1 className="text-xl font-semibold mb-2 text-zinc-900 dark:text-zinc-50">
+                Welcome back, {user?.role === 'SYSTEM_ADMIN' ? 'System' : user?.firstName}!
+              </h1>
+              <div className="mb-4">
+                <p className="text-zinc-600 dark:text-zinc-400">
+                  Here's an overview of your document flow system
                 </p>
-                <p className="text-xs text-zinc-600 dark:text-zinc-400">
-                  {user?.role}
-                </p>
               </div>
-              
-              <ThemeToggle />
-              
-              <button
-                onClick={logout}
-                className="rounded-md bg-zinc-900 px-4 py-2 text-sm font-semibold text-white hover:bg-zinc-800 dark:bg-zinc-50 dark:text-zinc-900 dark:hover:bg-zinc-200"
-              >
-                Logout
-              </button>
-            </div>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
-          <div className="space-y-8">
-            {/* Welcome Section */}
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-zinc-800">
-              <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-                Welcome back, {user?.firstName}!
-              </h2>
-              <p className="mt-2 text-zinc-600 dark:text-zinc-400">
-                You are logged in as <span className="font-medium">{user?.email}</span>
-              </p>
-            </div>
-
-            {/* User Details Card */}
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Your Profile
-              </h3>
-              
-              <dl className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                <div>
-                  <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                    Email
-                  </dt>
-                  <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-50">
-                    {user?.email}
-                  </dd>
+              {/* Stat cards row */}
+              <div className="grid gap-4 grid-cols-2 md:grid-cols-4 mb-6">
+                <StatCard
+                  title="Requisition Slips"
+                  value={7}
+                  icon={FileText}
+                  iconBgColor="bg-blue-500"
+                />
+                <StatCard
+                  title="Payment Requests"
+                  value={4}
+                  icon={DollarSign}
+                  iconBgColor="bg-green-500"
+                />
+                <StatCard
+                  title="Checks Issued"
+                  value={1}
+                  icon={CreditCard}
+                  iconBgColor="bg-purple-500"
+                />
+                <StatCard
+                  title="Pending Approvals"
+                  value={1}
+                  icon={TrendingUp}
+                  iconBgColor="bg-orange-500"
+                />
+              </div>
+              {/* Main dashboard grid: charts/activity (2/3), quick actions (1/3) */}
+              <div className="grid gap-6 lg:grid-cols-3">
+                {/* Data Visualization/Activity */}
+                <div className="lg:col-span-2 flex flex-col gap-6">
+                  <div className="rounded-xl bg-white dark:bg-zinc-950 shadow p-6 min-h-[220px] flex flex-col items-center justify-center">
+                    <BarChart2 className="h-10 w-10 text-zinc-300 mb-2" />
+                    <span className="text-zinc-400 text-sm">Data visualization coming soon</span>
+                  </div>
+                  {/* Placeholder for recent activity or timeline */}
+                  <div className="rounded-xl bg-white dark:bg-zinc-950 shadow p-6 min-h-[120px] flex flex-col justify-center">
+                    <span className="text-zinc-400 text-sm">Recent activity will appear here</span>
+                  </div>
                 </div>
-                
-                <div>
-                  <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                    Role
-                  </dt>
-                  <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-50">
-                    {user?.role}
-                  </dd>
+                {/* Quick Actions and System Info */}
+                <div className="flex flex-col gap-6">
+                  <QuickActionCard actions={quickActions} />
+                  <SystemInfoCard items={systemInfo} small />
                 </div>
-                
-                <div>
-                  <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                    Department
-                  </dt>
-                  <dd className="mt-1 text-sm text-zinc-900 dark:text-zinc-50">
-                    {user?.department?.name || 'N/A'}
-                  </dd>
-                </div>
-                
-                <div>
-                  <dt className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
-                    Status
-                  </dt>
-                  <dd className="mt-1">
-                    <span className={`inline-flex rounded-full px-2 py-1 text-xs font-semibold ${
-                      user?.isActive 
-                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-400'
-                        : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                    }`}>
-                      {user?.isActive ? 'Active' : 'Inactive'}
-                    </span>
-                  </dd>
-                </div>
-              </dl>
-            </div>
-
-            {/* Quick Actions */}
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                Quick Actions
-              </h3>
-              
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <button className="rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800">
-                  View Requisitions
-                </button>
-                
-                <button className="rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800">
-                  Create New Request
-                </button>
-                
-                <button className="rounded-md border border-zinc-300 bg-white px-4 py-3 text-sm font-medium text-zinc-900 hover:bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:hover:bg-zinc-800">
-                  View Approvals
-                </button>
               </div>
             </div>
-
-            {/* API Status */}
-            <div className="rounded-lg bg-white p-6 shadow-sm dark:bg-zinc-800">
-              <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
-                System Status
-              </h3>
-              
-              <div className="mt-4 flex items-center gap-2">
-                <div className="h-2 w-2 rounded-full bg-emerald-500" />
-                <span className="text-sm text-zinc-600 dark:text-zinc-400">
-                  Backend API connected
-                </span>
-              </div>
-            </div>
-          </div>
-        </main>
+          </main>
+        </div>
       </div>
     </ProtectedRoute>
   );
