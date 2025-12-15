@@ -13,8 +13,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { AlertTriangle } from 'lucide-react';
 
-const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 15 minutes
-const WARNING_TIME_MS = 60 * 1000; // Show warning 1 minute before timeout (at 14 minutes)
+// For testing: 2 minute total timeout, warning shows after 1 minute
+const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 2 minutes (change to 15 * 60 * 1000 for production)
+const WARNING_TIME_MS = 60 * 1000; // Show warning 1 minute before timeout
 
 export function SessionTimeoutWarning() {
   const { logout } = useAuth();
@@ -23,8 +24,18 @@ export function SessionTimeoutWarning() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const handleActivityRef = useRef<(() => void) | null>(null);
+  const isLoggingOutRef = useRef(false);
+  const showWarningRef = useRef(false);
 
-  const resetTimeout = useCallback(() => {
+  const resetTimeoutFn = useCallback((isUserActivity: boolean = true) => {
+    // Don't reset timer if warning dialog is showing (ignore user activity on dialog)
+    if (isUserActivity && showWarningRef.current) {
+      console.log('⏸️ Ignoring activity - warning dialog is open');
+      return;
+    }
+
+    console.log('↻ Timeout reset due to user activity');
     // Clear existing timeouts
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
@@ -33,8 +44,10 @@ export function SessionTimeoutWarning() {
     // Hide warning if visible
     setShowWarning(false);
 
-    // Set new warning timeout (show warning at 14 minutes)
+    // Set new warning timeout
     warningTimeoutRef.current = setTimeout(() => {
+      console.log('⚠️ SessionTimeoutWarning: Showing warning dialog');
+      showWarningRef.current = true;
       setShowWarning(true);
       setTimeRemaining(60); // 1 minute remaining
 
@@ -50,54 +63,35 @@ export function SessionTimeoutWarning() {
       }, 1000);
     }, SESSION_TIMEOUT_MS - WARNING_TIME_MS);
 
-    // Set logout timeout (15 minutes)
+    // Set logout timeout
     timeoutRef.current = setTimeout(() => {
+      console.log('🚪 SessionTimeoutWarning: Auto-logout triggered');
+      showWarningRef.current = false;
       setShowWarning(false);
       logout();
     }, SESSION_TIMEOUT_MS);
   }, [logout]);
 
-  // Reset timeout on user activity
-  const handleActivity = useCallback(() => {
-    resetTimeout();
-  }, [resetTimeout]);
+  // Store the activity handler in ref to avoid adding/removing listeners repeatedly
+  useEffect(() => {
+    handleActivityRef.current = resetTimeoutFn;
+  }, [resetTimeoutFn]);
 
-  // Track user activity
+  // Track user activity - only run once on mount
   useEffect(() => {
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
 
-    // Initialize timeout on mount
-    const initTimer = () => {
-      // Clear existing timeouts
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    console.log('🔄 SessionTimeoutWarning: Timer initialized');
+    
+    // Initialize timeout on mount (not from user activity)
+    resetTimeoutFn(false);
 
-      // Set new warning timeout (show warning at 14 minutes)
-      warningTimeoutRef.current = setTimeout(() => {
-        setShowWarning(true);
-        setTimeRemaining(60); // 1 minute remaining
-
-        // Start countdown
-        countdownIntervalRef.current = setInterval(() => {
-          setTimeRemaining((prev) => {
-            if (prev <= 1) {
-              if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
-      }, SESSION_TIMEOUT_MS - WARNING_TIME_MS);
-
-      // Set logout timeout (15 minutes)
-      timeoutRef.current = setTimeout(() => {
-        setShowWarning(false);
-        logout();
-      }, SESSION_TIMEOUT_MS);
+    // Create activity handler that uses ref to get latest function
+    const handleActivity = () => {
+      if (handleActivityRef.current) {
+        handleActivityRef.current(true); // Mark as user activity
+      }
     };
-
-    initTimer();
 
     events.forEach((event) => {
       window.addEventListener(event, handleActivity);
@@ -112,11 +106,42 @@ export function SessionTimeoutWarning() {
       if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
-  }, [handleActivity, logout]);
+  }, [resetTimeoutFn]);
 
   const handleExtendSession = () => {
+    showWarningRef.current = false;
     setShowWarning(false);
-    resetTimeout();
+    resetTimeoutFn(false); // Not user activity, but explicit action
+  };
+
+  const handleLogoutNow = (e: React.MouseEvent) => {
+    // Prevent this click from being captured by activity listeners
+    e.stopPropagation();
+    console.log('🚪 User clicked Logout Now');
+    
+    // Mark that we're logging out to prevent onOpenChange from interfering
+    isLoggingOutRef.current = true;
+    showWarningRef.current = false;
+    
+    // Clear all timeouts before logout
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    
+    // Close dialog and logout
+    setShowWarning(false);
+    logout();
+  };
+
+  const handleDialogOpenChange = (open: boolean) => {
+    // When closing the dialog (e.g., via X button or ESC), extend session instead of closing
+    if (!open && !isLoggingOutRef.current) {
+      console.log('⏸️ Dialog closed via X button - extending session');
+      handleExtendSession();
+      return;
+    }
+    isLoggingOutRef.current = false;
+    setShowWarning(open);
   };
 
   const formatTime = (seconds: number) => {
@@ -126,7 +151,7 @@ export function SessionTimeoutWarning() {
   };
 
   return (
-    <Dialog open={showWarning} onOpenChange={setShowWarning}>
+    <Dialog open={showWarning} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <div className="flex items-center gap-3">
@@ -145,10 +170,7 @@ export function SessionTimeoutWarning() {
         <DialogFooter className="gap-3 sm:gap-2">
           <Button
             variant="outline"
-            onClick={() => {
-              setShowWarning(false);
-              logout();
-            }}
+            onClick={handleLogoutNow}
           >
             Logout Now
           </Button>

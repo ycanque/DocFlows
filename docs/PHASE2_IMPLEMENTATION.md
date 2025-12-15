@@ -37,29 +37,26 @@
 
 **Known Minor Issues** (To Be Resolved):
 
-
-
 ### 🆕 Dashboard & Navigation Enhancements (December 16, 2025)
 
 **What Was Accomplished:**
 
 - ✅ **Dashboard Visualizations Implemented**
-   - Status Distribution and Requisition Trends charts added using Recharts
-   - Backend endpoints created for chart data
-   - Frontend chart components integrated into dashboard
+  - Status Distribution and Requisition Trends charts added using Recharts
+  - Backend endpoints created for chart data
+  - Frontend chart components integrated into dashboard
 - ✅ **Stat Cards & Quick Actions Navigable**
-   - Stat cards and quick actions now link to their respective module pages
-   - Improved dashboard interactivity and navigation
+  - Stat cards and quick actions now link to their respective module pages
+  - Improved dashboard interactivity and navigation
 - ✅ **Placeholder Pages Created**
-   - All sidebar navigation routes now have placeholder pages for future modules
+  - All sidebar navigation routes now have placeholder pages for future modules
 - ✅ **TopBar UI Polish**
-   - Swapped dev and icon button positions for better UX
-   - Removed unwanted border/outline from search icon for a flat design
+  - Swapped dev and icon button positions for better UX
+  - Removed unwanted border/outline from search icon for a flat design
 - ✅ **General UI/UX Improvements**
-   - Consistent, accessible, and responsive design maintained
+  - Consistent, accessible, and responsive design maintained
 
 **Status:** 🟢 Dashboard and navigation features stable; ready for next module implementations
-
 
 ### 🎊 First Complete Workflow - COMPLETED ✅
 
@@ -190,7 +187,6 @@
 
 ### ✅ Completed (85%)
 
-
 - [x] **Dashboard Visualizations** (Status Distribution, Trends)
 - [x] **Stat Cards & Quick Actions Navigation**
 - [x] **Placeholder Pages for All Modules**
@@ -198,16 +194,13 @@
 
 ### 🟡 In Progress (15%)
 
-
 - [x] Dashboard navigation and charts (100% complete ✅)
 
 ### ✅ Recently Completed (40%)
 
-
 - [x] Dashboard charts and navigation polish
 
 ### ⏳ Pending (15%)
-
 
 - [ ] Dashboard enhancements (future analytics, more modules)
 
