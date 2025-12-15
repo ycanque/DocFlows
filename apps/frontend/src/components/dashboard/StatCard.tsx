@@ -13,6 +13,7 @@ interface StatCardProps {
   };
   description?: string;
   iconColor?: string;
+  onClick?: () => void;
 }
 
 export default function StatCard({ 
@@ -21,10 +22,25 @@ export default function StatCard({
   icon: Icon,
   trend,
   description,
-  iconColor = 'text-blue-600 dark:text-blue-400'
+  iconColor = 'text-blue-600 dark:text-blue-400',
+  onClick,
 }: StatCardProps) {
   return (
-    <Card className="overflow-hidden hover:shadow-md transition-shadow">
+    <Card 
+      className={cn(
+        "overflow-hidden transition-all duration-150",
+        onClick ? "cursor-pointer hover:shadow-lg hover:scale-105" : "hover:shadow-md"
+      )}
+      onClick={onClick}
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onKeyDown={onClick ? (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onClick();
+        }
+      } : undefined}
+    >
       <CardContent className="p-6">
         <div className="flex items-start justify-between mb-4">
           <div className="flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">

@@ -37,6 +37,23 @@ export default function TopBar({ onMenuToggle, showMobileMenu = true }: TopBarPr
       </div>
 
       <div className="flex items-center gap-1">
+        <div className="hidden items-center gap-2 lg:flex">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+          >
+            Role Simulator
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs"
+          >
+            BU Simulator
+          </Button>
+        </div>
+
         <Button
           variant="ghost"
           size="icon"
@@ -58,23 +75,6 @@ export default function TopBar({ onMenuToggle, showMobileMenu = true }: TopBarPr
 
         <div className="hidden sm:block">
           <ThemeToggle />
-        </div>
-
-        <div className="hidden items-center gap-2 lg:flex ml-2 pl-2 border-l border-zinc-200 dark:border-zinc-800">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-          >
-            Role Simulator
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-          >
-            BU Simulator
-          </Button>
         </div>
       </div>
     </header>

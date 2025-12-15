@@ -7,9 +7,18 @@ import { UsersModule } from './users/users.module';
 import { DepartmentsModule } from './departments/departments.module';
 import { RequisitionsModule } from './requisitions/requisitions.module';
 import { CostCentersModule } from './cost-centers/cost-centers.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
-  imports: [PrismaModule, AuthModule, UsersModule, DepartmentsModule, RequisitionsModule, CostCentersModule],
+  imports: [
+    PrismaModule,
+    AuthModule,
+    UsersModule,
+    DepartmentsModule,
+    RequisitionsModule,
+    CostCentersModule,
+    DashboardModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })

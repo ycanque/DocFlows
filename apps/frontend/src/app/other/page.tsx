@@ -1,0 +1,67 @@
+'use client';
+
+import { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
+import Sidebar from '@/components/layout/Sidebar';
+import TopBar from '@/components/layout/TopBar';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileQuestion, Construction } from 'lucide-react';
+
+export default function OtherRequestsPage() {
+  const { user } = useAuth();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  return (
+    <ProtectedRoute>
+      <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
+        <Sidebar 
+          currentView="other"
+          isOpen={isSidebarOpen}
+          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
+        />
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+          <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900" role="main">
+            <div className="p-6 sm:p-8 space-y-8">
+              <div className="space-y-2">
+                <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+                  Other Requests
+                </h1>
+                <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                  Miscellaneous document requests
+                </p>
+              </div>
+
+              <Card>
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-md bg-zinc-100 dark:bg-zinc-800">
+                      <FileQuestion className="h-5 w-5 text-zinc-600 dark:text-zinc-400" />
+                    </div>
+                    <div>
+                      <CardTitle>Other Requests Module</CardTitle>
+                      <CardDescription>Coming Soon</CardDescription>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <Construction className="h-16 w-16 text-zinc-300 dark:text-zinc-700 mb-4" />
+                    <h3 className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mb-2">
+                      Under Development
+                    </h3>
+                    <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm">
+                      The other requests module is currently being developed. 
+                      You'll be able to submit various requests here soon.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </main>
+        </div>
+      </div>
+    </ProtectedRoute>
+  );
+}

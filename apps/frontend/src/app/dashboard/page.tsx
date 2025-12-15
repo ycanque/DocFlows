@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import Sidebar from '@/components/layout/Sidebar';
@@ -8,31 +9,85 @@ import Sidebar from '@/components/layout/Sidebar';
 import StatCard from '@/components/dashboard/StatCard';
 import QuickActionCard from '@/components/dashboard/QuickActionCard';
 import SystemInfoCard from '@/components/dashboard/SystemInfoCard';
+import StatusDistributionChart from '@/components/dashboard/StatusDistributionChart';
+import RequisitionTrendsChart from '@/components/dashboard/RequisitionTrendsChart';
 import { Card, CardContent } from '@/components/ui/card';
-import { FileText, DollarSign, CreditCard, TrendingUp, BarChart2 } from 'lucide-react';
+import { FileText, DollarSign, CreditCard, TrendingUp } from 'lucide-react';
 
 import TopBar from '@/components/layout/TopBar';
+import { dashboardService, type DashboardStats, type StatusDistribution, type RequisitionTrend } from '@/services/dashboardService';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState('dashboard');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [statusData, setStatusData] = useState<StatusDistribution[]>([]);
+  const [trendData, setTrendData] = useState<RequisitionTrend[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [chartsLoading, setChartsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch dashboard stats on mount
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const data = await dashboardService.getStats();
+        setStats(data);
+        setError(null);
+      } catch (err) {
+        console.error('Failed to fetch dashboard stats:', err);
+        setError('Failed to load dashboard statistics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  // Fetch chart data
+  useEffect(() => {
+    const fetchChartData = async () => {
+      try {
+        setChartsLoading(true);
+        const [statusDist, trends] = await Promise.all([
+          dashboardService.getStatusDistribution(),
+          dashboardService.getRequisitionTrends(),
+        ]);
+        setStatusData(statusDist);
+        setTrendData(trends);
+      } catch (err) {
+        console.error('Failed to fetch chart data:', err);
+      } finally {
+        setChartsLoading(false);
+      }
+    };
+
+    fetchChartData();
+  }, []);
+
+  const handleNavigate = (path: string) => {
+    router.push(`/${path}`);
+  };
 
   const quickActions = [
     {
       title: 'Create Requisition Slip',
       description: 'Submit a new requisition request',
-      onClick: () => setCurrentView('requisitions'),
+      onClick: () => handleNavigate('requisitions'),
     },
     {
       title: 'Request Payment',
       description: 'Create a new payment request',
-      onClick: () => setCurrentView('payments'),
+      onClick: () => handleNavigate('payments'),
     },
     {
       title: 'View Pending Approvals',
       description: 'Review items awaiting approval',
-      onClick: () => console.log('View approvals'),
+      onClick: () => handleNavigate('requisitions'),
     },
   ];
 
@@ -64,63 +119,108 @@ export default function DashboardPage() {
                   Welcome back, {user?.firstName}!
                 </h1>
                 <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                  Here's an overview of your document flow system
+                  Here&apos;s an overview of your document flow system
                 </p>
               </div>
               
               {/* Stat cards row */}
               <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                  title="Requisition Slips"
-                  value={7}
-                  icon={FileText}
-                  iconColor="text-blue-600 dark:text-blue-400"
-                  trend={{ value: '+12.5%', direction: 'up' }}
-                  description="Trending up this month"
-                />
-                <StatCard
-                  title="Payment Requests"
-                  value={4}
-                  icon={DollarSign}
-                  iconColor="text-emerald-600 dark:text-emerald-400"
-                  trend={{ value: '-20%', direction: 'down' }}
-                  description="Down 20% this period"
-                />
-                <StatCard
-                  title="Checks Issued"
-                  value={1}
-                  icon={CreditCard}
-                  iconColor="text-purple-600 dark:text-purple-400"
-                  trend={{ value: '+12.5%', direction: 'up' }}
-                  description="Strong user retention"
-                />
-                <StatCard
-                  title="Pending Approvals"
-                  value={1}
-                  icon={TrendingUp}
-                  iconColor="text-orange-600 dark:text-orange-400"
-                  trend={{ value: '+4.5%', direction: 'up' }}
-                  description="Steady performance increase"
-                />
+                {loading ? (
+                  // Loading skeleton
+                  <>
+                    {[1, 2, 3, 4].map((i) => (
+                      <Card key={i} className="overflow-hidden">
+                        <CardContent className="p-6">
+                          <div className="animate-pulse space-y-4">
+                            <div className="h-10 w-10 bg-zinc-200 dark:bg-zinc-800 rounded-md"></div>
+                            <div className="h-8 w-16 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                            <div className="h-4 w-32 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </>
+                ) : error ? (
+                  // Error state
+                  <div className="col-span-full">
+                    <Card>
+                      <CardContent className="p-6 text-center text-red-600 dark:text-red-400">
+                        {error}
+                      </CardContent>
+                    </Card>
+                  </div>
+                ) : stats ? (
+                  // Display stats
+                  <>
+                    <StatCard
+                      title="Requisition Slips"
+                      value={stats.requisitionSlips.total}
+                      icon={FileText}
+                      iconColor="text-blue-600 dark:text-blue-400"
+                      trend={stats.requisitionSlips.trend}
+                      description={stats.requisitionSlips.description}
+                      onClick={() => handleNavigate('requisitions')}
+                    />
+                    <StatCard
+                      title="Payment Requests"
+                      value={stats.paymentRequests.total}
+                      icon={DollarSign}
+                      iconColor="text-emerald-600 dark:text-emerald-400"
+                      trend={stats.paymentRequests.trend}
+                      description={stats.paymentRequests.description}
+                      onClick={() => handleNavigate('payments')}
+                    />
+                    <StatCard
+                      title="Checks Issued"
+                      value={stats.checksIssued.total}
+                      icon={CreditCard}
+                      iconColor="text-purple-600 dark:text-purple-400"
+                      trend={stats.checksIssued.trend}
+                      description={stats.checksIssued.description}
+                      onClick={() => handleNavigate('checks')}
+                    />
+                    <StatCard
+                      title="Pending Approvals"
+                      value={stats.pendingApprovals.total}
+                      icon={TrendingUp}
+                      iconColor="text-orange-600 dark:text-orange-400"
+                      trend={stats.pendingApprovals.trend}
+                      description={stats.pendingApprovals.description}
+                      onClick={() => handleNavigate('requisitions')}
+                    />
+                  </>
+                ) : null}
               </div>
               
               {/* Main dashboard grid */}
               <div className="grid gap-6 lg:grid-cols-3">
-                {/* Data Visualization/Activity */}
+                {/* Data Visualization */}
                 <div className="lg:col-span-2 space-y-6">
-                  <Card>
-                    <CardContent className="p-6 min-h-[320px] flex flex-col items-center justify-center">
-                      <BarChart2 className="h-12 w-12 text-zinc-300 dark:text-zinc-700 mb-3" />
-                      <p className="text-sm font-medium text-zinc-500 dark:text-zinc-400">Data visualization coming soon</p>
-                      <p className="text-xs text-zinc-400 dark:text-zinc-500 mt-1">Total for the last 3 months</p>
-                    </CardContent>
-                  </Card>
-                  
-                  <Card>
-                    <CardContent className="p-6 min-h-[160px] flex flex-col justify-center">
-                      <p className="text-sm text-zinc-500 dark:text-zinc-400">Recent activity will appear here</p>
-                    </CardContent>
-                  </Card>
+                  {chartsLoading ? (
+                    <>
+                      <Card>
+                        <CardContent className="p-6 h-100 flex items-center justify-center">
+                          <div className="animate-pulse space-y-4 w-full">
+                            <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 rounded mx-auto"></div>
+                            <div className="h-64 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                      <Card>
+                        <CardContent className="p-6 h-100 flex items-center justify-center">
+                          <div className="animate-pulse space-y-4 w-full">
+                            <div className="h-8 w-48 bg-zinc-200 dark:bg-zinc-800 rounded mx-auto"></div>
+                            <div className="h-64 bg-zinc-200 dark:bg-zinc-800 rounded"></div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </>
+                  ) : (
+                    <>
+                      <RequisitionTrendsChart data={trendData} />
+                      <StatusDistributionChart data={statusData} />
+                    </>
+                  )}
                 </div>
                 
                 {/* Quick Actions and System Info */}
