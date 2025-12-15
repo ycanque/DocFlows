@@ -12,9 +12,17 @@ import {
   rejectRequisition,
   cancelRequisition,
 } from '@/services/requisitionService';
-import { ArrowLeft, CheckCircle, XCircle, Ban, Send } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Ban, Send, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import ItemsTable from '@/components/requisitions/ItemsTable';
 import ApprovalTimeline from '@/components/requisitions/ApprovalTimeline';
@@ -156,7 +164,17 @@ export default function RequisitionDetailsPage() {
     return (
       (requisition.requesterId === user.id || user.role === UserRole.ADMIN) &&
       requisition.status !== RequisitionStatus.CANCELLED &&
-      requisition.status !== RequisitionStatus.COMPLETED
+      requisition.status !== RequisitionStatus.COMPLETED &&
+      requisition.status !== RequisitionStatus.APPROVED &&
+      requisition.status !== RequisitionStatus.REJECTED
+    );
+  }
+
+  function canEdit(): boolean {
+    if (!requisition || !user) return false;
+    return (
+      requisition.status === RequisitionStatus.DRAFT &&
+      requisition.requesterId === user.id
     );
   }
 
@@ -174,16 +192,22 @@ export default function RequisitionDetailsPage() {
     return (
       <ProtectedRoute>
         <div className="space-y-4">
-        <Button variant="ghost" onClick={() => router.push('/requisitions')}>
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Requisitions
-        </Button>
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-sm text-red-800 dark:text-red-200">
-            {error || 'Requisition not found'}
-          </p>
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/requisitions')}
+            className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Requisitions
+          </Button>
+          <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+            <CardContent className="p-4">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                {error || 'Requisition not found'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
-      </div>
       </ProtectedRoute>
     );
   }
@@ -192,146 +216,196 @@ export default function RequisitionDetailsPage() {
     <ProtectedRoute>
       <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => router.push('/requisitions')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {requisition.requisitionNumber}
-            </h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
-              Requisition Details
-            </p>
+      <div className="flex flex-col gap-4">
+        <Button 
+          variant="ghost" 
+          onClick={() => router.push('/requisitions')}
+          className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Requisitions
+        </Button>
+        
+        {/* Requisition ID and Subtitle */}
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+            {requisition.requisitionNumber}
+          </h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+            Requisition Details
+          </p>
+        </div>
+
+        {/* All Action Buttons (Workflow left, CRUD right) */}
+        <div className="flex gap-2 flex-wrap items-center justify-between">
+          {/* Workflow Action Buttons (Left) */}
+          <div className="flex gap-2 flex-wrap">
+            {canSubmit() && (
+              <Button
+                onClick={handleSubmit}
+                disabled={actionLoading}
+                className="flex items-center gap-2"
+              >
+                <Send className="h-4 w-4" />
+                Submit for Approval
+              </Button>
+            )}
+            {canApprove() && (
+              <Button
+                onClick={handleApprove}
+                disabled={actionLoading}
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="h-4 w-4" />
+                Approve
+              </Button>
+            )}
+            {canReject() && (
+              <Button
+                onClick={() => setShowRejectModal(true)}
+                disabled={actionLoading}
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <XCircle className="h-4 w-4" />
+                Reject
+              </Button>
+            )}
+            {canCancel() && (
+              <Button
+                onClick={handleCancel}
+                disabled={actionLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Ban className="h-4 w-4" />
+                Cancel
+              </Button>
+            )}
+          </div>
+
+          {/* CRUD Action Buttons (Right) */}
+          <div className="flex gap-2 flex-wrap">
+            {canEdit() && (
+              <Button
+                onClick={() => router.push(`/requisitions/${requisitionId}/edit`)}
+                disabled={actionLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
           </div>
         </div>
-        <StatusBadge status={requisition.status} />
       </div>
 
-      {/* Action Buttons */}
-      <div className="flex gap-2">
-        {canSubmit() && (
-          <Button
-            onClick={handleSubmit}
-            disabled={actionLoading}
-            className="flex items-center gap-2"
-          >
-            <Send className="h-4 w-4" />
-            Submit for Approval
-          </Button>
-        )}
-        {canApprove() && (
-          <Button
-            onClick={handleApprove}
-            disabled={actionLoading}
-            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-          >
-            <CheckCircle className="h-4 w-4" />
-            Approve
-          </Button>
-        )}
-        {canReject() && (
-          <Button
-            onClick={() => setShowRejectModal(true)}
-            disabled={actionLoading}
-            variant="destructive"
-            className="flex items-center gap-2"
-          >
-            <XCircle className="h-4 w-4" />
-            Reject
-          </Button>
-        )}
-        {canCancel() && (
-          <Button
-            onClick={handleCancel}
-            disabled={actionLoading}
-            variant="outline"
-            className="flex items-center gap-2"
-          >
-            <Ban className="h-4 w-4" />
-            Cancel
-          </Button>
-        )}
-      </div>
-
-      {/* Requisition Information */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Requisition Information</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Requisition Number
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white mt-1">
-                {requisition.requisitionNumber}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Status
-              </label>
-              <div className="mt-1">
+      {/* Requisition Information and Approval History - Side by Side */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Requisition Information */}
+        <div className="md:col-span-2 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Requisition Information</CardTitle>
                 <StatusBadge status={requisition.status} />
               </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Requester
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white mt-1">
-                {requisition.requester
-                  ? `${requisition.requester.firstName} ${requisition.requester.lastName}`
-                  : 'Unknown'}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Department
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white mt-1">
-                {requisition.department?.name || 'N/A'}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Date Requested
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white mt-1">
-                {new Date(requisition.dateRequested).toLocaleDateString()}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Date Needed
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white mt-1">
-                {new Date(requisition.dateNeeded).toLocaleDateString()}
-              </p>
-            </div>
-            <div className="md:col-span-2">
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Purpose
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white mt-1">
-                {requisition.purpose}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500 dark:text-gray-400">
-                Approval Level
-              </label>
-              <p className="text-sm text-gray-900 dark:text-white mt-1">
-                {requisition.currentApprovalLevel}
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-6">
+                {/* Key Information */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Requisition #
+                    </label>
+                    <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-2">
+                      {requisition.requisitionNumber}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Approval Level
+                    </label>
+                    <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-2">
+                      {requisition.currentApprovalLevel}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Requester and Department */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Requester
+                    </label>
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                      {requisition.requester
+                        ? `${requisition.requester.firstName} ${requisition.requester.lastName}`
+                        : 'Unknown'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Department
+                    </label>
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                      {requisition.department?.name || 'N/A'}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Dates */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Date Requested
+                    </label>
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                      {new Date(requisition.dateRequested).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Date Needed
+                    </label>
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                      {new Date(requisition.dateNeeded).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Purpose */}
+                <div>
+                  <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                    Purpose
+                  </label>
+                  <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2 leading-relaxed">
+                    {requisition.purpose}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Approval History */}
+        <div className="md:col-span-2 lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Approval History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ApprovalTimeline 
+                approvalRecords={approvalHistory} 
+                createdAt={requisition.createdAt}
+                requester={requisition.requester}
+              />
+            </CardContent>
+          </Card>
+        </div>
+      </div>
 
       {/* Requisition Items */}
       <Card>
@@ -343,59 +417,51 @@ export default function RequisitionDetailsPage() {
         </CardContent>
       </Card>
 
-      {/* Approval History */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Approval History</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ApprovalTimeline approvalRecords={approvalHistory} />
-        </CardContent>
-      </Card>
-
       {/* Reject Modal */}
-      {showRejectModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Reject Requisition
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                  Reason for Rejection
-                </label>
-                <textarea
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
-                  rows={4}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  placeholder="Please provide a reason for rejecting this requisition..."
-                />
-              </div>
-              <div className="flex gap-2 justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    setShowRejectModal(false);
-                    setRejectReason('');
-                  }}
-                  disabled={actionLoading}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  onClick={handleReject}
-                  disabled={actionLoading || !rejectReason.trim()}
-                >
-                  Reject Requisition
-                </Button>
-              </div>
+      <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reject Requisition</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this requisition
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <label htmlFor="reject-reason" className="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                Reason for Rejection
+              </label>
+              <textarea
+                id="reject-reason"
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
+                placeholder="Please provide a reason for rejecting this requisition..."
+              />
             </div>
           </div>
-        </div>
-      )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowRejectModal(false);
+                setRejectReason('');
+              }}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleReject}
+              disabled={actionLoading || !rejectReason.trim()}
+            >
+              Reject Requisition
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
     </ProtectedRoute>
   );

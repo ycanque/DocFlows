@@ -349,7 +349,7 @@ async function main() {
 
   // Create sample requisitions
   console.log('📝 Creating sample requisitions...');
-  
+
   // Draft requisition
   const draftReq = await prisma.requisitionSlip.create({
     data: {
@@ -366,13 +366,15 @@ async function main() {
             quantity: 10,
             unit: 'boxes',
             particulars: 'A4 Paper (500 sheets per box)',
-            estimatedCost: 250,
+            unitCost: 25,
+            subtotal: 250,
           },
           {
             quantity: 5,
             unit: 'pcs',
             particulars: 'Whiteboard markers (black)',
-            estimatedCost: 75,
+            unitCost: 15,
+            subtotal: 75,
           },
         ],
       },
@@ -388,7 +390,7 @@ async function main() {
       dateRequested: new Date(),
       dateNeeded: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 days from now
       purpose: 'Computer equipment upgrade',
-      status: RequisitionStatus.SUBMITTED,
+      status: RequisitionStatus.PENDING_APPROVAL,
       currentApprovalLevel: 0,
       items: {
         create: [
@@ -396,13 +398,15 @@ async function main() {
             quantity: 3,
             unit: 'units',
             particulars: 'Dell Laptop - i7, 16GB RAM, 512GB SSD',
-            estimatedCost: 45000,
+            unitCost: 15000,
+            subtotal: 45000,
           },
           {
             quantity: 3,
             unit: 'units',
             particulars: 'External Monitor 27" 4K',
-            estimatedCost: 9000,
+            unitCost: 3000,
+            subtotal: 9000,
           },
         ],
       },
@@ -426,13 +430,15 @@ async function main() {
             quantity: 1,
             unit: 'lot',
             particulars: 'Team building event package (50 pax)',
-            estimatedCost: 75000,
+            unitCost: 75000,
+            subtotal: 75000,
           },
           {
             quantity: 50,
             unit: 'pcs',
             particulars: 'T-shirts with company logo',
-            estimatedCost: 15000,
+            unitCost: 300,
+            subtotal: 15000,
           },
         ],
       },
@@ -467,13 +473,15 @@ async function main() {
             quantity: 2,
             unit: 'units',
             particulars: 'Network Switch 48-port Gigabit',
-            estimatedCost: 35000,
+            unitCost: 17500,
+            subtotal: 35000,
           },
           {
             quantity: 500,
             unit: 'meters',
             particulars: 'Cat6 Ethernet Cable',
-            estimatedCost: 8000,
+            unitCost: 16,
+            subtotal: 8000,
           },
         ],
       },

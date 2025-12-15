@@ -7,83 +7,106 @@ interface ItemsTableProps {
 export default function ItemsTable({ items }: ItemsTableProps) {
   if (!items || items.length === 0) {
     return (
-      <div className="text-sm text-gray-500 dark:text-gray-400 text-center py-8">
+      <div className="text-sm text-zinc-500 dark:text-zinc-400 text-center py-8">
         No items added
       </div>
     );
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-        <thead className="bg-gray-50 dark:bg-gray-800">
-          <tr>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Quantity
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Unit
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Particulars
-            </th>
-            <th
-              scope="col"
-              className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider"
-            >
-              Estimated Cost
-            </th>
-          </tr>
-        </thead>
-        <tbody className="bg-white dark:bg-gray-900 divide-y divide-gray-200 dark:divide-gray-700">
-          {items.map((item, index) => (
-            <tr key={item.id || index}>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                {item.quantity}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                {item.unit}
-              </td>
-              <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100">
-                {item.particulars}
-              </td>
-              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                {item.estimatedCost
-                  ? `₱${item.estimatedCost.toLocaleString('en-PH', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}`
-                  : '-'}
-              </td>
+    <div className="space-y-4">
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-700">
+          <thead className="bg-zinc-50 dark:bg-zinc-800">
+            <tr>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider"
+              >
+                Particulars
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider"
+              >
+                Specification
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider"
+              >
+                Quantity
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-left text-xs font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider"
+              >
+                Unit
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-right text-xs font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider"
+              >
+                Unit Cost
+              </th>
+              <th
+                scope="col"
+                className="px-6 py-3 text-right text-xs font-medium text-zinc-600 dark:text-zinc-300 uppercase tracking-wider"
+              >
+                Subtotal
+              </th>
             </tr>
-          ))}
-        </tbody>
-        <tfoot className="bg-gray-50 dark:bg-gray-800">
-          <tr>
-            <td colSpan={3} className="px-6 py-3 text-right text-sm font-medium text-gray-900 dark:text-gray-100">
-              Total Estimated Cost:
-            </td>
-            <td className="px-6 py-3 whitespace-nowrap text-sm font-bold text-gray-900 dark:text-gray-100">
-              ₱
-              {items
-                .reduce((sum, item) => sum + (item.estimatedCost || 0), 0)
-                .toLocaleString('en-PH', {
+          </thead>
+          <tbody className="bg-white dark:bg-zinc-900 divide-y divide-zinc-200 dark:divide-zinc-700">
+            {items.map((item, index) => (
+              <tr key={item.id || index}>
+                <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100 font-medium">
+                  {item.particulars}
+                </td>
+                <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
+                  {item.specification || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
+                  {new Intl.NumberFormat('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 4,
+                  }).format(item.quantity || 0)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
+                  {item.unit}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-zinc-900 dark:text-zinc-100">
+                  ₱{new Intl.NumberFormat('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(item.unitCost || 0)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-right text-zinc-900 dark:text-zinc-100 font-semibold">
+                  ₱{new Intl.NumberFormat('en-PH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(item.subtotal || 0)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-zinc-50 dark:bg-zinc-800">
+            <tr>
+              <td colSpan={5} className="px-6 py-3 text-right text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                Total Cost:
+              </td>
+              <td className="px-6 py-3 whitespace-nowrap text-sm font-bold text-zinc-900 dark:text-zinc-100 text-right">
+                ₱{new Intl.NumberFormat('en-PH', {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
-                })}
-            </td>
-          </tr>
-        </tfoot>
-      </table>
+                }).format(
+                  items.reduce((sum, item) => sum + (Number(item.subtotal) || 0), 0)
+                )}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
     </div>
   );
 }

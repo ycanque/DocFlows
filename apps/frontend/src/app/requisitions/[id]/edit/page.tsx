@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Department, CostCenter } from '@docflows/shared';
+import { useRouter, useParams } from 'next/navigation';
+import { Department, CostCenter, RequisitionSlip, RequisitionStatus } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import { createRequisition, CreateRequisitionDto } from '@/services/requisitionService';
+import { getRequisition, updateRequisition } from '@/services/requisitionService';
 import { getDepartments } from '@/services/departmentService';
 import { getCostCenters } from '@/services/costCenterService';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
@@ -57,6 +57,7 @@ function getTodayDateString() {
 }
 
 interface RequisitionItem {
+  id?: string;
   quantity: number;
   unit: string;
   particulars: string;
@@ -65,43 +66,88 @@ interface RequisitionItem {
   subtotal?: number;
 }
 
-export default function CreateRequisitionPage() {
+export default function EditRequisitionPage() {
   const router = useRouter();
+  const params = useParams();
   const { user } = useAuth();
+  const requisitionId = params?.id as string;
 
+  const [requisition, setRequisition] = useState<RequisitionSlip | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [formData, setFormData] = useState({
     departmentId: '',
     costCenterId: '',
     currency: 'PHP',
-    dateRequested: getTodayDateString(),
-    dateNeeded: getTodayDateString(),
+    dateRequested: new Date().toISOString().split('T')[0],
+    dateNeeded: new Date().toISOString().split('T')[0],
     purpose: '',
   });
   const [items, setItems] = useState<RequisitionItem[]>([
     { quantity: 1, unit: '', particulars: '', specification: '', unitCost: 0, subtotal: 0 },
   ]);
   const [loading, setLoading] = useState(false);
+  const [loadingRequisition, setLoadingRequisition] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [loadingCostCenters, setLoadingCostCenters] = useState(true);
 
   useEffect(() => {
+    if (requisitionId) {
+      loadRequisition();
+    }
     loadDepartments();
     loadCostCenters();
-  }, []);
+  }, [requisitionId]);
+
+  async function loadRequisition() {
+    try {
+      setLoadingRequisition(true);
+      const data = await getRequisition(requisitionId);
+      
+      // Check if user can edit
+      if (data.status !== RequisitionStatus.DRAFT || data.requesterId !== user?.id) {
+        setError('You do not have permission to edit this requisition or it is no longer in draft status');
+        return;
+      }
+
+      setRequisition(data);
+      
+      // Populate form data
+      setFormData({
+        departmentId: data.departmentId || '',
+        costCenterId: data.costCenterId || '',
+        currency: data.currency || 'PHP',
+        dateRequested: data.dateRequested ? new Date(data.dateRequested).toISOString().split('T')[0] : '',
+        dateNeeded: data.dateNeeded ? new Date(data.dateNeeded).toISOString().split('T')[0] : '',
+        purpose: data.purpose || '',
+      });
+
+      // Populate items
+      if (data.items && data.items.length > 0) {
+        setItems(data.items.map(item => ({
+          id: item.id,
+          quantity: item.quantity,
+          unit: item.unit,
+          particulars: item.particulars,
+          specification: item.specification || '',
+          unitCost: item.unitCost || 0,
+          subtotal: item.subtotal || 0,
+        })));
+      }
+    } catch (err: any) {
+      setError(err?.response?.data?.message || 'Failed to load requisition');
+      console.error('Error loading requisition:', err);
+    } finally {
+      setLoadingRequisition(false);
+    }
+  }
 
   async function loadDepartments() {
     try {
       setLoadingDepartments(true);
       const data = await getDepartments();
       setDepartments(data);
-      
-      // Set default department to user's department if available
-      if (user?.departmentId) {
-        setFormData((prev) => ({ ...prev, departmentId: user.departmentId! }));
-      }
     } catch (err) {
       console.error('Error loading departments:', err);
     } finally {
@@ -202,13 +248,7 @@ export default function CreateRequisitionPage() {
     try {
       setLoading(true);
 
-      if (!user?.id) {
-        setError('User not authenticated');
-        return;
-      }
-
-      const dto: CreateRequisitionDto = {
-        requesterId: user.id,
+      const dto = {
         departmentId: formData.departmentId,
         costCenterId: formData.costCenterId || undefined,
         currency: formData.currency,
@@ -216,6 +256,7 @@ export default function CreateRequisitionPage() {
         dateNeeded: formData.dateNeeded,
         purpose: formData.purpose,
         items: items.map((item) => ({
+          id: item.id,
           quantity: item.quantity,
           unit: item.unit,
           particulars: item.particulars,
@@ -225,14 +266,46 @@ export default function CreateRequisitionPage() {
         })),
       };
 
-      const newRequisition = await createRequisition(dto);
-      router.push(`/requisitions/${newRequisition.id}`);
+      await updateRequisition(requisitionId, dto);
+      router.push(`/requisitions/${requisitionId}`);
     } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to create requisition');
-      console.error('Error creating requisition:', err);
+      setError(err?.response?.data?.message || 'Failed to update requisition');
+      console.error('Error updating requisition:', err);
     } finally {
       setLoading(false);
     }
+  }
+
+  if (loadingRequisition) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error && !requisition) {
+    return (
+      <ProtectedRoute>
+        <div className="space-y-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push(`/requisitions/${requisitionId}`)}
+            className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Requisition
+          </Button>
+          <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+            <CardContent className="p-4">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
+    );
   }
 
   return (
@@ -242,18 +315,18 @@ export default function CreateRequisitionPage() {
       <div className="flex flex-col gap-4">
         <Button 
           variant="ghost" 
-          onClick={() => router.push('/requisitions')}
+          onClick={() => router.push(`/requisitions/${requisitionId}`)}
           className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Requisitions
+          Back to Requisition
         </Button>
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            Create Requisition
+            Edit Requisition
           </h1>
           <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-            Fill in the details to create a new requisition slip
+            Update the requisition details
           </p>
         </div>
       </div>
@@ -501,9 +574,9 @@ export default function CreateRequisitionPage() {
                           type="number"
                           value={item.quantity || ''}
                           onChange={(e) => {
-                            const newItems = [...items];
-                            newItems[index].quantity = e.target.valueAsNumber || 0;
-                            newItems[index].subtotal = (e.target.valueAsNumber || 0) * (newItems[index].unitCost || 0);
+                          const newItems = [...items];
+                          newItems[index].quantity = e.target.valueAsNumber || 0;
+                          newItems[index].subtotal = (e.target.valueAsNumber || 0) * (newItems[index].unitCost || 0);
                             setItems(newItems);
                           }}
                           step="0.01"
@@ -586,7 +659,7 @@ export default function CreateRequisitionPage() {
                             onChange={(e) => {
                               const newItems = [...items];
                               newItems[index].unitCost = e.target.valueAsNumber || 0;
-                              newItems[index].subtotal = (e.target.valueAsNumber || 0) * (newItems[index].quantity || 0);
+                                newItems[index].subtotal = (e.target.valueAsNumber || 0) * (newItems[index].quantity || 0);
                               setItems(newItems);
                             }}
                             step="0.01"
@@ -652,13 +725,13 @@ export default function CreateRequisitionPage() {
           <Button
             type="button"
             variant="outline"
-            onClick={() => router.push('/requisitions')}
+            onClick={() => router.push(`/requisitions/${requisitionId}`)}
             disabled={loading}
           >
             Cancel
           </Button>
           <Button type="submit" disabled={loading}>
-            {loading ? 'Creating...' : 'Create Requisition'}
+            {loading ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>
       </form>

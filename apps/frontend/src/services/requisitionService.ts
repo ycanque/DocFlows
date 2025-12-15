@@ -1,7 +1,8 @@
-import api from '../lib/api';
-import { RequisitionSlip, RequestItem, ApprovalRecord } from '@docflows/shared';
+import api from "../lib/api";
+import { RequisitionSlip, RequestItem, ApprovalRecord } from "@docflows/shared";
 
 export interface CreateRequisitionDto {
+  requesterId: string;
   departmentId: string;
   costCenterId?: string;
   projectId?: string;
@@ -10,7 +11,10 @@ export interface CreateRequisitionDto {
   dateNeeded: string;
   purpose: string;
   currency?: string;
-  items: Omit<RequestItem, 'id' | 'requisitionSlipId' | 'createdAt' | 'updatedAt'>[];
+  items: Omit<
+    RequestItem,
+    "id" | "requisitionSlipId" | "createdAt" | "updatedAt"
+  >[];
 }
 
 export interface UpdateRequisitionDto {
@@ -22,6 +26,13 @@ export interface UpdateRequisitionDto {
   dateNeeded?: string;
   purpose?: string;
   currency?: string;
+  items?: Array<{
+    id?: string;
+    quantity: number;
+    unit: string;
+    particulars: string;
+    estimatedCost?: number;
+  }>;
 }
 
 export interface RejectRequisitionDto {
@@ -32,7 +43,7 @@ export interface RejectRequisitionDto {
  * Get all requisitions
  */
 export async function getRequisitions(): Promise<RequisitionSlip[]> {
-  const response = await api.get('/requisitions');
+  const response = await api.get("/requisitions");
   return response.data;
 }
 
@@ -47,8 +58,10 @@ export async function getRequisition(id: string): Promise<RequisitionSlip> {
 /**
  * Create a new requisition
  */
-export async function createRequisition(data: CreateRequisitionDto): Promise<RequisitionSlip> {
-  const response = await api.post('/requisitions', data);
+export async function createRequisition(
+  data: CreateRequisitionDto
+): Promise<RequisitionSlip> {
+  const response = await api.post("/requisitions", data);
   return response.data;
 }
 
@@ -108,7 +121,9 @@ export async function cancelRequisition(id: string): Promise<RequisitionSlip> {
 /**
  * Get approval history for a requisition
  */
-export async function getApprovalHistory(id: string): Promise<ApprovalRecord[]> {
+export async function getApprovalHistory(
+  id: string
+): Promise<ApprovalRecord[]> {
   const response = await api.get(`/requisitions/${id}/approval-history`);
   return response.data;
 }

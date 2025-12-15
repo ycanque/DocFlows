@@ -1,8 +1,8 @@
-import { IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsNumber, IsOptional, IsString, Min } from 'class-validator';
 
 export class CreateRequestItemDto {
-  @IsInt()
-  @Min(1)
+  @IsNumber()
+  @Min(0.01)
   quantity!: number;
 
   @IsString()
@@ -11,7 +11,17 @@ export class CreateRequestItemDto {
   @IsString()
   particulars!: string;
 
+  @IsString()
+  @IsOptional()
+  specification?: string;
+
   @IsNumber()
   @IsOptional()
-  estimatedCost?: number;
+  @Min(0)
+  unitCost?: number;
+
+  @IsNumber()
+  @IsOptional()
+  @Min(0)
+  subtotal?: number;
 }

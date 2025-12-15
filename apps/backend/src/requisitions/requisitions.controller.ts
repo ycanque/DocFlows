@@ -75,8 +75,8 @@ export class RequisitionsController {
   @ApiResponse({ status: 400, description: 'Invalid status transition' })
   @ApiResponse({ status: 404, description: 'Requisition not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  submit(@Param('id') id: string) {
-    return this.requisitionsService.submit(id);
+  submit(@Param('id') id: string, @Request() req: any) {
+    return this.requisitionsService.submit(id, req.user.id);
   }
 
   @Post(':id/approve')
@@ -97,7 +97,7 @@ export class RequisitionsController {
   @ApiResponse({ status: 404, description: 'Requisition not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   approve(@Param('id') id: string, @Request() req: any, @Body() body?: { comments?: string }) {
-    return this.requisitionsService.approve(id, req.user.sub, body?.comments);
+    return this.requisitionsService.approve(id, req.user.id, body?.comments);
   }
 
   @Post(':id/reject')
@@ -108,6 +108,7 @@ export class RequisitionsController {
     schema: {
       type: 'object',
       properties: {
+        reason: { type: 'string', example: 'Insufficient justification' },
         comments: { type: 'string', example: 'Insufficient justification' },
       },
     },
@@ -117,8 +118,12 @@ export class RequisitionsController {
   @ApiResponse({ status: 403, description: 'Forbidden - insufficient permissions' })
   @ApiResponse({ status: 404, description: 'Requisition not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  reject(@Param('id') id: string, @Request() req: any, @Body() body?: { comments?: string }) {
-    return this.requisitionsService.reject(id, req.user.sub, body?.comments);
+  reject(
+    @Param('id') id: string,
+    @Request() req: any,
+    @Body() body?: { reason?: string; comments?: string },
+  ) {
+    return this.requisitionsService.reject(id, req.user.id, body?.reason || body?.comments);
   }
 
   @Post(':id/cancel')
@@ -127,8 +132,8 @@ export class RequisitionsController {
   @ApiResponse({ status: 400, description: 'Invalid status transition' })
   @ApiResponse({ status: 404, description: 'Requisition not found' })
   @ApiResponse({ status: 401, description: 'Unauthorized' })
-  cancel(@Param('id') id: string) {
-    return this.requisitionsService.cancel(id);
+  cancel(@Param('id') id: string, @Request() req: any) {
+    return this.requisitionsService.cancel(id, req.user.id);
   }
 
   @Get(':id/approval-history')

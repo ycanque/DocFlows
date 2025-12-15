@@ -57,6 +57,7 @@ model User {
   approverProfile      Approver?
   requisitionSlips     RequisitionSlip[]
   requisitionsForPayment RequisitionForPayment[]
+  submissionsGiven     ApprovalRecord[] @relation("SubmittedBy")
   approvalsGiven       ApprovalRecord[] @relation("ApprovedBy")
   rejectionsGiven      ApprovalRecord[] @relation("RejectedBy")
   adjustmentRequests   RequestForAdjustment[]
@@ -180,6 +181,8 @@ model ApprovalRecord {
   entityType    String    @map("entity_type")
   entityId      String    @map("entity_id") @db.Uuid
   approvalLevel Int       @map("approval_level")
+  submittedBy   String?   @map("submitted_by") @db.Uuid
+  submitter     User?     @relation("SubmittedBy", fields: [submittedBy], references: [id])
   approvedBy    String?   @map("approved_by") @db.Uuid
   approver      User?     @relation("ApprovedBy", fields: [approvedBy], references: [id])
   rejectedBy    String?   @map("rejected_by") @db.Uuid
@@ -191,6 +194,7 @@ model ApprovalRecord {
 
   @@map("approval_records")
   @@index([entityType, entityId])
+  @@index([submittedBy])
   @@index([approvedBy])
   @@index([rejectedBy])
 }
@@ -249,10 +253,12 @@ model RequestItem {
   id                String          @id @default(uuid()) @db.Uuid
   requisitionSlipId String          @map("requisition_slip_id") @db.Uuid
   requisitionSlip   RequisitionSlip @relation(fields: [requisitionSlipId], references: [id], onDelete: Cascade)
-  quantity          Int
+  quantity          Decimal         @db.Decimal(15, 4)
   unit              String
   particulars       String
-  estimatedCost     Decimal?        @map("estimated_cost") @db.Decimal(15, 2)
+  specification     String?
+  unitCost          Decimal?        @map("unit_cost") @db.Decimal(15, 2)
+  subtotal          Decimal?        @map("subtotal") @db.Decimal(15, 2)
   createdAt         DateTime        @default(now()) @map("created_at")
   updatedAt         DateTime        @updatedAt @map("updated_at")
 

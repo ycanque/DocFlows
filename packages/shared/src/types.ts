@@ -14,7 +14,7 @@ import {
   CostCenterType,
   BusinessUnitStatus,
   ProjectStatus,
-} from './enums';
+} from "./enums";
 
 // Core Entities
 export interface User {
@@ -99,6 +99,8 @@ export interface ApprovalRecord {
   entityType: string;
   entityId: string;
   approvalLevel: number;
+  submittedBy?: string;
+  submitter?: User;
   approvedBy?: string;
   approver?: User;
   rejectedBy?: string;
@@ -141,7 +143,9 @@ export interface RequestItem {
   quantity: number;
   unit: string;
   particulars: string;
-  estimatedCost?: number;
+  specification?: string;
+  unitCost?: number;
+  subtotal?: number;
   createdAt: string;
   updatedAt: string;
 }

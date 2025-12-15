@@ -5,21 +5,22 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  
+
   // Enable CORS - Allow localhost and network IP for development
   const allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
     'http://172.21.176.1:3000',
+    'http://localhost:5040', // Allow backend port for Swagger UI/local tools
   ];
-  
+
   console.log('🔐 CORS Allowed Origins:', allowedOrigins);
-  
+
   app.enableCors({
     origin: (origin, callback) => {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
-      
+
       if (allowedOrigins.indexOf(origin) !== -1) {
         callback(null, true);
       } else {
@@ -38,7 +39,7 @@ async function bootstrap() {
       transform: true,
     }),
   );
-  
+
   // Swagger API Documentation
   const config = new DocumentBuilder()
     .setTitle('DocFlows API')
@@ -58,14 +59,14 @@ async function bootstrap() {
       'JWT',
     )
     .build();
-  
+
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document, {
     swaggerOptions: {
       persistAuthorization: true,
     },
   });
-  
+
   await app.listen(process.env.PORT ?? 5040);
   console.log(`🚀 Application is running on: http://localhost:${process.env.PORT ?? 5040}`);
   console.log(`📚 Swagger documentation: http://localhost:${process.env.PORT ?? 5040}/api`);
