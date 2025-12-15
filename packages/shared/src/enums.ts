@@ -33,6 +33,26 @@ export enum RFPStatus {
   CANCELLED = 'CANCELLED',
 }
 
+// Cost Center Type
+export enum CostCenterType {
+  PROJECT = 'PROJECT',
+  BUSINESS_UNIT = 'BUSINESS_UNIT',
+  DIVISION = 'DIVISION',
+}
+
+// Business Unit Status
+export enum BusinessUnitStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+}
+
+// Project Status
+export enum ProjectStatus {
+  ACTIVE = 'ACTIVE',
+  INACTIVE = 'INACTIVE',
+  COMPLETED = 'COMPLETED',
+}
+
 // Check Voucher Status
 export enum CheckVoucherStatus {
   DRAFT = 'DRAFT',

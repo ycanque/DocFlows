@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Department } from '@docflows/shared';
+import { Department, CostCenter } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { createRequisition, CreateRequisitionDto } from '@/services/requisitionService';
 import { getDepartments } from '@/services/departmentService';
+import { getCostCenters } from '@/services/costCenterService';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,8 +24,11 @@ export default function CreateRequisitionPage() {
   const { user } = useAuth();
 
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [formData, setFormData] = useState({
     departmentId: '',
+    costCenterId: '',
+    currency: 'PHP',
     dateRequested: new Date().toISOString().split('T')[0],
     dateNeeded: new Date().toISOString().split('T')[0],
     purpose: '',
@@ -35,9 +39,11 @@ export default function CreateRequisitionPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [loadingCostCenters, setLoadingCostCenters] = useState(true);
 
   useEffect(() => {
     loadDepartments();
+    loadCostCenters();
   }, []);
 
   async function loadDepartments() {
@@ -54,6 +60,18 @@ export default function CreateRequisitionPage() {
       console.error('Error loading departments:', err);
     } finally {
       setLoadingDepartments(false);
+    }
+  }
+
+  async function loadCostCenters() {
+    try {
+      setLoadingCostCenters(true);
+      const data = await getCostCenters();
+      setCostCenters(data);
+    } catch (err) {
+      console.error('Error loading cost centers:', err);
+    } finally {
+      setLoadingCostCenters(false);
     }
   }
 
@@ -126,7 +144,12 @@ export default function CreateRequisitionPage() {
       setLoading(true);
 
       const dto: CreateRequisitionDto = {
-        ...formData,
+        departmentId: formData.departmentId,
+        costCenterId: formData.costCenterId || undefined,
+        currency: formData.currency,
+        dateRequested: formData.dateRequested,
+        dateNeeded: formData.dateNeeded,
+        purpose: formData.purpose,
         items: items.map((item) => ({
           quantity: item.quantity,
           unit: item.unit,
@@ -232,6 +255,54 @@ export default function CreateRequisitionPage() {
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   required
                 />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Currency <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.currency}
+                  onChange={(e) =>
+                    setFormData({ ...formData, currency: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  required
+                >
+                  <option value="PHP">₱ - Philippine Peso (PHP)</option>
+                  <option value="USD">$ - US Dollar (USD)</option>
+                  <option value="EUR">€ - Euro (EUR)</option>
+                  <option value="JPY">¥ - Japanese Yen (JPY)</option>
+                  <option value="GBP">£ - British Pound (GBP)</option>
+                </select>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Select currency for this transaction (default: PHP)
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Cost Center <span className="text-red-500">*</span>
+                </label>
+                {loadingCostCenters ? (
+                  <div className="text-sm text-gray-500">Loading cost centers...</div>
+                ) : (
+                  <select
+                    value={formData.costCenterId}
+                    onChange={(e) =>
+                      setFormData({ ...formData, costCenterId: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    required
+                  >
+                    <option value="">Select Cost Center</option>
+                    {costCenters.map((cc) => (
+                      <option key={cc.id} value={cc.id}>
+                        {cc.code} - {cc.name} ({cc.type === 'BUSINESS_UNIT' ? 'Business Unit' : cc.type === 'PROJECT' ? 'Project' : 'Division'})
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="md:col-span-2">

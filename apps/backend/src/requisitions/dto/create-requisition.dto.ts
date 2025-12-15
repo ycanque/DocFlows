@@ -17,6 +17,18 @@ export class CreateRequisitionDto {
   @IsString()
   departmentId!: string;
 
+  @IsString()
+  @IsOptional()
+  costCenterId?: string;
+
+  @IsString()
+  @IsOptional()
+  projectId?: string;
+
+  @IsString()
+  @IsOptional()
+  businessUnitId?: string;
+
   @IsDateString()
   dateRequested!: string;
 
@@ -25,6 +37,10 @@ export class CreateRequisitionDto {
 
   @IsString()
   purpose!: string;
+
+  @IsString()
+  @IsOptional()
+  currency?: string = 'PHP';
 
   @IsEnum(RequisitionStatus)
   @IsOptional()

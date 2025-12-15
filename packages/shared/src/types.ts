@@ -11,6 +11,9 @@ import {
   CashAdvanceStatus,
   TripType,
   EmploymentType,
+  CostCenterType,
+  BusinessUnitStatus,
+  ProjectStatus,
 } from './enums';
 
 // Core Entities
@@ -33,6 +36,47 @@ export interface Department {
   code: string;
   headOfDepartmentId?: string;
   headOfDepartment?: User;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BusinessUnit {
+  id: string;
+  unitCode: string;
+  name: string;
+  description?: string;
+  status: BusinessUnitStatus;
+  budgetAmount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Project {
+  id: string;
+  projectCode: string;
+  name: string;
+  description?: string;
+  status: ProjectStatus;
+  businessUnitId?: string;
+  businessUnit?: BusinessUnit;
+  startDate?: string;
+  endDate?: string;
+  budgetAmount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CostCenter {
+  id: string;
+  type: CostCenterType;
+  code: string;
+  name: string;
+  description?: string;
+  projectId?: string;
+  project?: Project;
+  businessUnitId?: string;
+  businessUnit?: BusinessUnit;
+  isActive: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -73,9 +117,16 @@ export interface RequisitionSlip {
   requester?: User;
   departmentId: string;
   department?: Department;
+  costCenterId?: string;
+  costCenter?: CostCenter;
+  projectId?: string;
+  project?: Project;
+  businessUnitId?: string;
+  businessUnit?: BusinessUnit;
   dateRequested: string;
   dateNeeded: string;
   purpose: string;
+  currency: string;
   status: RequisitionStatus;
   currentApprovalLevel: number;
   items: RequestItem[];

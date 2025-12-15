@@ -12,7 +12,7 @@ interface TopBarProps {
 
 export default function TopBar({ onMenuToggle, showMobileMenu = true }: TopBarProps) {
   return (
-    <header className="sticky top-0 z-20 flex items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-950" style={{ height: 'var(--header-height)' }}>
+    <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-zinc-200 bg-white px-4 dark:border-zinc-800 dark:bg-zinc-950">
       <div className="flex items-center gap-3">
         {showMobileMenu && onMenuToggle && (
           <Button
@@ -27,7 +27,7 @@ export default function TopBar({ onMenuToggle, showMobileMenu = true }: TopBarPr
         )}
         
         <div className="flex items-center gap-2 lg:hidden">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-sm font-bold text-white">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-blue-600 to-blue-700 text-xs font-bold text-white shadow-sm">
             DF
           </div>
           <span className="text-sm font-semibold text-zinc-900 dark:text-zinc-50">
@@ -36,31 +36,31 @@ export default function TopBar({ onMenuToggle, showMobileMenu = true }: TopBarPr
         </div>
       </div>
 
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1">
         <Button
           variant="ghost"
           size="icon"
-          className="hidden h-9 w-9 md:inline-flex"
+          className="hidden h-9 w-9 md:inline-flex hover:bg-zinc-100 dark:hover:bg-zinc-800"
           aria-label="Search"
         >
-          <Search className="h-5 w-5" />
+          <Search className="h-4 w-4" />
         </Button>
 
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-9 w-9"
+          className="relative h-9 w-9 hover:bg-zinc-100 dark:hover:bg-zinc-800"
           aria-label="Notifications"
         >
-          <Bell className="h-5 w-5" />
-          <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-red-500" aria-hidden="true" />
+          <Bell className="h-4 w-4" />
+          <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-red-500 ring-2 ring-white dark:ring-zinc-950" aria-hidden="true" />
         </Button>
 
         <div className="hidden sm:block">
           <ThemeToggle />
         </div>
 
-        <div className="hidden items-center gap-2 lg:flex">
+        <div className="hidden items-center gap-2 lg:flex ml-2 pl-2 border-l border-zinc-200 dark:border-zinc-800">
           <Button
             variant="outline"
             size="sm"

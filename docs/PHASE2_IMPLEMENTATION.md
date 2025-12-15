@@ -39,19 +39,39 @@
   - Per-item fields: quantity, unit, particulars, estimated cost
   - Total cost calculation
   - Form validation with error messages
+  - **NEW:** Currency dropdown (PHP, USD, EUR, JPY, GBP)
+  - **NEW:** Cost Center selector (populated from API, shows code, name, type)
+  - Both fields required and styled as per reference
+  - Helper text for currency field
 - ✅ **Shared Components**: Reusable requisition components
   - StatusBadge: 7 status types with theme-aware colors
   - ApprovalTimeline: Visual timeline with approval/rejection indicators
   - ItemsTable: Items display with total cost footer
 - ✅ **Department Service**: Department API integration
 
+**Backend & Data Model Enhancements:**
+
+- ✅ **Prisma Schema**: Added enums (`CostCenterType`, `BusinessUnitStatus`, `ProjectStatus`), models (`BusinessUnit`, `Project`, `CostCenter`), and updated `RequisitionSlip` with `currency`, `costCenterId`, `projectId`, `businessUnitId` fields
+- ✅ **Cost Centers API**: New endpoints (`GET /cost-centers`, `GET /cost-centers/:id`) and service/controller/module
+- ✅ **DTOs**: `CreateRequisitionDto` and `UpdateRequisitionDto` now include new fields
+- ✅ **Requisitions Service**: All queries and create method now support new fields and relations
+- ✅ **Database Migration**: Migration applied and database seeded with 3 business units, 2 projects, 5 cost centers
+
+**Frontend Enhancements:**
+
+- ✅ **Shared Types**: Added new enums and interfaces for cost center, business unit, project
+- ✅ **Cost Center Service**: API integration for cost center dropdown
+- ✅ **Requisition Form**: Currency and cost center fields, validation, and UI/UX improvements
+- ✅ **Seed Data**: Cost center dropdown now shows CHEM, LAB, WATER, and project-based cost centers
+
 **End-to-End Workflow Now Functional:**
 
 1. ✅ User creates requisition with items
-2. ✅ User submits for approval
-3. ✅ Approver reviews and approves/rejects
-4. ✅ Approval history tracked and displayed
-5. ✅ Status updates reflected in real-time
+2. ✅ User selects currency and cost center
+3. ✅ User submits for approval
+4. ✅ Approver reviews and approves/rejects
+5. ✅ Approval history tracked and displayed
+6. ✅ Status updates reflected in real-time
 
 **Frontend Server Status:**
 
@@ -325,7 +345,13 @@
   - Redirect to login if unauthenticated
   - Session storage for redirect after login
 - [x] **Logout functionality**
-  - TokDesign System & UI Components (100% Complete)
+  - Token removal
+  - Redirect to login page
+  - Clear user data
+
+- **Next Step**: Implement refresh tokens
+
+#### ✅ Design System & UI Components (100% Complete)
 
 - [x] **Shadcn UI Components** (`components/ui/`)
   - Button component with 6 variants (default, destructive, outline, secondary, ghost, link)
@@ -363,8 +389,8 @@
   - Enterprise layout with sidebar
   - 4 statistics cards (Requisitions, Payments, Checks, Approvals)
   - Quick actions panel
-  - System information panel
-  - Responsive grid layout
+  - System status indicator
+  - Logout functionality
 - [x] **Settings page** (`app/settings/page.tsx`)
   - Theme configuration UI
   - Visual theme toggles (Light/Dark)
@@ -377,7 +403,7 @@
 - [x] **Mobile hamburger menu**
   - Hamburger icon (Menu/X toggle)
   - Slide-in animation
-  - Dismissible backdroplay
+  - Dismissible backdrop
   - Logout button
 - [ ] Sidebar navigation component
 - [ ] Breadcrumbs component

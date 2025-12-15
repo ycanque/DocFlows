@@ -26,6 +26,9 @@ async function main() {
   await prisma.approvalRecord.deleteMany();
   await prisma.requestItem.deleteMany();
   await prisma.requisitionSlip.deleteMany();
+  await prisma.costCenter.deleteMany();
+  await prisma.project.deleteMany();
+  await prisma.businessUnit.deleteMany();
   await prisma.approver.deleteMany();
   await prisma.user.deleteMany();
   await prisma.department.deleteMany();
@@ -67,6 +70,124 @@ async function main() {
 
   const [adminDept, financeDept, opsDept, hrDept, itDept] = departments;
   console.log(`✅ Created ${departments.length} departments`);
+
+  // Create Business Units
+  console.log('🏢 Creating business units...');
+  const chemBusinessUnit = await prisma.businessUnit.create({
+    data: {
+      unitCode: 'CHEM',
+      name: 'CHEMICALS',
+      description: 'Chemicals Business Unit',
+      status: 'ACTIVE',
+      budgetAmount: 5000000,
+    },
+  });
+
+  const labBusinessUnit = await prisma.businessUnit.create({
+    data: {
+      unitCode: 'LAB',
+      name: 'LABORATORY',
+      description: 'Laboratory Business Unit',
+      status: 'ACTIVE',
+      budgetAmount: 3000000,
+    },
+  });
+
+  const waterBusinessUnit = await prisma.businessUnit.create({
+    data: {
+      unitCode: 'WATER',
+      name: 'WATER',
+      description: 'Water Business Unit',
+      status: 'ACTIVE',
+      budgetAmount: 4000000,
+    },
+  });
+  console.log('✅ Created 3 business units');
+
+  // Create Projects
+  console.log('📊 Creating projects...');
+  const project1 = await prisma.project.create({
+    data: {
+      projectCode: 'PROJ-2025-001',
+      name: 'Infrastructure Upgrade 2025',
+      description: 'Company-wide infrastructure modernization',
+      status: 'ACTIVE',
+      businessUnitId: chemBusinessUnit.id,
+      startDate: new Date('2025-01-01'),
+      endDate: new Date('2025-12-31'),
+      budgetAmount: 2000000,
+    },
+  });
+
+  const project2 = await prisma.project.create({
+    data: {
+      projectCode: 'PROJ-2025-002',
+      name: 'Quality Assurance Initiative',
+      description: 'Quality improvement across all units',
+      status: 'ACTIVE',
+      businessUnitId: labBusinessUnit.id,
+      startDate: new Date('2025-01-15'),
+      endDate: new Date('2025-06-30'),
+      budgetAmount: 1500000,
+    },
+  });
+  console.log('✅ Created 2 projects');
+
+  // Create Cost Centers
+  console.log('💰 Creating cost centers...');
+  await Promise.all([
+    prisma.costCenter.create({
+      data: {
+        type: 'BUSINESS_UNIT',
+        code: 'CHEM',
+        name: 'CHEMICALS',
+        description: 'Chemicals Business Unit Cost Center',
+        businessUnitId: chemBusinessUnit.id,
+        isActive: true,
+      },
+    }),
+    prisma.costCenter.create({
+      data: {
+        type: 'BUSINESS_UNIT',
+        code: 'LAB',
+        name: 'LABORATORY',
+        description: 'Laboratory Business Unit Cost Center',
+        businessUnitId: labBusinessUnit.id,
+        isActive: true,
+      },
+    }),
+    prisma.costCenter.create({
+      data: {
+        type: 'BUSINESS_UNIT',
+        code: 'WATER',
+        name: 'WATER',
+        description: 'Water Business Unit Cost Center',
+        businessUnitId: waterBusinessUnit.id,
+        isActive: true,
+      },
+    }),
+    prisma.costCenter.create({
+      data: {
+        type: 'PROJECT',
+        code: 'PROJ-2025-001',
+        name: 'Infrastructure Upgrade 2025',
+        description: 'Infrastructure project cost center',
+        projectId: project1.id,
+        isActive: true,
+      },
+    }),
+    prisma.costCenter.create({
+      data: {
+        type: 'PROJECT',
+        code: 'PROJ-2025-002',
+        name: 'Quality Assurance Initiative',
+        description: 'QA project cost center',
+        projectId: project2.id,
+        isActive: true,
+      },
+    }),
+  ]);
+  console.log('✅ Created 5 cost centers');
 
   // Create Users
   console.log('👤 Creating users...');

@@ -3,17 +3,25 @@ import { RequisitionSlip, RequestItem, ApprovalRecord } from '@docflows/shared';
 
 export interface CreateRequisitionDto {
   departmentId: string;
+  costCenterId?: string;
+  projectId?: string;
+  businessUnitId?: string;
   dateRequested: string;
   dateNeeded: string;
   purpose: string;
+  currency?: string;
   items: Omit<RequestItem, 'id' | 'requisitionSlipId' | 'createdAt' | 'updatedAt'>[];
 }
 
 export interface UpdateRequisitionDto {
   departmentId?: string;
+  costCenterId?: string;
+  projectId?: string;
+  businessUnitId?: string;
   dateRequested?: string;
   dateNeeded?: string;
   purpose?: string;
+  currency?: string;
 }
 
 export interface RejectRequisitionDto {

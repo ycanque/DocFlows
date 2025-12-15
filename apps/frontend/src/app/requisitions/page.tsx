@@ -6,6 +6,8 @@ import { RequisitionSlip, RequisitionStatus } from '@docflows/shared';
 import { getRequisitions } from '@/services/requisitionService';
 import { FileText, Plus, Search, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -97,8 +99,8 @@ export default function RequisitionsListPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Requisitions</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <h1 className="text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">Requisitions</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
             Manage requisition slips and track approvals
           </p>
         </div>
@@ -110,123 +112,132 @@ export default function RequisitionsListPage() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
-          <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
-        </div>
+        <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 mb-4">
+          <CardContent className="p-4">
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </CardContent>
+        </Card>
       )}
 
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {requisitions.length}
-              </p>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">Total</p>
+                <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                  {requisitions.length}
+                </p>
+              </div>
+              <FileText className="h-8 w-8 text-zinc-400" />
             </div>
-            <FileText className="h-8 w-8 text-gray-400" />
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Pending</p>
-              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
-                {requisitions.filter((r) => r.status === RequisitionStatus.PENDING_APPROVAL).length}
-              </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">Pending</p>
+                <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+                  {requisitions.filter((r) => r.status === RequisitionStatus.PENDING_APPROVAL).length}
+                </p>
+              </div>
+              <Filter className="h-8 w-8 text-yellow-400" />
             </div>
-            <Filter className="h-8 w-8 text-yellow-400" />
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Approved</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-                {requisitions.filter((r) => r.status === RequisitionStatus.APPROVED).length}
-              </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">Approved</p>
+                <p className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                  {requisitions.filter((r) => r.status === RequisitionStatus.APPROVED).length}
+                </p>
+              </div>
+              <FileText className="h-8 w-8 text-emerald-400" />
             </div>
-            <FileText className="h-8 w-8 text-green-400" />
-          </div>
-        </div>
-        <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Draft</p>
-              <p className="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                {requisitions.filter((r) => r.status === RequisitionStatus.DRAFT).length}
-              </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-zinc-600 dark:text-zinc-400">Draft</p>
+                <p className="text-2xl font-bold text-zinc-600 dark:text-zinc-400">
+                  {requisitions.filter((r) => r.status === RequisitionStatus.DRAFT).length}
+                </p>
+              </div>
+              <FileText className="h-8 w-8 text-zinc-400" />
             </div>
-            <FileText className="h-8 w-8 text-gray-400" />
-          </div>
-        </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-4">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* Search */}
-          <div className="flex-1 relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search by number, purpose, or requester..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            />
+      <Card>
+        <CardContent className="p-4">
+          <div className="flex flex-col sm:flex-row gap-4">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
+              <input
+                type="text"
+                placeholder="Search by number, purpose, or requester..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
+            {/* Status Filter Tabs */}
+            <div className="flex gap-2 overflow-x-auto">
+              {statusTabs.map((tab) => (
+                <Button
+                  key={tab.label}
+                  variant={selectedStatus === tab.value ? 'default' : 'secondary'}
+                  className="px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
+                  onClick={() => setSelectedStatus(tab.value)}
+                >
+                  {tab.label}
+                </Button>
+              ))}
+            </div>
           </div>
-
-          {/* Status Filter Tabs */}
-          <div className="flex gap-2 overflow-x-auto">
-            {statusTabs.map((tab) => (
-              <button
-                key={tab.label}
-                onClick={() => setSelectedStatus(tab.value)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors ${
-                  selectedStatus === tab.value
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       {/* Requisitions Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-900">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Requisition #
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Requester
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Department
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Purpose
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Date Needed
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Items
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+      <Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-zinc-200 dark:divide-zinc-800">
+              <thead className="bg-zinc-50 dark:bg-zinc-900">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Requisition #
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Requester
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Department
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Purpose
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Date Needed
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Items
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white dark:bg-zinc-950 divide-y divide-zinc-200 dark:divide-zinc-800">
               {filteredRequisitions.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
@@ -268,10 +279,11 @@ export default function RequisitionsListPage() {
                   </tr>
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
-      </div>
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
     </ProtectedRoute>
   );

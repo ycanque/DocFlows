@@ -7,6 +7,18 @@ export class UpdateRequisitionDto {
   @IsOptional()
   departmentId?: string;
 
+  @IsString()
+  @IsOptional()
+  costCenterId?: string;
+
+  @IsString()
+  @IsOptional()
+  projectId?: string;
+
+  @IsString()
+  @IsOptional()
+  businessUnitId?: string;
+
   @IsDateString()
   @IsOptional()
   dateRequested?: string;
@@ -18,6 +30,10 @@ export class UpdateRequisitionDto {
   @IsString()
   @IsOptional()
   purpose?: string;
+
+  @IsString()
+  @IsOptional()
+  currency?: string;
 
   @IsEnum(RequisitionStatus)
   @IsOptional()

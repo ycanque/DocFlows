@@ -23,6 +23,23 @@ enum UserRole {
   TREASURY
 }
 
+enum CostCenterType {
+  PROJECT
+  BUSINESS_UNIT
+  DIVISION
+}
+
+enum BusinessUnitStatus {
+  ACTIVE
+  INACTIVE
+}
+
+enum ProjectStatus {
+  ACTIVE
+  INACTIVE
+  COMPLETED
+}
+
 model User {
   id            String    @id @default(uuid()) @db.Uuid
   email         String    @unique
@@ -70,6 +87,74 @@ model Department {
 
   @@map("departments")
   @@index([code])
+}
+
+model BusinessUnit {
+  id                    String              @id @default(uuid()) @db.Uuid
+  unitCode              String              @unique @map("unit_code")
+  name                  String
+  description           String?
+  status                BusinessUnitStatus  @default(ACTIVE)
+  budgetAmount          Decimal?            @map("budget_amount") @db.Decimal(15, 2)
+  createdAt             DateTime            @default(now()) @map("created_at")
+  updatedAt             DateTime            @updatedAt @map("updated_at")
+
+  // Relations
+  projects              Project[]
+  costCenters           CostCenter[]
+  requisitionSlips      RequisitionSlip[]
+
+  @@map("business_units")
+  @@index([unitCode])
+  @@index([status])
+}
+
+model Project {
+  id                    String         @id @default(uuid()) @db.Uuid
+  projectCode           String         @unique @map("project_code")
+  name                  String
+  description           String?
+  status                ProjectStatus  @default(ACTIVE)
+  businessUnitId        String?        @map("business_unit_id") @db.Uuid
+  businessUnit          BusinessUnit?  @relation(fields: [businessUnitId], references: [id])
+  startDate             DateTime?      @map("start_date") @db.Date
+  endDate               DateTime?      @map("end_date") @db.Date
+  budgetAmount          Decimal?       @map("budget_amount") @db.Decimal(15, 2)
+  createdAt             DateTime       @default(now()) @map("created_at")
+  updatedAt             DateTime       @updatedAt @map("updated_at")
+
+  // Relations
+  costCenters           CostCenter[]
+  requisitionSlips      RequisitionSlip[]
+
+  @@map("projects")
+  @@index([projectCode])
+  @@index([businessUnitId])
+  @@index([status])
+}
+
+model CostCenter {
+  id                    String           @id @default(uuid()) @db.Uuid
+  type                  CostCenterType
+  code                  String           @unique
+  name                  String
+  description           String?
+  projectId             String?          @map("project_id") @db.Uuid
+  project               Project?         @relation(fields: [projectId], references: [id])
+  businessUnitId        String?          @map("business_unit_id") @db.Uuid
+  businessUnit          BusinessUnit?    @relation(fields: [businessUnitId], references: [id])
+  isActive              Boolean          @default(true) @map("is_active")
+  createdAt             DateTime         @default(now()) @map("created_at")
+  updatedAt             DateTime         @updatedAt @map("updated_at")
+
+  // Relations
+  requisitionSlips      RequisitionSlip[]
+
+  @@map("cost_centers")
+  @@index([code])
+  @@index([type])
+  @@index([projectId])
+  @@index([businessUnitId])
 }
 
 model Approver {
@@ -131,9 +216,16 @@ model RequisitionSlip {
   requester             User                @relation(fields: [requesterId], references: [id])
   departmentId          String              @map("department_id") @db.Uuid
   department            Department          @relation(fields: [departmentId], references: [id])
+  costCenterId          String?             @map("cost_center_id") @db.Uuid
+  costCenter            CostCenter?         @relation(fields: [costCenterId], references: [id])
+  projectId             String?             @map("project_id") @db.Uuid
+  project               Project?            @relation(fields: [projectId], references: [id])
+  businessUnitId        String?             @map("business_unit_id") @db.Uuid
+  businessUnit          BusinessUnit?       @relation(fields: [businessUnitId], references: [id])
   dateRequested         DateTime            @map("date_requested") @db.Date
   dateNeeded            DateTime            @map("date_needed") @db.Date
   purpose               String
+  currency              String              @default("PHP")
   status                RequisitionStatus   @default(DRAFT)
   currentApprovalLevel  Int                 @default(0) @map("current_approval_level")
   createdAt             DateTime            @default(now()) @map("created_at")
@@ -147,6 +239,9 @@ model RequisitionSlip {
   @@index([requisitionNumber])
   @@index([requesterId])
   @@index([departmentId])
+  @@index([costCenterId])
+  @@index([projectId])
+  @@index([businessUnitId])
   @@index([status])
 }
 

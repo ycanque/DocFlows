@@ -24,21 +24,25 @@ export class RequisitionsService {
         requisitionNumber: `REQ-${Date.now()}`,
         requesterId: dto.requesterId,
         departmentId: dto.departmentId,
+        costCenterId: dto.costCenterId,
+        projectId: dto.projectId,
+        businessUnitId: dto.businessUnitId,
         dateRequested: new Date(dto.dateRequested),
         dateNeeded: new Date(dto.dateNeeded),
         purpose: dto.purpose,
+        currency: dto.currency ?? 'PHP',
         status: dto.status ?? RequisitionStatus.DRAFT,
         items: {
           create: dto.items?.map((item) => this.toCreateItem(item)) ?? [],
         },
       },
-      include: { items: true, requester: true, department: true },
+      include: { items: true, requester: true, department: true, costCenter: true, project: true, businessUnit: true },
     });
   }
 
   findAll() {
     return this.prisma.requisitionSlip.findMany({
-      include: { items: true, requester: true, department: true },
+      include: { items: true, requester: true, department: true, costCenter: true, project: true, businessUnit: true },
       orderBy: { createdAt: 'desc' },
     });
   }
@@ -46,7 +50,7 @@ export class RequisitionsService {
   async findOne(id: string) {
     const requisition = await this.prisma.requisitionSlip.findUnique({
       where: { id },
-      include: { items: true, requester: true, department: true },
+      include: { items: true, requester: true, department: true, costCenter: true, project: true, businessUnit: true },
     });
 
     if (!requisition) throw new NotFoundException('Requisition not found');
