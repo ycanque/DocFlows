@@ -24,8 +24,12 @@ async function main() {
   // Clear existing data (in reverse order of dependencies)
   console.log('🧹 Cleaning existing data...');
   await prisma.approvalRecord.deleteMany();
+  await prisma.check.deleteMany();
+  await prisma.checkVoucher.deleteMany();
+  await prisma.requisitionForPayment.deleteMany();
   await prisma.requestItem.deleteMany();
   await prisma.requisitionSlip.deleteMany();
+  await prisma.bankAccount.deleteMany();
   await prisma.costCenter.deleteMany();
   await prisma.project.deleteMany();
   await prisma.businessUnit.deleteMany();
@@ -510,6 +514,94 @@ async function main() {
 
   console.log(`✅ Created 4 sample requisitions with different statuses`);
 
+  // Create Bank Accounts
+  console.log('\n💳 Creating bank accounts...');
+  const bankAccounts = await Promise.all([
+    prisma.bankAccount.create({
+      data: {
+        accountName: 'Main Operating Account',
+        accountNumber: '1001-2345-6789',
+        bankName: 'BDO',
+        isActive: true,
+      },
+    }),
+    prisma.bankAccount.create({
+      data: {
+        accountName: 'Payroll Account',
+        accountNumber: '2001-3456-7890',
+        bankName: 'BPI',
+        isActive: true,
+      },
+    }),
+    prisma.bankAccount.create({
+      data: {
+        accountName: 'Savings Account',
+        accountNumber: '3001-4567-8901',
+        bankName: 'PNB',
+        isActive: true,
+      },
+    }),
+    prisma.bankAccount.create({
+      data: {
+        accountName: 'Old Account (Inactive)',
+        accountNumber: '0001-0000-0000',
+        bankName: 'Metrobank',
+        isActive: false,
+      },
+    }),
+  ]);
+
+  console.log(`✅ Created ${bankAccounts.length} bank accounts`);
+
+  // Create Sample RFPs
+  console.log('\n💰 Creating sample requisitions for payment...');
+  const rfps = await Promise.all([
+    prisma.requisitionForPayment.create({
+      data: {
+        rfpNumber: `RFP-${Date.now()}-DRAFT01`,
+        requesterId: regularUser1.id,
+        departmentId: adminDept.id,
+        seriesCode: 'S',
+        dateNeeded: new Date('2025-12-25'),
+        payee: 'Acme Supplies Inc.',
+        particulars: 'Office supplies and equipment',
+        amount: 15000,
+        status: 'DRAFT',
+        currentApprovalLevel: 0,
+      },
+    }),
+    prisma.requisitionForPayment.create({
+      data: {
+        rfpNumber: `RFP-${Date.now()}-SUBM01`,
+        requesterId: regularUser1.id,
+        departmentId: adminDept.id,
+        seriesCode: 'U',
+        dateNeeded: new Date('2025-12-20'),
+        payee: 'Tech Solutions Ltd.',
+        particulars: 'Software licenses',
+        amount: 25000,
+        status: 'SUBMITTED',
+        currentApprovalLevel: 1,
+      },
+    }),
+    prisma.requisitionForPayment.create({
+      data: {
+        rfpNumber: `RFP-${Date.now()}-APPR01`,
+        requesterId: regularUser1.id,
+        departmentId: financeDept.id,
+        seriesCode: 'G',
+        dateNeeded: new Date('2025-12-22'),
+        payee: 'Consulting Partners Co.',
+        particulars: 'Professional services',
+        amount: 50000,
+        status: 'APPROVED',
+        currentApprovalLevel: 2,
+      },
+    }),
+  ]);
+
+  console.log(`✅ Created ${rfps.length} sample requisitions for payment`);
+
   console.log('\n🎉 Seed completed successfully!\n');
   console.log('📊 Summary:');
   console.log(`   - Departments: ${departments.length}`);
@@ -517,6 +609,8 @@ async function main() {
   console.log(`   - Approvers: 5 (with 3-level hierarchy for Ops dept)`);
   console.log(`   - Requisitions: 4 (various statuses)`);
   console.log(`   - Approval Records: 3`);
+  console.log(`   - Bank Accounts: ${bankAccounts.length}`);
+  console.log(`   - Requisitions for Payment: ${rfps.length}`);
   console.log('\n🔐 Test Credentials:');
   console.log('   Admin: admin@docflow.com / admin123');
   console.log('   User: user1@docflow.com / password123');

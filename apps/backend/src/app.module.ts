@@ -8,6 +8,7 @@ import { DepartmentsModule } from './departments/departments.module';
 import { RequisitionsModule } from './requisitions/requisitions.module';
 import { CostCentersModule } from './cost-centers/cost-centers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { PaymentsModule } from './payments/payments.module';
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
     RequisitionsModule,
     CostCentersModule,
     DashboardModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
