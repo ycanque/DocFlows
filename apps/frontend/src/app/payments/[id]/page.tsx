@@ -174,7 +174,7 @@ export default function PaymentDetailPage() {
   }
 
   function canCancel() {
-    return ![RFPStatus.DISBURSED, RFPStatus.CANCELLED, RFPStatus.REJECTED].includes(payment?.status as RFPStatus) &&
+    return ![RFPStatus.APPROVED, RFPStatus.CV_GENERATED, RFPStatus.CHECK_ISSUED, RFPStatus.DISBURSED, RFPStatus.CANCELLED, RFPStatus.REJECTED].includes(payment?.status as RFPStatus) &&
            user?.role === UserRole.ADMIN;
   }
 
