@@ -65,6 +65,31 @@ export class RequisitionsService {
     });
   }
 
+  async search(query: string) {
+    // Only search by requisition number to avoid UUID parsing errors
+    // Limit results for performance
+    const requisitions = await this.prisma.requisitionSlip.findMany({
+      where: {
+        requisitionNumber: {
+          contains: query,
+          mode: 'insensitive',
+        },
+        // Only include submitted or approved requisitions that can be referenced in payments
+        status: {
+          in: [RequisitionStatus.PENDING_APPROVAL, RequisitionStatus.APPROVED, RequisitionStatus.COMPLETED],
+        },
+      },
+      select: {
+        id: true,
+        requisitionNumber: true,
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 10, // Limit to 10 results for performance
+    });
+
+    return requisitions;
+  }
+
   async findOne(id: string) {
     const requisition = await this.prisma.requisitionSlip.findUnique({
       where: { id },

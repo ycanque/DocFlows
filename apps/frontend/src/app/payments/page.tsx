@@ -10,8 +10,6 @@ import { Card, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Sidebar from '@/components/layout/Sidebar';
-import TopBar from '@/components/layout/TopBar';
 import { format, parseISO } from 'date-fns';
 
 const statusTabs = [
@@ -34,7 +32,6 @@ export default function PaymentsListPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStatus, setSelectedStatus] = useState<RFPStatus | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     loadPayments();
@@ -91,16 +88,7 @@ export default function PaymentsListPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-        <Sidebar 
-          currentView="payments"
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900" role="main">
-            <div className="p-6 sm:p-8 space-y-8">
+      <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
@@ -270,7 +258,7 @@ export default function PaymentsListPage() {
                           {payment.currency} {payment.amount.toLocaleString()}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
-                          {payment.date ? format(parseISO(payment.date), 'MMM dd, yyyy') : 'N/A'}
+                          {payment.dateNeeded ? format(parseISO(payment.dateNeeded), 'MMM dd, yyyy') : 'N/A'}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <StatusBadge status={payment.status} />
@@ -283,9 +271,6 @@ export default function PaymentsListPage() {
             </div>
           </CardContent>
         </Card>
-            </div>
-          </main>
-        </div>
       </div>
     </ProtectedRoute>
   );

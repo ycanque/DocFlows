@@ -299,19 +299,6 @@ export default function CheckVoucherDetailPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Approval History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {voucher.approvalRecords && voucher.approvalRecords.length > 0 ? (
-                  <PaymentStatusTimeline approvalRecords={voucher.approvalRecords} />
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No approval history yet</p>
-                )}
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
                 <CardTitle>Metadata</CardTitle>
               </CardHeader>
               <CardContent>

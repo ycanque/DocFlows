@@ -17,8 +17,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import PaymentStatusTimeline from '@/components/payments/PaymentStatusTimeline';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import Sidebar from '@/components/layout/Sidebar';
-import TopBar from '@/components/layout/TopBar';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
@@ -34,7 +32,6 @@ export default function PaymentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
     if (paymentId) {
@@ -91,7 +88,7 @@ export default function PaymentDetailPage() {
     try {
       setActionLoading(true);
       setError(null);
-      await rejectRequisitionForPayment(payment.id, 'Rejected by approver');
+      await rejectRequisitionForPayment(payment.id, { reason: 'Rejected by approver' });
       setSuccess('Payment request rejected');
       await loadPayment();
     } catch (err: any) {
@@ -177,51 +174,32 @@ export default function PaymentDetailPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-          <Sidebar 
-            currentView="payments"
-            isOpen={isSidebarOpen}
-            onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-            <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900" role="main">
-              <div className="p-6">
-                <div className="text-center py-12">
-                  <p className="text-zinc-600 dark:text-zinc-400">Loading payment request...</p>
-                </div>
-              </div>
-            </main>
-          </div>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
         </div>
       </ProtectedRoute>
     );
   }
 
-  if (error && !payment) {
+  if (error || !payment) {
     return (
       <ProtectedRoute>
-        <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-          <Sidebar 
-            currentView="payments"
-            isOpen={isSidebarOpen}
-            onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-          />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-            <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900" role="main">
-              <div className="p-6">
-                <Card>
-                  <CardContent className="pt-6">
-                    <p className="text-red-600 mb-4">{error}</p>
-                    <Button onClick={() => router.push('/payments')} className="mt-4">
-                      Back to Payments
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </main>
-          </div>
+        <div className="space-y-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/payments')}
+            className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Payments
+          </Button>
+          <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+            <CardContent className="p-4">
+              <p className="text-sm text-red-800 dark:text-red-200">
+                {error || 'Payment request not found'}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       </ProtectedRoute>
     );
@@ -233,16 +211,7 @@ export default function PaymentDetailPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-        <Sidebar 
-          currentView="payments"
-          isOpen={isSidebarOpen}
-          onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-        />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900" role="main">
-            <div className="p-6 sm:p-8 space-y-8">
+      <div className="space-y-6">
               {/* Header */}
               <div className="flex flex-col gap-4">
                 <Button 
@@ -349,9 +318,9 @@ export default function PaymentDetailPage() {
                     </p>
                   </div>
                   <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Date</p>
+                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Date Needed</p>
                     <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {payment.date ? format(parseISO(payment.date), 'MMM dd, yyyy') : 'N/A'}
+                      {payment.dateNeeded ? format(parseISO(payment.dateNeeded), 'MMM dd, yyyy') : 'N/A'}
                     </p>
                   </div>
                   <div>
@@ -389,7 +358,7 @@ export default function PaymentDetailPage() {
                 <CardTitle>Approval Timeline</CardTitle>
               </CardHeader>
               <CardContent>
-                <PaymentStatusTimeline payment={payment} />
+                <PaymentStatusTimeline approvalRecords={payment.approvalRecords || []} />
               </CardContent>
             </Card>
 
@@ -425,9 +394,6 @@ export default function PaymentDetailPage() {
               </Card>
             )}
           </div>
-        </div>
-            </div>
-          </main>
         </div>
       </div>
     </ProtectedRoute>

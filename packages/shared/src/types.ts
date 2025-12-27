@@ -165,6 +165,7 @@ export interface RequisitionForPayment {
   payee: string;
   particulars: string;
   amount: number;
+  currency: string;
   status: RFPStatus;
   currentApprovalLevel: number;
   checkVoucher?: CheckVoucher;

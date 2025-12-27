@@ -1,10 +1,16 @@
-import { IsString, IsOptional, IsDate, IsDecimal, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsDate, IsNumber, IsUUID } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateRequisitionForPaymentDto {
   @IsUUID()
   @IsOptional()
   requisitionSlipId?: string;
+
+  @IsUUID()
+  requesterId: string;
+
+  @IsUUID()
+  departmentId: string;
 
   @IsString()
   seriesCode: string;
@@ -19,6 +25,11 @@ export class CreateRequisitionForPaymentDto {
   @IsString()
   particulars: string;
 
-  @IsDecimal({ decimal_digits: '2' })
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Type(() => Number)
   amount: number;
+
+  @IsString()
+  @IsOptional()
+  currency?: string;
 }

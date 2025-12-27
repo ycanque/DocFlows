@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
   Request,
 } from '@nestjs/common';
@@ -40,6 +41,14 @@ export class RequisitionsController {
   @ApiResponse({ status: 401, description: 'Unauthorized' })
   findAll() {
     return this.requisitionsService.findAll();
+  }
+
+  @Get('search')
+  @ApiOperation({ summary: 'Search requisitions by requisition number' })
+  @ApiResponse({ status: 200, description: 'Search results' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  search(@Query('q') query: string) {
+    return this.requisitionsService.search(query || '');
   }
 
   @Get(':id')

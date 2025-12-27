@@ -93,10 +93,9 @@ export class PaymentsController {
   @ApiOperation({ summary: 'Create requisition for payment' })
   @ApiResponse({ status: 201, description: 'RFP created' })
   async createRequisitionForPayment(
-    @Req() req: RequestWithUser,
     @Body() createDto: CreateRequisitionForPaymentDto,
   ): Promise<RequisitionForPayment> {
-    return this.paymentsService.create(req.user.id, req.user.departmentId, createDto);
+    return this.paymentsService.create(createDto);
   }
 
   @Get()

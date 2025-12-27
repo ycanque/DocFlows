@@ -247,7 +247,7 @@ export default function ChecksListPage() {
                       <StatusBadge status={check.status} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {check.issueDate ? format(parseISO(check.issueDate), 'MMM d, yyyy') : 'N/A'}
+                      {check.checkDate ? format(parseISO(check.checkDate), 'MMM d, yyyy') : 'N/A'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                       {check.disbursementDate ? format(parseISO(check.disbursementDate), 'MMM d, yyyy') : '-'}

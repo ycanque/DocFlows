@@ -296,6 +296,7 @@ model RequisitionForPayment {
   payee                 String
   particulars           String
   amount                Decimal           @db.Decimal(15, 2)
+  currency              String            @default("PHP")
   status                RFPStatus         @default(DRAFT)
   currentApprovalLevel  Int               @default(0) @map("current_approval_level")
   createdAt             DateTime          @default(now()) @map("created_at")

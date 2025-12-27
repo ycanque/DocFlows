@@ -238,9 +238,9 @@ export default function CheckDetailPage() {
                     </dd>
                   </div>
                   <div>
-                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Issue Date</dt>
+                    <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Check Date</dt>
                     <dd className="mt-1 text-sm text-gray-900 dark:text-white">
-                      {check.issueDate ? format(parseISO(check.issueDate), 'MMMM d, yyyy') : 'N/A'}
+                      {check.checkDate ? format(parseISO(check.checkDate), 'MMMM d, yyyy') : 'N/A'}
                     </dd>
                   </div>
                   <div>
@@ -249,14 +249,6 @@ export default function CheckDetailPage() {
                       {check.disbursementDate ? format(parseISO(check.disbursementDate), 'MMMM d, yyyy') : 'Not yet disbursed'}
                     </dd>
                   </div>
-                  {check.voidReason && (
-                    <div className="sm:col-span-2">
-                      <dt className="text-sm font-medium text-gray-500 dark:text-gray-400">Void Reason</dt>
-                      <dd className="mt-1 text-sm text-red-600 dark:text-red-400">
-                        {check.voidReason}
-                      </dd>
-                    </div>
-                  )}
                 </dl>
               </CardContent>
             </Card>
@@ -305,19 +297,6 @@ export default function CheckDetailPage() {
           </div>
 
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Approval History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {check.approvalRecords && check.approvalRecords.length > 0 ? (
-                  <PaymentStatusTimeline approvalRecords={check.approvalRecords} />
-                ) : (
-                  <p className="text-sm text-gray-500 dark:text-gray-400">No approval history yet</p>
-                )}
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <CardTitle>Metadata</CardTitle>

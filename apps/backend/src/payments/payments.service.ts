@@ -12,24 +12,21 @@ import { CreateRequisitionForPaymentDto, UpdateRequisitionForPaymentDto } from '
 export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
-  async create(
-    userId: string,
-    departmentId: string,
-    data: CreateRequisitionForPaymentDto,
-  ): Promise<RequisitionForPayment> {
+  async create(data: CreateRequisitionForPaymentDto): Promise<RequisitionForPayment> {
     // Generate unique RFP number
     const rfpNumber = `RFP-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
 
     return this.prisma.requisitionForPayment.create({
       data: {
         rfpNumber,
-        requesterId: userId,
-        departmentId,
+        requesterId: data.requesterId,
+        departmentId: data.departmentId,
         seriesCode: data.seriesCode,
         dateNeeded: data.dateNeeded,
         payee: data.payee,
         particulars: data.particulars,
         amount: data.amount,
+        currency: data.currency || 'PHP',
         requisitionSlipId: data.requisitionSlipId,
         status: RFPStatus.DRAFT,
         currentApprovalLevel: 0,

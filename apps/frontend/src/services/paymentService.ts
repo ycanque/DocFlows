@@ -3,6 +3,8 @@ import { RequisitionForPayment, ApprovalRecord } from "@docflows/shared";
 
 export interface CreateRequisitionForPaymentDto {
   requisitionSlipId?: string;
+  requesterId: string;
+  departmentId: string;
   seriesCode: string;
   dateNeeded: string;
   payee: string;
@@ -124,5 +126,17 @@ export async function cancelRequisitionForPayment(
   id: string
 ): Promise<RequisitionForPayment> {
   const response = await api.post(`/payments/${id}/cancel`);
+  return response.data;
+}
+
+/**
+ * Search requisition slips by number or ID
+ */
+export async function searchRequisitionSlips(
+  query: string
+): Promise<Array<{ id: string; requisitionNumber: string }>> {
+  const response = await api.get(
+    `/requisitions/search?q=${encodeURIComponent(query)}`
+  );
   return response.data;
 }
