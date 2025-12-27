@@ -1,5 +1,5 @@
 import { ApprovalRecord, User } from '@docflows/shared';
-import { CheckCircle2, XCircle, FileText } from 'lucide-react';
+import { CheckCircle2, XCircle, FileText, Send, Clock } from 'lucide-react';
 
 interface ApprovalTimelineProps {
   approvalRecords: ApprovalRecord[];
@@ -124,6 +124,8 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
           const isApproved = !!record.approvedBy;
           const isRejected = !!record.rejectedBy;
           const isCancelled = record.approvalLevel === -1;
+          const isSubmission = record.approvalLevel === 0 && record.submitter;
+          const isPending = !isApproved && !isRejected && !isCancelled && !isSubmission && record.approvalLevel > 0;
           const isLast = recordIdx === sortedRecords.length - 1;
 
           return (
@@ -141,19 +143,27 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                       className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-gray-900 ${
                         isCancelled
                           ? 'bg-gray-500'
+                          : isSubmission
+                          ? 'bg-blue-500'
                           : isApproved
                           ? 'bg-green-500'
                           : isRejected
                           ? 'bg-red-500'
+                          : isPending
+                          ? 'bg-yellow-500'
                           : 'bg-gray-400'
                       }`}
                     >
                       {isCancelled ? (
                         <XCircle className="h-5 w-5 text-white" aria-hidden="true" />
+                      ) : isSubmission ? (
+                        <Send className="h-4 w-4 text-white" aria-hidden="true" />
                       ) : isApproved ? (
                         <CheckCircle2 className="h-5 w-5 text-white" aria-hidden="true" />
                       ) : isRejected ? (
                         <XCircle className="h-5 w-5 text-white" aria-hidden="true" />
+                      ) : isPending ? (
+                        <Clock className="h-4 w-4 text-white" aria-hidden="true" />
                       ) : (
                         <span className="h-2 w-2 bg-white rounded-full" />
                       )}

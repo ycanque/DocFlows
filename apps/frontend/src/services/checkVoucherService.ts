@@ -42,3 +42,16 @@ export async function approveCheckVoucher(id: string): Promise<CheckVoucher> {
   const response = await api.patch(`/payments/check-vouchers/${id}/approve`);
   return response.data;
 }
+
+/**
+ * Reject a check voucher
+ */
+export async function rejectCheckVoucher(
+  id: string,
+  reason: string
+): Promise<CheckVoucher> {
+  const response = await api.patch(`/payments/check-vouchers/${id}/reject`, {
+    reason,
+  });
+  return response.data;
+}

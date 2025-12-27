@@ -348,7 +348,7 @@ model CheckVoucher {
 
 enum CheckStatus {
   ISSUED
-  CLEARED
+  DISBURSED
   VOIDED
   CANCELLED
 }
@@ -366,6 +366,7 @@ model Check {
   status            CheckStatus   @default(ISSUED)
   issuedBy          String?       @map("issued_by") @db.Uuid
   disbursedBy       String?       @map("disbursed_by") @db.Uuid
+  receivedBy        String?       @map("received_by")
   disbursementDate  DateTime?     @map("disbursement_date") @db.Date
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")

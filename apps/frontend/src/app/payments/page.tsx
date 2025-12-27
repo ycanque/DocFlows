@@ -15,7 +15,7 @@ import { format, parseISO } from 'date-fns';
 const statusTabs = [
   { label: 'All', value: null },
   { label: 'Draft', value: RFPStatus.DRAFT },
-  { label: 'Submitted', value: RFPStatus.SUBMITTED },
+  { label: 'Pending', value: RFPStatus.SUBMITTED },
   { label: 'Approved', value: RFPStatus.APPROVED },
   { label: 'CV Generated', value: RFPStatus.CV_GENERATED },
   { label: 'Check Issued', value: RFPStatus.CHECK_ISSUED },
@@ -171,7 +171,7 @@ export default function PaymentsListPage() {
         {/* Filters */}
         <Card>
           <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col lg:flex-row gap-4">
               {/* Search */}
               <div className="flex-1 relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
@@ -184,7 +184,7 @@ export default function PaymentsListPage() {
                 />
               </div>
               {/* Status Filter Tabs */}
-              <div className="flex gap-2 overflow-x-auto">
+              <div className="flex gap-2 overflow-x-auto max-w-full pb-2 lg:pb-0">
                 {statusTabs.map((tab) => (
                   <Button
                     key={tab.label}

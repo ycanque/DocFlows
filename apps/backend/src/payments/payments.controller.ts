@@ -224,6 +224,20 @@ export class PaymentsController {
     return this.checkVouchersService.approve(id, req.user.id);
   }
 
+  @Patch('check-vouchers/:id/reject')
+  @ApiOperation({ summary: 'Reject check voucher' })
+  @ApiResponse({ status: 200, description: 'Check Voucher rejected' })
+  async rejectCheckVoucher(
+    @Param('id') id: string,
+    @Body('reason') reason: string,
+    @Req() req: RequestWithUser,
+  ): Promise<CheckVoucher> {
+    if (!reason) {
+      throw new BadRequestException('Reason is required to reject a check voucher');
+    }
+    return this.checkVouchersService.reject(id, req.user.id, reason);
+  }
+
   // ==================== CHECKS ====================
 
   @Post('check-vouchers/:id/issue-check')
@@ -254,8 +268,12 @@ export class PaymentsController {
   @Patch('checks/:id/clear')
   @ApiOperation({ summary: 'Clear/disburse check' })
   @ApiResponse({ status: 200, description: 'Check cleared' })
-  async clearCheck(@Param('id') id: string, @Req() req: RequestWithUser): Promise<Check> {
-    return this.checksService.clear(id, req.user.id);
+  async clearCheck(
+    @Param('id') id: string,
+    @Body('receivedBy') receivedBy: string,
+    @Req() req: RequestWithUser,
+  ): Promise<Check> {
+    return this.checksService.clear(id, req.user.id, receivedBy);
   }
 
   @Patch('checks/:id/void')

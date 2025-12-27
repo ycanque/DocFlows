@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { RequisitionSlip, RequisitionStatus } from '@docflows/shared';
 import { getRequisitions } from '@/services/requisitionService';
 import { FileText, Plus, Search, Filter } from 'lucide-react';
@@ -22,13 +22,17 @@ const statusTabs = [
 
 export default function RequisitionsListPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user } = useAuth();
   const [requisitions, setRequisitions] = useState<RequisitionSlip[]>([]);
   const [filteredRequisitions, setFilteredRequisitions] = useState<RequisitionSlip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<RequisitionStatus | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<RequisitionStatus | null>(() => {
+    const statusParam = searchParams.get('status');
+    return statusParam === 'PENDING_APPROVAL' ? RequisitionStatus.PENDING_APPROVAL : null;
+  });
 
   useEffect(() => {
     loadRequisitions();

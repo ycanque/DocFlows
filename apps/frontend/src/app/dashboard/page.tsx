@@ -186,7 +186,7 @@ export default function DashboardPage() {
                       iconColor="text-orange-600 dark:text-orange-400"
                       trend={stats.pendingApprovals.trend}
                       description={stats.pendingApprovals.description}
-                      onClick={() => handleNavigate('requisitions')}
+                      onClick={() => router.push('/requisitions?status=PENDING_APPROVAL')}
                     />
                   </>
                 ) : null}

@@ -1,143 +1,410 @@
 'use client';
 
-import { ApprovalRecord } from '@docflows/shared';
-import { format, parseISO } from 'date-fns';
+import { ApprovalRecord, User, CheckVoucher } from '@docflows/shared';
+import { CheckCircle2, XCircle, FileText, Send, Clock, Receipt, ArrowRight, CreditCard, CheckCircle } from 'lucide-react';
+import Link from 'next/link';
 
 interface PaymentStatusTimelineProps {
   approvalRecords: ApprovalRecord[];
+  createdAt?: string;
+  requester?: User;
+  checkVoucher?: CheckVoucher | null;
   className?: string;
+}
+
+function formatDateOnly(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleDateString('en-US', {
+    month: '2-digit',
+    day: '2-digit',
+    year: 'numeric',
+  });
+}
+
+function formatTimeOnly(timestamp: string): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  });
 }
 
 export default function PaymentStatusTimeline({
   approvalRecords,
+  createdAt,
+  requester,
+  checkVoucher,
   className = '',
 }: PaymentStatusTimelineProps) {
-  if (!approvalRecords || approvalRecords.length === 0) {
+  const hasApprovalRecords = approvalRecords && approvalRecords.length > 0;
+  const hasAnyTimeline = createdAt || hasApprovalRecords || checkVoucher;
+
+  if (!hasAnyTimeline) {
     return (
-      <div className={`text-sm text-gray-500 dark:text-gray-400 ${className}`}>
-        No approval history available.
+      <div className={`text-sm text-gray-500 dark:text-gray-400 text-center py-8 ${className}`}>
+        No approval history yet
       </div>
     );
   }
 
-  // Sort by date (newest first)
-  const sortedRecords = [...approvalRecords].sort(
-    (a, b) => parseISO(b.createdAt).getTime() - parseISO(a.createdAt).getTime()
+  // Sort by timestamp (earliest first)
+  const sortedRecords = hasApprovalRecords 
+    ? [...approvalRecords].sort((a, b) => {
+        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+      })
+    : [];
+
+  // Separate the disbursed and rejected records from other approval records
+  const disbursedRecord = sortedRecords.find(r => r.comments?.includes('Check Disbursed - Payment Complete'));
+  const rejectedRecord = sortedRecords.find(r => r.comments?.includes('Payment rejected'));
+  const regularRecords = sortedRecords.filter(r => 
+    !r.comments?.includes('Check Disbursed - Payment Complete') && 
+    !r.comments?.includes('Payment rejected')
   );
 
-  const getActionIcon = (action: string) => {
-    switch (action.toLowerCase()) {
-      case 'submitted':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <svg className="h-5 w-5 text-blue-600 dark:text-blue-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-      case 'approved':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-            <svg className="h-5 w-5 text-green-600 dark:text-green-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-      case 'rejected':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-900">
-            <svg className="h-5 w-5 text-red-600 dark:text-red-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-      case 'cancelled':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-            <svg className="h-5 w-5 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM7 9a1 1 0 000 2h6a1 1 0 100-2H7z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-      case 'verified':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-            <svg className="h-5 w-5 text-blue-600 dark:text-blue-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-      case 'issued':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900">
-            <svg className="h-5 w-5 text-indigo-600 dark:text-indigo-300" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
-              <path fillRule="evenodd" d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-      case 'cleared':
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900">
-            <svg className="h-5 w-5 text-emerald-600 dark:text-emerald-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-      default:
-        return (
-          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-gray-800">
-            <svg className="h-5 w-5 text-gray-600 dark:text-gray-300" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-            </svg>
-          </div>
-        );
-    }
-  };
+  // Calculate max approval level from regular records
+  const maxApprovalLevel = regularRecords.length > 0
+    ? Math.max(...regularRecords.filter(r => r.approvalLevel > 0).map(r => r.approvalLevel))
+    : 1;
 
   return (
     <div className={`flow-root ${className}`}>
-      <ul className="-mb-8">
-        {sortedRecords.map((record, idx) => (
-          <li key={record.id}>
+      <ul role="list" className={checkVoucher ? "pb-2" : "-mb-8"}>
+        {/* Created Entry */}
+        {createdAt && (
+          <li key="created">
             <div className="relative pb-8">
-              {idx !== sortedRecords.length - 1 && (
+              {/* Timeline connector line */}
+              {regularRecords.length > 0 && (
                 <span
-                  className="absolute left-4 top-8 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
+                  className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
                   aria-hidden="true"
                 />
               )}
               <div className="relative flex space-x-3">
-                <div>{getActionIcon(record.action)}</div>
+                <div>
+                  <span className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center ring-8 ring-white dark:ring-gray-900">
+                    <FileText className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </span>
+                </div>
                 <div className="flex min-w-0 flex-1 justify-between space-x-4">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white">
-                      {record.action}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 dark:text-gray-100">
+                      <span className="font-medium">Created</span>
                     </p>
-                    {record.submittedBy && (
-                      <p className="mt-0.5 text-sm text-gray-500 dark:text-gray-400">
-                        by {record.submittedBy.firstName} {record.submittedBy.lastName}
-                      </p>
-                    )}
-                    {record.comments && (
-                      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-                        {record.comments}
+                    {requester && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        by {requester.firstName} {requester.lastName}{' '}
+                        <span className="text-xs">({requester.role})</span>
                       </p>
                     )}
                   </div>
-                  <div className="whitespace-nowrap text-right text-sm text-gray-500 dark:text-gray-400">
-                    <time dateTime={record.createdAt?.toString() || ''}>
-                      {record.createdAt ? format(parseISO(record.createdAt), 'MMM d, yyyy') : 'N/A'}
-                    </time>
-                    <div className="text-xs">
-                      {record.createdAt ? format(parseISO(record.createdAt), 'h:mm a') : ''}
-                    </div>
+                  <div className="flex flex-col items-end text-nowrap text-xs text-gray-500 dark:text-gray-400">
+                    <span>{formatDateOnly(createdAt)}</span>
+                    <span>{formatTimeOnly(createdAt)}</span>
                   </div>
                 </div>
               </div>
             </div>
           </li>
-        ))}
+        )}
+
+        {/* Approval Records */}
+        {regularRecords.map((record, recordIdx) => {
+          const isApproved = !!record.approvedBy;
+          const isRejected = !!record.rejectedBy;
+          const isCancelled = record.comments?.toLowerCase().includes('cancel');
+          const isSubmission = record.approvalLevel === 0 && record.submitter;
+          const isPending = !isApproved && !isRejected && !isCancelled && !isSubmission;
+          const isLast = recordIdx === regularRecords.length - 1;
+          const showLine = !isLast || !!checkVoucher;
+
+          return (
+            <li key={record.id}>
+              <div className="relative pb-8">
+                {showLine && (
+                  <span
+                    className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
+                    aria-hidden="true"
+                  />
+                )}
+                <div className="relative flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                  <div className="flex-shrink-0">
+                    <span
+                      className={`h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white dark:ring-gray-900 ${
+                        isCancelled
+                          ? 'bg-gray-500'
+                          : isSubmission
+                          ? 'bg-blue-500'
+                          : isApproved
+                          ? 'bg-green-500'
+                          : isRejected
+                          ? 'bg-red-500'
+                          : isPending
+                          ? 'bg-yellow-500'
+                          : 'bg-gray-400'
+                      }`}
+                    >
+                      {isCancelled ? (
+                        <XCircle className="h-5 w-5 text-white" aria-hidden="true" />
+                      ) : isSubmission ? (
+                        <Send className="h-4 w-4 text-white" aria-hidden="true" />
+                      ) : isApproved ? (
+                        <CheckCircle2 className="h-5 w-5 text-white" aria-hidden="true" />
+                      ) : isRejected ? (
+                        <XCircle className="h-5 w-5 text-white" aria-hidden="true" />
+                      ) : isPending ? (
+                        <Clock className="h-4 w-4 text-white" aria-hidden="true" />
+                      ) : (
+                        <span className="h-2 w-2 bg-white rounded-full" />
+                      )}
+                    </span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm text-gray-900 dark:text-gray-100">
+                      {isCancelled ? (
+                        <span className="font-medium text-gray-600 dark:text-gray-400">Cancelled</span>
+                      ) : record.approvalLevel === 0 && record.submitter ? (
+                        <span className="font-medium">Submitted for Approval</span>
+                      ) : (
+                        <>
+                          {!isApproved && !isRejected ? (
+                            <span className="font-medium">🕒 Pending Approval - Level {record.approvalLevel} of {maxApprovalLevel}</span>
+                          ) : (
+                            <>
+                              Level {record.approvalLevel}{' '}
+                              {isApproved && (
+                                <span className="font-medium text-green-600 dark:text-green-400">
+                                  Approved
+                                </span>
+                              )}
+                              {isRejected && (
+                                <span className="font-medium text-red-600 dark:text-red-400">
+                                  Rejected
+                                </span>
+                              )}
+                            </>
+                          )}
+                        </>
+                      )}
+                    </p>
+                    {record.submitter && !isCancelled && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        by {record.submitter.firstName} {record.submitter.lastName}{' '}
+                        <span className="text-xs">({record.submitter.role})</span>
+                      </p>
+                    )}
+                    {isCancelled && record.submitter && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        by {record.submitter.firstName} {record.submitter.lastName}{' '}
+                        <span className="text-xs">({record.submitter.role})</span>
+                      </p>
+                    )}
+                    {record.approver && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        by {record.approver.firstName} {record.approver.lastName}{' '}
+                        <span className="text-xs">({record.approver.role})</span>
+                      </p>
+                    )}
+                    {record.rejector && (
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        by {record.rejector.firstName} {record.rejector.lastName}{' '}
+                        <span className="text-xs">({record.rejector.role})</span>
+                      </p>
+                    )}
+                    {!isApproved && !isRejected && record.approvalLevel > 0 && !record.submitter && (
+                      <p className="text-sm text-blue-600 dark:text-blue-400">
+                        Awaiting action from: <span className="font-medium">Approver</span>
+                      </p>
+                    )}
+                    {!isApproved && !isRejected && record.approvalLevel > 0 && !record.submitter && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400">
+                        Required role: <span className="font-mono">APPROVER</span>
+                      </p>
+                    )}
+                    {record.comments && record.comments !== 'Submitted for approval' && !record.comments.includes('Awaiting') && (
+                      <p className={`mt-1 text-sm ${isRejected ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-300'}`}>
+                        "{record.comments}"
+                      </p>
+                    )}
+                  </div>
+                  <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0">
+                    <time dateTime={record.timestamp} className="text-xs flex flex-col gap-1 whitespace-nowrap">
+                      <span>{formatDateOnly(record.timestamp)}</span>
+                      <span>{formatTimeOnly(record.timestamp)}</span>
+                    </time>
+                  </div>
+                </div>
+              </div>
+            </li>
+          );
+        })}
+
+        {checkVoucher && (
+          <li className="relative">
+            <div className={`relative ${checkVoucher.check || rejectedRecord ? 'pb-8' : ''}`}>
+              {(checkVoucher.check || rejectedRecord) && (
+                <span
+                  className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
+                  aria-hidden="true"
+                />
+              )}
+              <div className="relative flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center ring-8 ring-white dark:ring-gray-950 z-10 relative">
+                    <Receipt className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                    Check Voucher Created
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    CV #: <span className="font-mono font-medium">{checkVoucher.cvNumber}</span>
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    Status: <span className="capitalize">{checkVoucher.status.toLowerCase().replace(/_/g, ' ')}</span>
+                  </p>
+                  <div className="mt-2">
+                    <Link 
+                      href={`/vouchers/${checkVoucher.id}`}
+                      className="text-xs font-medium text-purple-600 hover:text-purple-500 dark:text-purple-400 dark:hover:text-purple-300 flex items-center gap-1"
+                    >
+                      View Voucher <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </div>
+                </div>
+                <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0">
+                  <time dateTime={checkVoucher.createdAt} className="text-xs flex flex-col gap-1 whitespace-nowrap">
+                    <span>{formatDateOnly(checkVoucher.createdAt)}</span>
+                    <span>{formatTimeOnly(checkVoucher.createdAt)}</span>
+                  </time>
+                </div>
+              </div>
+            </div>
+          </li>
+        )}
+
+        {checkVoucher?.check && (
+          <li className="relative">
+            <div className={`relative ${disbursedRecord || rejectedRecord ? 'pb-8' : 'pb-0'}`}>
+              {(disbursedRecord || rejectedRecord) && (
+                <span
+                  className="absolute left-4 top-4 -ml-px h-full w-0.5 bg-gray-200 dark:bg-gray-700"
+                  aria-hidden="true"
+                />
+              )}
+              <div className="relative flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center ring-8 ring-white dark:ring-gray-950 z-10 relative">
+                    <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                  </div>
+                </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                  Check Issued
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Check #: <span className="font-mono font-medium">{checkVoucher.check.checkNumber}</span>
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Status: <span className="capitalize">{checkVoucher.check.status.toLowerCase().replace(/_/g, ' ')}</span>
+                </p>
+                <div className="mt-2">
+                  <Link 
+                    href={`/checks/${checkVoucher.check.id}`}
+                    className="text-xs font-medium text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 flex items-center gap-1"
+                  >
+                    View Check <ArrowRight className="h-3 w-3" />
+                  </Link>
+                </div>
+              </div>
+              <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0">
+                <time dateTime={checkVoucher.check.createdAt} className="text-xs flex flex-col gap-1 whitespace-nowrap">
+                  <span>{formatDateOnly(checkVoucher.check.createdAt)}</span>
+                  <span>{formatTimeOnly(checkVoucher.check.createdAt)}</span>
+                </time>
+              </div>
+              </div>
+            </div>
+          </li>
+        )}
+
+        {/* Check Disbursed - Payment Complete */}
+        {disbursedRecord && checkVoucher?.check && (
+          <li>
+            <div className="relative pb-0">
+              <div className="relative flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0 bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-green-500 flex items-center justify-center ring-8 ring-white dark:ring-gray-950 z-10 relative">
+                    <CheckCircle className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-green-900 dark:text-green-100">
+                    ✓ Check Disbursed - Payment Complete
+                  </p>
+                  {checkVoucher.check.receivedBy && (
+                    <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                      Received by: <span className="font-medium">{checkVoucher.check.receivedBy}</span>
+                    </p>
+                  )}
+                  {createdAt && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-2">
+                      Payment cycle completed in {' '}
+                      {Math.ceil((new Date(disbursedRecord.timestamp).getTime() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24))} days
+                    </p>
+                  )}
+                </div>
+                <div className="text-right text-green-600 dark:text-green-400 flex-shrink-0">
+                  <time dateTime={disbursedRecord.timestamp} className="text-xs flex flex-col gap-1 whitespace-nowrap">
+                    <span>{formatDateOnly(disbursedRecord.timestamp)}</span>
+                    <span>{formatTimeOnly(disbursedRecord.timestamp)}</span>
+                  </time>
+                </div>
+              </div>
+            </div>
+          </li>
+        )}
+
+        {/* Payment Rejected */}
+        {rejectedRecord && (
+          <li>
+            <div className="relative pb-0">
+              <div className="relative flex flex-col sm:flex-row sm:space-x-3 space-y-3 sm:space-y-0 bg-red-50 dark:bg-red-900/20 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                <div className="flex-shrink-0">
+                  <div className="h-8 w-8 rounded-full bg-red-500 flex items-center justify-center ring-8 ring-white dark:ring-gray-950 z-10 relative">
+                    <XCircle className="h-5 w-5 text-white" />
+                  </div>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-red-900 dark:text-red-100">
+                    ✗ Payment Rejected
+                  </p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                    Reason
+                  </p>
+                  <p className="text-sm text-red-700 dark:text-red-300">
+                    {rejectedRecord.comments?.replace('Payment rejected - ', '')}
+                  </p>
+                  {createdAt && (
+                    <p className="text-xs text-red-600 dark:text-red-400 mt-2">
+                      Payment cycle ended after {Math.ceil((new Date(rejectedRecord.timestamp).getTime() - new Date(createdAt).getTime()) / (1000 * 60 * 60 * 24))} days
+                    </p>
+                  )}
+                </div>
+                <div className="text-right text-red-600 dark:text-red-400 flex-shrink-0">
+                  <time dateTime={rejectedRecord.timestamp} className="text-xs flex flex-col gap-1 whitespace-nowrap">
+                    <span>{formatDateOnly(rejectedRecord.timestamp)}</span>
+                    <span>{formatTimeOnly(rejectedRecord.timestamp)}</span>
+                  </time>
+                </div>
+              </div>
+            </div>
+          </li>
+        )}
       </ul>
     </div>
   );

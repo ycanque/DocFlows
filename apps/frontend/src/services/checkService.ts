@@ -43,8 +43,13 @@ export async function issueCheck(
 /**
  * Clear/disburse a check (Treasury)
  */
-export async function clearCheck(id: string): Promise<Check> {
-  const response = await api.patch(`/payments/checks/${id}/clear`);
+export async function clearCheck(
+  id: string,
+  receivedBy?: string
+): Promise<Check> {
+  const response = await api.patch(`/payments/checks/${id}/clear`, {
+    receivedBy,
+  });
   return response.data;
 }
 

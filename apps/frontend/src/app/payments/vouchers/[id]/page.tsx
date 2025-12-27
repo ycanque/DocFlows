@@ -25,8 +25,6 @@ import StatusBadge from '@/components/requisitions/StatusBadge';
 import BankSelector from '@/components/payments/BankSelector';
 import PaymentStatusTimeline from '@/components/payments/PaymentStatusTimeline';
 import { useAuth } from '@/contexts/AuthContext';
-import Sidebar from '@/components/layout/Sidebar';
-import TopBar from '@/components/layout/TopBar';
 import { format, parseISO } from 'date-fns';
 
 export default function CheckVoucherDetailPage() {
@@ -34,7 +32,6 @@ export default function CheckVoucherDetailPage() {
   const params = useParams();
   const { user } = useAuth();
   const voucherId = params?.id as string;
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const [voucher, setVoucher] = useState<CheckVoucher | null>(null);
   const [loading, setLoading] = useState(true);
@@ -127,16 +124,8 @@ export default function CheckVoucherDetailPage() {
   if (loading) {
     return (
       <ProtectedRoute>
-        <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-          <Sidebar currentView="payments" isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-            <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900">
-              <div className="flex h-96 items-center justify-center">
-                <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
-              </div>
-            </main>
-          </div>
+        <div className="flex h-96 items-center justify-center">
+          <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-blue-600"></div>
         </div>
       </ProtectedRoute>
     );
@@ -145,23 +134,15 @@ export default function CheckVoucherDetailPage() {
   if (error || !voucher) {
     return (
       <ProtectedRoute>
-        <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-          <Sidebar currentView="payments" isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <div className="flex flex-1 flex-col overflow-hidden">
-            <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-            <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900">
-              <div className="p-6 space-y-6">
-                <Card>
-                  <CardContent className="p-6 text-center text-red-600 dark:text-red-400">
-                    <p>{error || 'Check voucher not found'}</p>
-                    <Button onClick={() => router.push('/payments/vouchers')} className="mt-4">
-                      Back to Check Vouchers
-                    </Button>
-                  </CardContent>
-                </Card>
-              </div>
-            </main>
-          </div>
+        <div className="space-y-6">
+          <Card>
+            <CardContent className="p-6 text-center text-red-600 dark:text-red-400">
+              <p>{error || 'Check voucher not found'}</p>
+              <Button onClick={() => router.push('/payments/vouchers')} className="mt-4">
+                Back to Check Vouchers
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </ProtectedRoute>
     );
@@ -169,13 +150,8 @@ export default function CheckVoucherDetailPage() {
 
   return (
     <ProtectedRoute>
-      <div className="flex h-screen overflow-hidden bg-zinc-50 dark:bg-zinc-900">
-        <Sidebar currentView="payments" isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-        <div className="flex flex-1 flex-col overflow-hidden">
-          <TopBar onMenuToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-          <main className="flex-1 overflow-y-auto bg-zinc-50 dark:bg-zinc-900">
-            <div className="p-6 sm:p-8 space-y-8">
-              <div className="mb-6">
+      <div className="space-y-8">
+        <div>
           <Button
             variant="ghost"
             onClick={() => router.push('/payments/vouchers')}
@@ -371,9 +347,6 @@ export default function CheckVoucherDetailPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-            </div>
-          </main>
-        </div>
       </div>
     </ProtectedRoute>
   );

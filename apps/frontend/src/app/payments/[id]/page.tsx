@@ -14,11 +14,20 @@ import {
 import { generateCheckVoucher } from '@/services/checkVoucherService';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Textarea } from '@/components/ui/textarea';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import PaymentStatusTimeline from '@/components/payments/PaymentStatusTimeline';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt, Edit } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt, Edit, ArrowRight, CreditCard } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 export default function PaymentDetailPage() {
@@ -32,6 +41,8 @@ export default function PaymentDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [success, setSuccess] = useState<string | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
 
   useEffect(() => {
     if (paymentId) {
@@ -84,12 +95,17 @@ export default function PaymentDetailPage() {
   }
 
   async function handleReject() {
-    if (!payment) return;
+    if (!payment || !rejectReason.trim()) {
+      setError('Please enter a reason for rejection');
+      return;
+    }
     try {
       setActionLoading(true);
       setError(null);
-      await rejectRequisitionForPayment(payment.id, { reason: 'Rejected by approver' });
+      await rejectRequisitionForPayment(payment.id, { reason: rejectReason });
       setSuccess('Payment request rejected');
+      setShowRejectModal(false);
+      setRejectReason('');
       await loadPayment();
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to reject payment request');
@@ -134,9 +150,10 @@ export default function PaymentDetailPage() {
       setError(null);
       const cv = await generateCheckVoucher(payment.id);
       setSuccess('Check voucher generated successfully!');
-      router.push(`/payments/vouchers/${cv.id}`);
+      await loadPayment();
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to generate check voucher');
+    } finally {
       setActionLoading(false);
     }
   }
@@ -152,7 +169,7 @@ export default function PaymentDetailPage() {
   }
 
   function canReject() {
-    return [RFPStatus.SUBMITTED, RFPStatus.APPROVED].includes(payment?.status as RFPStatus) &&
+    return payment?.status === RFPStatus.SUBMITTED &&
            (user?.role === UserRole.APPROVER || user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
   }
 
@@ -255,7 +272,7 @@ export default function PaymentDetailPage() {
                       <Button
                         onClick={handleApprove}
                         disabled={actionLoading}
-                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white"
                       >
                         <CheckCircle className="h-4 w-4" />
                         Approve
@@ -264,7 +281,7 @@ export default function PaymentDetailPage() {
                     {canReject() && (
                       <Button
                         variant="destructive"
-                        onClick={handleReject}
+                        onClick={() => setShowRejectModal(true)}
                         disabled={actionLoading}
                         className="flex items-center gap-2"
                       >
@@ -291,6 +308,26 @@ export default function PaymentDetailPage() {
                       >
                         <Ban className="h-4 w-4" />
                         Cancel
+                      </Button>
+                    )}
+                    {payment.checkVoucher && (
+                      <Button
+                        onClick={() => router.push(`/vouchers/${payment.checkVoucher?.id}`)}
+                        disabled={actionLoading}
+                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white"
+                      >
+                        <Receipt className="h-4 w-4" />
+                        View Check Voucher
+                      </Button>
+                    )}
+                    {payment.checkVoucher?.check && (
+                      <Button
+                        onClick={() => router.push(`/checks/${payment.checkVoucher?.check?.id}`)}
+                        disabled={actionLoading}
+                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        View Check
                       </Button>
                     )}
                   </div>
@@ -461,22 +498,8 @@ export default function PaymentDetailPage() {
                     </div>
                   )}
                 </div>
-                {payment.checkVoucher && (
-                  <div className="pb-6 border-b border-zinc-200 dark:border-zinc-700">
-                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                      Check Voucher
-                    </label>
-                    <div className="mt-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => router.push(`/payments/vouchers/${payment.checkVoucher?.id}`)}
-                      >
-                        View Check Voucher
-                      </Button>
-                    </div>
-                  </div>
-                )}
+                
+
               </CardContent>
             </Card>
           </div>
@@ -484,14 +507,58 @@ export default function PaymentDetailPage() {
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Approval Timeline</CardTitle>
+                <CardTitle>Approval History</CardTitle>
               </CardHeader>
               <CardContent>
-                <PaymentStatusTimeline approvalRecords={payment.approvalRecords || []} />
+                <PaymentStatusTimeline 
+                  approvalRecords={payment.approvalRecords || []} 
+                  createdAt={payment.createdAt}
+                  requester={payment.requester}
+                  checkVoucher={payment.checkVoucher}
+                />
               </CardContent>
             </Card>
           </div>
         </div>
+
+        {/* Reject Modal */}
+        <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reject Payment Request</DialogTitle>
+              <DialogDescription>
+                Provide a reason for rejecting this payment request. This will be recorded in the approval history.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <label className="text-sm font-medium mb-2 block">Reason for Rejection</label>
+              <Textarea
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="Enter reason for rejection..."
+                className="w-full"
+              />
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectReason('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={handleReject} 
+                disabled={actionLoading || !rejectReason.trim()}
+              >
+                {actionLoading ? 'Rejecting...' : 'Reject Request'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </ProtectedRoute>
   );

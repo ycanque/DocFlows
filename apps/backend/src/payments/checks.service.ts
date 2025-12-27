@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
-import { Prisma, Check, CheckStatus, CheckVoucherStatus } from '@prisma/client';
+import { Prisma, Check, CheckStatus, CheckVoucherStatus, RFPStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -148,12 +148,12 @@ export class ChecksService {
     return check;
   }
 
-  async clear(id: string, clearedBy: string): Promise<Check> {
+  async clear(id: string, clearedBy: string, receivedBy?: string): Promise<Check> {
     const check = await this.findOne(id);
 
     if (check.status !== CheckStatus.ISSUED) {
       throw new BadRequestException(
-        `Can only clear ISSUED checks. Current status: ${check.status}`,
+        `Can only disburse ISSUED checks. Current status: ${check.status}`,
       );
     }
 
@@ -161,8 +161,9 @@ export class ChecksService {
       const updated = await tx.check.update({
         where: { id },
         data: {
-          status: CheckStatus.CLEARED,
+          status: CheckStatus.DISBURSED,
           disbursedBy: clearedBy,
+          receivedBy: receivedBy || null,
           disbursementDate: new Date(),
         },
         include: {
@@ -191,6 +192,27 @@ export class ChecksService {
         },
       });
 
+      // Update RFP status to DISBURSED and create approval record
+      if (updated.checkVoucher?.requisitionForPayment) {
+        await tx.requisitionForPayment.update({
+          where: { id: updated.checkVoucher.requisitionForPaymentId },
+          data: {
+            status: RFPStatus.DISBURSED,
+          },
+        });
+
+        await tx.approvalRecord.create({
+          data: {
+            entityType: 'RequisitionForPayment',
+            entityId: updated.checkVoucher.requisitionForPaymentId,
+            approvalLevel: 0,
+            approvedBy: clearedBy,
+            comments: 'Check Disbursed - Payment Complete',
+            timestamp: new Date(),
+          },
+        });
+      }
+
       return updated;
     });
   }
@@ -217,7 +239,7 @@ export class ChecksService {
   async void(id: string, voidedBy: string, reason: string): Promise<Check> {
     const check = await this.findOne(id);
 
-    if (check.status !== CheckStatus.ISSUED && check.status !== CheckStatus.CLEARED) {
+    if (check.status !== CheckStatus.ISSUED && check.status !== CheckStatus.DISBURSED) {
       throw new BadRequestException(`Cannot void Check in ${check.status} status`);
     }
 
@@ -242,6 +264,7 @@ export class ChecksService {
         },
       });
 
+      // Create approval record for Check
       await tx.approvalRecord.create({
         data: {
           entityType: 'Check',
@@ -251,6 +274,27 @@ export class ChecksService {
           timestamp: new Date(),
         },
       });
+
+      // Update RFP status to REJECTED
+      if (updated.checkVoucher?.requisitionForPaymentId) {
+        await tx.requisitionForPayment.update({
+          where: { id: updated.checkVoucher.requisitionForPaymentId },
+          data: {
+            status: RFPStatus.REJECTED,
+          },
+        });
+
+        // Create approval record for RFP
+        await tx.approvalRecord.create({
+          data: {
+            entityType: 'RequisitionForPayment',
+            entityId: updated.checkVoucher.requisitionForPaymentId,
+            approvalLevel: 0,
+            comments: `Payment rejected - Check voided: ${reason}`,
+            timestamp: new Date(),
+          },
+        });
+      }
 
       return updated;
     });

@@ -210,6 +210,7 @@ export interface Check {
   issuer?: User;
   disbursedBy?: string;
   disburser?: User;
+  receivedBy?: string;
   disbursementDate?: string;
   createdAt: string;
   updatedAt: string;

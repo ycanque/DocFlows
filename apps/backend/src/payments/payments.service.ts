@@ -61,19 +61,35 @@ export class PaymentsService {
       include: {
         requester: true,
         department: true,
-        checkVoucher: true,
+        checkVoucher: {
+          include: {
+            check: {
+              include: {
+                bankAccount: true,
+              },
+            },
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: string): Promise<RequisitionForPayment> {
+  async findOne(id: string): Promise<any> {
     const rfp = await this.prisma.requisitionForPayment.findUnique({
       where: { id },
       include: {
         requester: true,
         department: true,
-        checkVoucher: true,
+        checkVoucher: {
+          include: {
+            check: {
+              include: {
+                bankAccount: true,
+              },
+            },
+          },
+        },
       },
     });
 
@@ -81,7 +97,21 @@ export class PaymentsService {
       throw new NotFoundException(`RFP with ID ${id} not found`);
     }
 
-    return rfp;
+    // Fetch approval records separately
+    const approvalRecords = await this.prisma.approvalRecord.findMany({
+      where: {
+        entityType: 'RequisitionForPayment',
+        entityId: id,
+      },
+      include: {
+        submitter: true,
+        approver: true,
+        rejector: true,
+      },
+      orderBy: { timestamp: 'desc' },
+    });
+
+    return { ...rfp, approvalRecords };
   }
 
   async update(id: string, data: UpdateRequisitionForPaymentDto): Promise<RequisitionForPayment> {
@@ -141,6 +171,18 @@ export class PaymentsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // Get approvers for this department to determine approval levels
+      const approvers = await tx.approver.findMany({
+        where: {
+          departmentId: rfp.departmentId,
+          isActive: true,
+        },
+        orderBy: { approvalLevel: 'asc' },
+      });
+
+      const maxApprovalLevel =
+        approvers.length > 0 ? Math.max(...approvers.map((a) => a.approvalLevel)) : 1;
+
       // Update RFP status
       const updated = await tx.requisitionForPayment.update({
         where: { id },
@@ -155,16 +197,30 @@ export class PaymentsService {
         },
       });
 
-      // Create approval record
+      // Create submission record (level 0)
       await tx.approvalRecord.create({
         data: {
           entityType: 'RequisitionForPayment',
           entityId: id,
-          approvalLevel: 1,
+          approvalLevel: 0,
           submittedBy: userId,
+          comments: 'Submitted for approval',
           timestamp: new Date(),
         },
       });
+
+      // Create pending approval records for each required level
+      for (let level = 1; level <= maxApprovalLevel; level++) {
+        await tx.approvalRecord.create({
+          data: {
+            entityType: 'RequisitionForPayment',
+            entityId: id,
+            approvalLevel: level,
+            comments: `Awaiting approval at level ${level}`,
+            timestamp: new Date(),
+          },
+        });
+      }
 
       return updated;
     });
@@ -189,28 +245,40 @@ export class PaymentsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // Find the pending approval record for current level
+      const pendingRecord = await tx.approvalRecord.findFirst({
+        where: {
+          entityType: 'RequisitionForPayment',
+          entityId: id,
+          approvalLevel: rfp.currentApprovalLevel,
+          approvedBy: null,
+          rejectedBy: null,
+        },
+      });
+
+      // Update the pending record with approval
+      if (pendingRecord) {
+        await tx.approvalRecord.update({
+          where: { id: pendingRecord.id },
+          data: {
+            approvedBy: approverId,
+            comments: 'Approved',
+            timestamp: new Date(),
+          },
+        });
+      }
+
       // Update RFP status
       const updated = await tx.requisitionForPayment.update({
         where: { id },
         data: {
           status: RFPStatus.APPROVED,
-          currentApprovalLevel: 2,
+          currentApprovalLevel: rfp.currentApprovalLevel + 1,
         },
         include: {
           requester: true,
           department: true,
           checkVoucher: true,
-        },
-      });
-
-      // Create approval record
-      await tx.approvalRecord.create({
-        data: {
-          entityType: 'RequisitionForPayment',
-          entityId: id,
-          approvalLevel: 2,
-          approvedBy: approverId,
-          timestamp: new Date(),
         },
       });
 
@@ -228,6 +296,29 @@ export class PaymentsService {
     }
 
     return this.prisma.$transaction(async (tx) => {
+      // Find the pending approval record for current level
+      const pendingRecord = await tx.approvalRecord.findFirst({
+        where: {
+          entityType: 'RequisitionForPayment',
+          entityId: id,
+          approvalLevel: rfp.currentApprovalLevel,
+          approvedBy: null,
+          rejectedBy: null,
+        },
+      });
+
+      // Update the pending record with rejection
+      if (pendingRecord) {
+        await tx.approvalRecord.update({
+          where: { id: pendingRecord.id },
+          data: {
+            rejectedBy: rejectorId,
+            comments: reason || 'Rejected',
+            timestamp: new Date(),
+          },
+        });
+      }
+
       // Update RFP status
       const updated = await tx.requisitionForPayment.update({
         where: { id },
@@ -239,18 +330,6 @@ export class PaymentsService {
           requester: true,
           department: true,
           checkVoucher: true,
-        },
-      });
-
-      // Create rejection record
-      await tx.approvalRecord.create({
-        data: {
-          entityType: 'RequisitionForPayment',
-          entityId: id,
-          approvalLevel: 1,
-          rejectedBy: rejectorId,
-          comments: reason,
-          timestamp: new Date(),
         },
       });
 

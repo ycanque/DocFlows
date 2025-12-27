@@ -49,8 +49,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   },
   [RFPStatus.SUBMITTED]: {
-    label: 'Submitted',
-    className: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
+    label: 'Pending Approval',
+    className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900 dark:text-yellow-300',
   },
   [RFPStatus.PENDING_APPROVAL]: {
     label: 'Pending Approval',
@@ -112,8 +112,8 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: 'Issued',
     className: 'bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300',
   },
-  [CheckStatus.CLEARED]: {
-    label: 'Cleared',
+  [CheckStatus.DISBURSED]: {
+    label: 'Disbursed',
     className: 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300',
   },
   [CheckStatus.VOIDED]: {

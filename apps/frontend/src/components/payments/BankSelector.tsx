@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { BankAccount } from '@docflows/shared';
 import { getActiveBankAccounts } from '@/services/bankAccountService';
+import { ChevronDown } from 'lucide-react';
 
 interface BankSelectorProps {
   value: string;
@@ -45,10 +46,12 @@ export default function BankSelector({
     }
   };
 
+  const selectedAccount = bankAccounts.find(acc => acc.id === value);
+
   return (
     <div className={className}>
       {label && (
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">
           {label}
           {required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -56,33 +59,41 @@ export default function BankSelector({
       
       {loading ? (
         <div className="animate-pulse">
-          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded"></div>
+          <div className="h-10 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
         </div>
       ) : loadError ? (
         <div className="text-sm text-red-600 dark:text-red-400">
           {loadError}
         </div>
       ) : (
-        <select
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          disabled={disabled}
-          required={required}
-          className={`
-            block w-full rounded-md border-gray-300 dark:border-gray-600 
-            shadow-sm focus:border-blue-500 focus:ring-blue-500 
-            dark:bg-gray-700 dark:text-white sm:text-sm
-            disabled:bg-gray-100 dark:disabled:bg-gray-800 disabled:cursor-not-allowed
-            ${error ? 'border-red-300 focus:border-red-500 focus:ring-red-500' : ''}
-          `}
-        >
-          <option value="">Select a bank account...</option>
-          {bankAccounts.map((account) => (
-            <option key={account.id} value={account.id}>
-              {account.accountNumber} - {account.bankName} ({account.accountName})
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            disabled={disabled}
+            required={required}
+            className={`
+              w-full appearance-none rounded-lg border border-gray-300 dark:border-gray-600
+              bg-white dark:bg-gray-800 px-4 py-2.5 pr-10 text-sm
+              text-gray-900 dark:text-gray-100
+              transition-colors
+              focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-0 
+              dark:focus:ring-offset-0
+              disabled:bg-gray-100 dark:disabled:bg-gray-700 
+              disabled:text-gray-500 dark:disabled:text-gray-400
+              disabled:cursor-not-allowed
+              ${error ? 'border-red-300 dark:border-red-600 focus:ring-red-500' : ''}
+            `}
+          >
+            <option value="">Select a bank account...</option>
+            {bankAccounts.map((account) => (
+              <option key={account.id} value={account.id}>
+                {account.accountNumber} - {account.bankName} ({account.accountName})
+              </option>
+            ))}
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500 pointer-events-none" />
+        </div>
       )}
 
       {error && (

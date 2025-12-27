@@ -92,6 +92,11 @@ export class CheckVouchersService {
             department: true,
           },
         },
+        check: {
+          include: {
+            bankAccount: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     });
@@ -105,6 +110,11 @@ export class CheckVouchersService {
           include: {
             requester: true,
             department: true,
+          },
+        },
+        check: {
+          include: {
+            bankAccount: true,
           },
         },
       },
@@ -194,6 +204,69 @@ export class CheckVouchersService {
           timestamp: new Date(),
         },
       });
+
+      return updated;
+    });
+  }
+
+  async reject(id: string, rejectedBy: string, reason: string): Promise<CheckVoucher> {
+    const cv = await this.findOne(id);
+
+    if (
+      cv.status === CheckVoucherStatus.APPROVED ||
+      cv.status === CheckVoucherStatus.CHECK_ISSUED
+    ) {
+      throw new BadRequestException(`Cannot reject CV in ${cv.status} status.`);
+    }
+
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.checkVoucher.update({
+        where: { id },
+        data: {
+          status: CheckVoucherStatus.REJECTED,
+        },
+        include: {
+          requisitionForPayment: {
+            include: {
+              requester: true,
+              department: true,
+            },
+          },
+        },
+      });
+
+      // Create approval record for Check Voucher
+      await tx.approvalRecord.create({
+        data: {
+          entityType: 'CheckVoucher',
+          entityId: id,
+          approvalLevel: cv.status === CheckVoucherStatus.VERIFIED ? 3 : 2,
+          rejectedBy: rejectedBy,
+          comments: reason || 'Check voucher rejected',
+          timestamp: new Date(),
+        },
+      });
+
+      // Update RFP status to REJECTED
+      if (updated.requisitionForPaymentId) {
+        await tx.requisitionForPayment.update({
+          where: { id: updated.requisitionForPaymentId },
+          data: {
+            status: RFPStatus.REJECTED,
+          },
+        });
+
+        // Create approval record for RFP
+        await tx.approvalRecord.create({
+          data: {
+            entityType: 'RequisitionForPayment',
+            entityId: updated.requisitionForPaymentId,
+            approvalLevel: 0,
+            comments: `Payment rejected - ${reason || 'Check voucher rejected'}`,
+            timestamp: new Date(),
+          },
+        });
+      }
 
       return updated;
     });
