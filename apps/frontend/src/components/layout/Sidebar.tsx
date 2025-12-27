@@ -141,9 +141,11 @@ export default function Sidebar({
         aria-label="Main navigation"
       >
         <div className="flex items-center gap-3 px-4 py-5 flex-shrink-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-md bg-gradient-to-br from-blue-600 to-blue-700 text-white font-bold text-sm shadow-sm">
-            DF
-          </div>
+          <img 
+            src="/favicon.svg" 
+            alt="DocFlows Logo" 
+            className="h-9 w-9"
+          />
           <div>
             <h1 className="text-base font-semibold leading-tight text-zinc-900 dark:text-zinc-50">Document Flow</h1>
             <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-none">Management System</p>

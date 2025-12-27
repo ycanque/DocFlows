@@ -11,8 +11,9 @@ import {
   approveRequisition,
   rejectRequisition,
   cancelRequisition,
+  deleteRequisition,
 } from '@/services/requisitionService';
-import { ArrowLeft, CheckCircle, XCircle, Ban, Send, Edit } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Ban, Send, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -137,6 +138,19 @@ export default function RequisitionDetailsPage() {
     }
   }
 
+  async function handleDelete() {
+    if (!window.confirm('Delete this requisition permanently? This action cannot be undone.')) return;
+
+    try {
+      setActionLoading(true);
+      await deleteRequisition(requisitionId);
+      router.push('/requisitions');
+    } catch (err: any) {
+      alert(err?.response?.data?.message || 'Failed to delete requisition');
+      setActionLoading(false);
+    }
+  }
+
   function canSubmit(): boolean {
     if (!requisition || !user) return false;
     return (
@@ -171,6 +185,14 @@ export default function RequisitionDetailsPage() {
   }
 
   function canEdit(): boolean {
+    if (!requisition || !user) return false;
+    return (
+      requisition.status === RequisitionStatus.DRAFT &&
+      requisition.requesterId === user.id
+    );
+  }
+
+  function canDelete(): boolean {
     if (!requisition || !user) return false;
     return (
       requisition.status === RequisitionStatus.DRAFT &&
@@ -295,6 +317,17 @@ export default function RequisitionDetailsPage() {
               >
                 <Edit className="h-4 w-4" />
                 Edit
+              </Button>
+            )}
+            {canDelete() && (
+              <Button
+                onClick={handleDelete}
+                disabled={actionLoading}
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
               </Button>
             )}
           </div>

@@ -17,6 +17,10 @@ export class CreateRequisitionForPaymentDto {
 
   @IsDate()
   @Type(() => Date)
+  dateRequested: Date;
+
+  @IsDate()
+  @Type(() => Date)
   dateNeeded: Date;
 
   @IsString()

@@ -13,15 +13,14 @@ export class PaymentsService {
   constructor(private prisma: PrismaService) {}
 
   async create(data: CreateRequisitionForPaymentDto): Promise<RequisitionForPayment> {
-    // Generate unique RFP number
-    const rfpNumber = `RFP-${Date.now()}-${Math.random().toString(36).substring(2, 10)}`;
-
-    return this.prisma.requisitionForPayment.create({
+    // Create the record first to get auto-incremented rfpSeq
+    const created = await this.prisma.requisitionForPayment.create({
       data: {
-        rfpNumber,
+        rfpNumber: 'TEMP', // Temporary placeholder
         requesterId: data.requesterId,
         departmentId: data.departmentId,
         seriesCode: data.seriesCode,
+        dateRequested: data.dateRequested,
         dateNeeded: data.dateNeeded,
         payee: data.payee,
         particulars: data.particulars,
@@ -31,6 +30,15 @@ export class PaymentsService {
         status: RFPStatus.DRAFT,
         currentApprovalLevel: 0,
       },
+    });
+
+    // Generate the formatted RFP number with the sequence
+    const rfpNumber = `RFP-${created.rfpSeq.toString().padStart(6, '0')}`;
+
+    // Update the record with the proper rfpNumber
+    return this.prisma.requisitionForPayment.update({
+      where: { id: created.id },
+      data: { rfpNumber },
       include: {
         requester: true,
         department: true,
@@ -88,6 +96,7 @@ export class PaymentsService {
       where: { id },
       data: {
         ...(data.seriesCode && { seriesCode: data.seriesCode }),
+        ...(data.dateRequested && { dateRequested: data.dateRequested }),
         ...(data.dateNeeded && { dateNeeded: data.dateNeeded }),
         ...(data.payee && { payee: data.payee }),
         ...(data.particulars && { particulars: data.particulars }),

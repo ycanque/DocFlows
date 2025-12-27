@@ -357,7 +357,7 @@ async function main() {
   // Draft requisition
   const draftReq = await prisma.requisitionSlip.create({
     data: {
-      requisitionNumber: 'REQ-2025-001',
+      requisitionNumber: 'TEMP',
       requesterId: regularUser1.id,
       departmentId: opsDept.id,
       dateRequested: new Date(),
@@ -385,10 +385,16 @@ async function main() {
     },
   });
 
+  // Update with formatted number
+  await prisma.requisitionSlip.update({
+    where: { id: draftReq.id },
+    data: { requisitionNumber: `REQ-${draftReq.reqSeq.toString().padStart(6, '0')}` },
+  });
+
   // Submitted requisition
   const submittedReq = await prisma.requisitionSlip.create({
     data: {
-      requisitionNumber: 'REQ-2025-002',
+      requisitionNumber: 'TEMP',
       requesterId: regularUser2.id,
       departmentId: itDept.id,
       dateRequested: new Date(),
@@ -417,10 +423,16 @@ async function main() {
     },
   });
 
+  // Update with formatted number
+  await prisma.requisitionSlip.update({
+    where: { id: submittedReq.id },
+    data: { requisitionNumber: `REQ-${submittedReq.reqSeq.toString().padStart(6, '0')}` },
+  });
+
   // Pending approval requisition with first level approved
   const pendingReq = await prisma.requisitionSlip.create({
     data: {
-      requisitionNumber: 'REQ-2025-003',
+      requisitionNumber: 'TEMP',
       requesterId: regularUser1.id,
       departmentId: opsDept.id,
       dateRequested: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
@@ -449,6 +461,12 @@ async function main() {
     },
   });
 
+  // Update with formatted number
+  await prisma.requisitionSlip.update({
+    where: { id: pendingReq.id },
+    data: { requisitionNumber: `REQ-${pendingReq.reqSeq.toString().padStart(6, '0')}` },
+  });
+
   // Create approval record for the pending requisition
   await prisma.approvalRecord.create({
     data: {
@@ -463,7 +481,7 @@ async function main() {
   // Approved requisition
   const approvedReq = await prisma.requisitionSlip.create({
     data: {
-      requisitionNumber: 'REQ-2025-004',
+      requisitionNumber: 'TEMP',
       requesterId: regularUser2.id,
       departmentId: itDept.id,
       dateRequested: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000), // 5 days ago
@@ -490,6 +508,12 @@ async function main() {
         ],
       },
     },
+  });
+
+  // Update with formatted number
+  await prisma.requisitionSlip.update({
+    where: { id: approvedReq.id },
+    data: { requisitionNumber: `REQ-${approvedReq.reqSeq.toString().padStart(6, '0')}` },
   });
 
   // Create approval records for approved requisition
@@ -555,52 +579,68 @@ async function main() {
 
   // Create Sample RFPs
   console.log('\n💰 Creating sample requisitions for payment...');
-  const rfps = await Promise.all([
-    prisma.requisitionForPayment.create({
-      data: {
-        rfpNumber: `RFP-${Date.now()}-DRAFT01`,
-        requesterId: regularUser1.id,
-        departmentId: adminDept.id,
-        seriesCode: 'S',
-        dateNeeded: new Date('2025-12-25'),
-        payee: 'Acme Supplies Inc.',
-        particulars: 'Office supplies and equipment',
-        amount: 15000,
-        status: 'DRAFT',
-        currentApprovalLevel: 0,
-      },
-    }),
-    prisma.requisitionForPayment.create({
-      data: {
-        rfpNumber: `RFP-${Date.now()}-SUBM01`,
-        requesterId: regularUser1.id,
-        departmentId: adminDept.id,
-        seriesCode: 'U',
-        dateNeeded: new Date('2025-12-20'),
-        payee: 'Tech Solutions Ltd.',
-        particulars: 'Software licenses',
-        amount: 25000,
-        status: 'SUBMITTED',
-        currentApprovalLevel: 1,
-      },
-    }),
-    prisma.requisitionForPayment.create({
-      data: {
-        rfpNumber: `RFP-${Date.now()}-APPR01`,
-        requesterId: regularUser1.id,
-        departmentId: financeDept.id,
-        seriesCode: 'G',
-        dateNeeded: new Date('2025-12-22'),
-        payee: 'Consulting Partners Co.',
-        particulars: 'Professional services',
-        amount: 50000,
-        status: 'APPROVED',
-        currentApprovalLevel: 2,
-      },
-    }),
-  ]);
 
-  console.log(`✅ Created ${rfps.length} sample requisitions for payment`);
+  const rfp1 = await prisma.requisitionForPayment.create({
+    data: {
+      rfpNumber: 'TEMP',
+      requesterId: regularUser1.id,
+      departmentId: adminDept.id,
+      seriesCode: 'S',
+      dateRequested: new Date('2025-12-20'),
+      dateNeeded: new Date('2025-12-25'),
+      payee: 'Acme Supplies Inc.',
+      particulars: 'Office supplies and equipment',
+      amount: 15000,
+      status: 'DRAFT',
+      currentApprovalLevel: 0,
+    },
+  });
+  await prisma.requisitionForPayment.update({
+    where: { id: rfp1.id },
+    data: { rfpNumber: `RFP-${rfp1.rfpSeq.toString().padStart(6, '0')}` },
+  });
+
+  const rfp2 = await prisma.requisitionForPayment.create({
+    data: {
+      rfpNumber: 'TEMP',
+      requesterId: regularUser1.id,
+      departmentId: adminDept.id,
+      seriesCode: 'U',
+      dateRequested: new Date('2025-12-15'),
+      dateNeeded: new Date('2025-12-20'),
+      payee: 'Tech Solutions Ltd.',
+      particulars: 'Software licenses',
+      amount: 25000,
+      status: 'SUBMITTED',
+      currentApprovalLevel: 1,
+    },
+  });
+  await prisma.requisitionForPayment.update({
+    where: { id: rfp2.id },
+    data: { rfpNumber: `RFP-${rfp2.rfpSeq.toString().padStart(6, '0')}` },
+  });
+
+  const rfp3 = await prisma.requisitionForPayment.create({
+    data: {
+      rfpNumber: 'TEMP',
+      requesterId: regularUser1.id,
+      departmentId: financeDept.id,
+      seriesCode: 'G',
+      dateRequested: new Date('2025-12-18'),
+      dateNeeded: new Date('2025-12-22'),
+      payee: 'Consulting Partners Co.',
+      particulars: 'Professional services',
+      amount: 50000,
+      status: 'APPROVED',
+      currentApprovalLevel: 2,
+    },
+  });
+  await prisma.requisitionForPayment.update({
+    where: { id: rfp3.id },
+    data: { rfpNumber: `RFP-${rfp3.rfpSeq.toString().padStart(6, '0')}` },
+  });
+
+  console.log(`✅ Created 3 sample requisitions for payment`);
 
   console.log('\n🎉 Seed completed successfully!\n');
   console.log('📊 Summary:');
@@ -610,7 +650,7 @@ async function main() {
   console.log(`   - Requisitions: 4 (various statuses)`);
   console.log(`   - Approval Records: 3`);
   console.log(`   - Bank Accounts: ${bankAccounts.length}`);
-  console.log(`   - Requisitions for Payment: ${rfps.length}`);
+  console.log(`   - Requisitions for Payment: 3`);
   console.log('\n🔐 Test Credentials:');
   console.log('   Admin: admin@docflow.com / admin123');
   console.log('   User: user1@docflow.com / password123');

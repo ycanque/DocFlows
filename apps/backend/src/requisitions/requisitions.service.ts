@@ -23,9 +23,10 @@ export class RequisitionsService {
   }
 
   async create(dto: CreateRequisitionDto) {
-    return this.prisma.requisitionSlip.create({
+    // Create the record first to get auto-incremented reqSeq
+    const created = await this.prisma.requisitionSlip.create({
       data: {
-        requisitionNumber: `REQ-${Date.now()}`,
+        requisitionNumber: 'TEMP', // Temporary placeholder
         requesterId: dto.requesterId,
         departmentId: dto.departmentId,
         costCenterId: dto.costCenterId,
@@ -40,6 +41,15 @@ export class RequisitionsService {
           create: dto.items?.map((item) => this.toCreateItem(item)) ?? [],
         },
       },
+    });
+
+    // Generate the formatted requisition number with the sequence
+    const requisitionNumber = `REQ-${created.reqSeq.toString().padStart(6, '0')}`;
+
+    // Update the record with the proper requisitionNumber
+    return this.prisma.requisitionSlip.update({
+      where: { id: created.id },
+      data: { requisitionNumber },
       include: {
         items: true,
         requester: true,
@@ -76,7 +86,11 @@ export class RequisitionsService {
         },
         // Only include submitted or approved requisitions that can be referenced in payments
         status: {
-          in: [RequisitionStatus.PENDING_APPROVAL, RequisitionStatus.APPROVED, RequisitionStatus.COMPLETED],
+          in: [
+            RequisitionStatus.PENDING_APPROVAL,
+            RequisitionStatus.APPROVED,
+            RequisitionStatus.COMPLETED,
+          ],
         },
       },
       select: {

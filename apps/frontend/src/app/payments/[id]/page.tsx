@@ -18,7 +18,7 @@ import StatusBadge from '@/components/requisitions/StatusBadge';
 import PaymentStatusTimeline from '@/components/payments/PaymentStatusTimeline';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt } from 'lucide-react';
+import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt, Edit } from 'lucide-react';
 import { format, parseISO } from 'date-fns';
 
 export default function PaymentDetailPage() {
@@ -165,6 +165,11 @@ export default function PaymentDetailPage() {
     return payment?.status === RFPStatus.DRAFT && user?.role === UserRole.ADMIN;
   }
 
+  function canEdit() {
+    return payment?.status === RFPStatus.DRAFT &&
+           (payment?.requesterId === user?.id || user?.role === UserRole.ADMIN);
+  }
+
   function canGenerateCV() {
     return payment?.status === RFPStatus.APPROVED &&
            !payment?.checkVoucher &&
@@ -232,49 +237,89 @@ export default function PaymentDetailPage() {
                   </p>
                 </div>
 
-                {/* Action Buttons */}
-                <div className="flex gap-2 flex-wrap">
-                  {canSubmit() && (
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={actionLoading}
-                      className="flex items-center gap-2"
-                    >
-                      <FileText className="h-4 w-4" />
-                      Submit for Approval
-                    </Button>
-                  )}
-                  {canApprove() && (
-                    <Button
-                      onClick={handleApprove}
-                      disabled={actionLoading}
-                      className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-                    >
-                      <CheckCircle className="h-4 w-4" />
-                      Approve
-                    </Button>
-                  )}
-                  {canReject() && (
-                    <Button
-                      variant="destructive"
-                      onClick={handleReject}
-                      disabled={actionLoading}
-                      className="flex items-center gap-2"
-                    >
-                      <XCircle className="h-4 w-4" />
-                      Reject
-                    </Button>
-                  )}
-                  {canGenerateCV() && (
-                    <Button
-                      onClick={handleGenerateCV}
-                      disabled={actionLoading}
-                      className="flex items-center gap-2"
-                    >
-                      <Receipt className="h-4 w-4" />
-                      Generate Check Voucher
-                    </Button>
-                  )}
+                {/* All Action Buttons (Workflow left, CRUD right) */}
+                <div className="flex gap-2 flex-wrap items-center justify-between">
+                  {/* Workflow Action Buttons (Left) */}
+                  <div className="flex gap-2 flex-wrap">
+                    {canSubmit() && (
+                      <Button
+                        onClick={handleSubmit}
+                        disabled={actionLoading}
+                        className="flex items-center gap-2"
+                      >
+                        <FileText className="h-4 w-4" />
+                        Submit for Approval
+                      </Button>
+                    )}
+                    {canApprove() && (
+                      <Button
+                        onClick={handleApprove}
+                        disabled={actionLoading}
+                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                      >
+                        <CheckCircle className="h-4 w-4" />
+                        Approve
+                      </Button>
+                    )}
+                    {canReject() && (
+                      <Button
+                        variant="destructive"
+                        onClick={handleReject}
+                        disabled={actionLoading}
+                        className="flex items-center gap-2"
+                      >
+                        <XCircle className="h-4 w-4" />
+                        Reject
+                      </Button>
+                    )}
+                    {canGenerateCV() && (
+                      <Button
+                        onClick={handleGenerateCV}
+                        disabled={actionLoading}
+                        className="flex items-center gap-2"
+                      >
+                        <Receipt className="h-4 w-4" />
+                        Generate Check Voucher
+                      </Button>
+                    )}
+                    {canCancel() && (
+                      <Button
+                        onClick={handleCancel}
+                        disabled={actionLoading}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Ban className="h-4 w-4" />
+                        Cancel
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* CRUD Action Buttons (Right) */}
+                  <div className="flex gap-2 flex-wrap">
+                    {canEdit() && (
+                      <Button
+                        onClick={() => router.push(`/payments/${paymentId}/edit`)}
+                        disabled={actionLoading}
+                        variant="outline"
+                        className="flex items-center gap-2"
+                      >
+                        <Edit className="h-4 w-4" />
+                        Edit
+                      </Button>
+                    )}
+                    {canDelete() && (
+                      <Button
+                        onClick={handleDelete}
+                        disabled={actionLoading}
+                        variant="destructive"
+                        className="flex items-center gap-2"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Delete
+                      </Button>
+                    )}
+                  </div>
                 </div>
               </div>
 
@@ -305,47 +350,131 @@ export default function PaymentDetailPage() {
                   <StatusBadge status={payment.status} />
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Payee</p>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">{payment.payee}</p>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Key Information */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        RFP #
+                      </label>
+                      <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.rfpNumber}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Approval Level
+                      </label>
+                      <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.currentApprovalLevel}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Amount</p>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {payment.currency} {payment.amount.toLocaleString()}
-                    </p>
+
+                  {/* Requester and Department */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Requester
+                      </label>
+                      <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.requester
+                          ? `${payment.requester.firstName} ${payment.requester.lastName}`
+                          : 'Unknown'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Department
+                      </label>
+                      <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.department?.name || 'N/A'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Date Needed</p>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
-                      {payment.dateNeeded ? format(parseISO(payment.dateNeeded), 'MMM dd, yyyy') : 'N/A'}
-                    </p>
+
+                  {/* Payee and Amount */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Payee
+                      </label>
+                      <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.payee}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Amount
+                      </label>
+                      <p className="text-lg font-semibold text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.currency === 'PHP' ? '₱' : payment.currency} {Number(payment.amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400">Series Code</p>
-                    <p className="font-medium text-zinc-900 dark:text-zinc-100">
+
+                  {/* Dates */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Date Requested
+                      </label>
+                      <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.dateRequested ? format(parseISO(payment.dateRequested), 'MMM dd, yyyy') : 'N/A'}
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Date Needed
+                      </label>
+                      <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                        {payment.dateNeeded ? format(parseISO(payment.dateNeeded), 'MMM dd, yyyy') : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Series Code */}
+                  <div className="pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Series Code
+                    </label>
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
                       {payment.seriesCode || 'N/A'}
+                      {payment.seriesCode && (
+                        <span className="text-xs text-zinc-500 dark:text-zinc-400 ml-2">
+                          ({payment.seriesCode === 'S' ? 'Standard' : payment.seriesCode === 'U' ? 'Urgent' : payment.seriesCode === 'G' ? 'General' : ''})
+                        </span>
+                      )}
                     </p>
                   </div>
+
+                  {/* Particulars */}
+                  {payment.particulars && (
+                    <div>
+                      <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                        Particulars
+                      </label>
+                      <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2 leading-relaxed">
+                        {payment.particulars}
+                      </p>
+                    </div>
+                  )}
                 </div>
-                {payment.particulars && (
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-1">Particulars</p>
-                    <p className="text-zinc-900 dark:text-zinc-100">{payment.particulars}</p>
-                  </div>
-                )}
                 {payment.checkVoucher && (
-                  <div>
-                    <p className="text-sm text-zinc-600 dark:text-zinc-400 mb-2">Check Voucher</p>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => router.push(`/payments/vouchers/${payment.checkVoucher?.id}`)}
-                    >
-                      View Check Voucher
-                    </Button>
+                  <div className="pb-6 border-b border-zinc-200 dark:border-zinc-700">
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Check Voucher
+                    </label>
+                    <div className="mt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => router.push(`/payments/vouchers/${payment.checkVoucher?.id}`)}
+                      >
+                        View Check Voucher
+                      </Button>
+                    </div>
                   </div>
                 )}
               </CardContent>
@@ -361,38 +490,6 @@ export default function PaymentDetailPage() {
                 <PaymentStatusTimeline approvalRecords={payment.approvalRecords || []} />
               </CardContent>
             </Card>
-
-            {(canCancel() || canDelete()) && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-red-600">Danger Zone</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {canCancel() && (
-                    <Button
-                      variant="outline"
-                      onClick={handleCancel}
-                      disabled={actionLoading}
-                      className="w-full gap-2 text-orange-600 border-orange-600 hover:bg-orange-50"
-                    >
-                      <Ban className="h-4 w-4" />
-                      Cancel Request
-                    </Button>
-                  )}
-                  {canDelete() && (
-                    <Button
-                      variant="destructive"
-                      onClick={handleDelete}
-                      disabled={actionLoading}
-                      className="w-full gap-2"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete Request
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
           </div>
         </div>
       </div>

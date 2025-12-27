@@ -4,8 +4,8 @@
 **Target Date**: Week of December 18, 2025  
 **Based on**: `PHASE2_IMPLEMENTATION.md` and `documentflowsystem.dbml`
 
-**Current Status**: 🟢 Phase 1 Backend Complete (100%) | Phase 2 Frontend In Progress (0%) | Phase 3 Testing Pending (0%)  
-**Last Updated**: December 18, 2025, 11:45 AM  
+**Current Status**: 🟢 Phase 1 Backend Complete (100%) | 🟢 Phase 2 Frontend Complete (100%) | Phase 3 Testing Pending (0%)  
+**Last Updated**: December 27, 2025, 7:30 PM  
 **Backend Server**: Running on http://localhost:5040  
 **Swagger Docs**: Available at http://localhost:5040/api
 
@@ -36,13 +36,23 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
       - Models: `BankAccount`, `RequisitionForPayment`, `CheckVoucher`, `Check` ✅
       - Relations defined: One-to-One between RFP and CV, CV and Check; Many-to-One for BankAccount ✅
       - **Location**: `apps/backend/prisma/schema.prisma` (Lines 271-397)
-  2.  [x] **Seed Data Created**:
+  2.  [x] **Recent Schema Updates** (December 27, 2025):
+      - Added `dateRequested` field to RequisitionForPayment (DateTime with @default(now())) ✅
+      - Added `rfpSeq` auto-increment field for sequential numbering (Int with @default(autoincrement())) ✅
+      - Added `reqSeq` auto-increment field to RequisitionSlip for sequential numbering ✅
+      - Migration: `20251227104418_add_date_requested_to_rfp` ✅
+      - Migration: `20251227125630_add_autoincrement_sequences` ✅
+      - Made `requisitionSlipId` optional (nullable) in RequisitionForPayment ✅
+  3.  [x] **Seed Data Created**:
       - 4 Bank Accounts (3 active, 1 inactive) ✅
-      - 3 sample RFPs (DRAFT, SUBMITTED, APPROVED) ✅
-      - **Location**: `apps/backend/prisma/seed.ts` (Lines 552-605)
-  3.  [x] **Database Migrated**:
+      - 3 sample RFPs with sequential numbering (RFP-000001, RFP-000002, RFP-000003) ✅
+      - 4 sample Requisition Slips with sequential numbering (REQ-000001 to REQ-000004) ✅
+      - All RFPs include `dateRequested` field ✅
+      - **Location**: `apps/backend/prisma/seed.ts`
+  4.  [x] **Database Migrated**:
       - Schema verified with Prisma 7 PostgreSQL adapter ✅
-      - Seed executed successfully ✅
+      - All migrations applied successfully ✅
+      - Seed executed successfully with new auto-increment pattern ✅
 
 ### Step 1.2: Shared Types & DTOs
 
@@ -55,14 +65,18 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
       - `CheckStatus` enum ✅
   2.  [x] **Verify `packages/shared/src/types.ts`**:
       - Interfaces: `RequisitionForPayment`, `CheckVoucher`, `Check`, `BankAccount` ✅
+      - Added `dateRequested: string` to RequisitionForPayment interface ✅
+      - Added `rfpSeq: number` to RequisitionForPayment interface ✅
+      - Added `reqSeq: number` to RequisitionSlip interface ✅
       - **Location**: `packages/shared/src/types.ts` (Lines 147-224)
   3.  [x] **Create Backend DTOs** (`apps/backend/src/payments/dto`) ✅:
       - `CreateBankAccountDto` ✅
       - `UpdateBankAccountDto` ✅
-      - `CreateRequisitionForPaymentDto` ✅
+      - `CreateRequisitionForPaymentDto` (includes `dateRequested` field with @IsDate() validation) ✅
       - `UpdateRequisitionForPaymentDto` ✅
       - `CreateCheckVoucherDto` ✅
       - `IssueCheckDto` ✅
+      - **Note**: `requisitionSlipId` removed from frontend DTOs but maintained in backend schema ✅
       - **Location**: `apps/backend/src/payments/dto/` (6 files)
 
 ### Step 1.3: Modules & Services
@@ -80,7 +94,9 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
       - `findActive()` - List active accounts only ✅
       - **Location**: `apps/backend/src/payments/bank-accounts.service.ts`
   2.  [x] **`PaymentsService` (RFP Logic)** ✅:
-      - `create(userId, dto)`: Init status `RFPStatus.DRAFT` ✅
+      - `create(userId, dto)`: Init status `RFPStatus.DRAFT` with auto-increment numbering ✅
+        - Uses two-step process: creates with `rfpNumber='TEMP'`, then updates with `RFP-${rfpSeq.padStart(6, '0')}` ✅
+        - Generates sequential numbers like RFP-000001, RFP-000002, etc. ✅
       - `findAll(filters)`: Support filtering by status, payee ✅
       - `findOne(id)`: Include relations (checkVoucher, department, requester) ✅
       - **Workflow Actions**:
@@ -158,8 +174,8 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
 
 ## 3. 💻 Phase 2: Frontend Implementation
 
-**Status**: ✅ COMPLETE (100%)  
-**Completion Date**: December 18, 2025  
+**Status**: 🟢 COMPLETE (100%)  
+**Completion Date**: December 27, 2025  
 **Priority**: HIGH - ✅ Completed successfully
 
 ### Step 2.1: Service Layer Integration
@@ -170,13 +186,14 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
   1.  [x] **`apps/frontend/src/services/paymentService.ts`** ✅:
       - `getRequisitionsForPayment(filters)` - List RFPs
       - `getRequisitionForPayment(id)` - Get RFP details
-      - `createRequisitionForPayment(dto)` - Create RFP
+      - `createRequisitionForPayment(dto)` - Create RFP with dateRequested field
       - `updateRequisitionForPayment(id, dto)` - Update RFP
       - `deleteRequisitionForPayment(id)` - Delete RFP
       - `submitRequisitionForPayment(id)` - Submit for approval ✅
       - `approveRequisitionForPayment(id)` - Approve RFP ✅
       - `rejectRequisitionForPayment(id, reason)` - Reject RFP ✅
       - `cancelRequisitionForPayment(id)` - Cancel RFP ✅
+      - **Note**: DTO excludes `requisitionSlipId` (hidden from frontend) ✅
       - **Location**: `apps/frontend/src/services/paymentService.ts`
   2.  [x] **`apps/frontend/src/services/checkVoucherService.ts`** ✅:
       - `getCheckVouchers()` - List CVs ✅
@@ -245,18 +262,31 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
         - Statistics cards: Total, Pending, Approved, Disbursed, Total Amount ✅
         - Search/filter by payee, RFP number, particulars ✅
         - Click row to navigate to details ✅
+        - Displays RFP numbers in format: RFP-000001 ✅
         - **Location**: `apps/frontend/src/app/dashboard/payments/page.tsx`
       - `/dashboard/payments/create` - Form to create new RFP ✅
         - Uses RFPForm component ✅
-        - Fields: Payee, Series Code, Date Needed, Amount, Particulars ✅
+        - Fields: Payee, Series Code, Date Requested, Date Needed, Amount, Particulars ✅
+        - Date validation: dateRequested >= today, dateNeeded >= dateRequested ✅
+        - Auto-adjusts dateNeeded if earlier than dateRequested ✅
         - Submit button creates RFP in DRAFT status ✅
+        - **Note**: Requisition Slip search UI removed (relation hidden from frontend) ✅
         - **Location**: `apps/frontend/src/app/dashboard/payments/create/page.tsx`
       - `/dashboard/payments/[id]` - Detail view ✅
         - Display all RFP information with metadata ✅
+        - Shows Date Requested and Date Needed fields ✅
         - Status badge with approval timeline ✅
-        - Action buttons based on user role ✅
+        - Action buttons based on user role (Submit, Approve, Reject, Generate CV, Cancel, Edit, Delete) ✅
+        - Edit button with permission check (draft status + requester/admin) ✅
         - Link to Check Voucher if generated ✅
         - **Location**: `apps/frontend/src/app/dashboard/payments/[id]/page.tsx`
+      - `/dashboard/payments/[id]/edit` - Edit form for draft RFPs ✅
+        - Loads existing payment data and pre-populates form ✅
+        - Permission check: only DRAFT status + (requester ownership OR admin) ✅
+        - Same fields as create form with validation ✅
+        - Updates via `updateRequisitionForPayment` service ✅
+        - Redirects to detail page after successful update ✅
+        - **Location**: `apps/frontend/src/app/payments/[id]/edit/page.tsx`
   3.  [x] **Check Vouchers (CV)** ✅:
       - `/dashboard/payments/vouchers` - List view ✅
         - Table: CV Number, RFP, Payee, Amount, Status, Actions ✅
@@ -420,7 +450,49 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
 
 ---
 
-### Frontend - Phase 2 Status: 🟡 IMPLEMENTATION IN PROGRESS (75%)
+### Frontend - Phase 2 Status: � COMPLETE (100%)
+
+**Completed**: December 27, 2025
+
+- ✅ 4 Service layer files (paymentService, checkVoucherService, checkService, bankAccountService) - 25 methods total
+- ✅ Component updates (StatusBadge with 19 status mappings, BankSelector, PaymentStatusTimeline, RFPForm)
+- ✅ 9 Page/view implementations with full UI (including edit page)
+- ✅ Date field implementation (dateRequested with validation)
+- ✅ Auto-increment number display (RFP-000001 format)
+- ✅ Hidden requisitionSlip relation from frontend UI
+- ✅ Full CRUD operations for Payment Requests (Create, Read, Update, Delete)
+- ✅ Edit functionality with permission-based access control
+
+**Files Created/Updated**:
+
+- `apps/frontend/src/services/` - 4 service files (25 methods total)
+- `apps/frontend/src/components/payments/` - 3 new components
+- `apps/frontend/src/app/dashboard/payments/` - 9 page components (list, create, detail, edit + vouchers + checks)
+- All pages include: role-based permissions, loading states, error handling, responsive design
+
+**Key Features Implemented**:
+
+- ✅ Sequential numbering system (RFP-000001, REQ-000001)
+- ✅ Date validation (dateRequested >= today, dateNeeded >= dateRequested)
+- ✅ Auto-adjustment of dateNeeded when dateRequested changes
+- ✅ Removed requisition slip search from create form
+- ✅ Proper date formatting with date-fns (parseISO)
+- ✅ Full CRUD operations with edit page and delete functionality
+- ✅ Permission-based UI controls (canEdit, canDelete, canSubmit, canApprove)
+- ✅ Currency formatting with ₱ symbol and 2 decimal places
+- ✅ Design consistency between Payments and Requisitions modules
+
+**Priority**: HIGH - ✅ Completed successfully
+
+**Server Status**: 🟢 Running
+
+- Backend: http://localhost:5040
+- Swagger: http://localhost:5040/api
+- Database: PostgreSQL document_flow connected
+
+---
+
+### Frontend - Phase 2 Status: �🟡 IMPLEMENTATION IN PROGRESS (75%)
 
 **Completed**:
 
@@ -517,9 +589,16 @@ The Request for Payment (RFP) module manages the workflow for requesting payment
 
 ### Sample RFPs (for testing workflow)
 
-1. **DRAFT RFP** - Requester: user1 - Amount: 15,000 PHP - For Office Supplies
-2. **SUBMITTED RFP** - Requester: user1 - Amount: 25,000 PHP - For Software Licenses
-3. **APPROVED RFP** - Requester: user1 - Amount: 50,000 PHP - For Consulting Services
+1. **RFP-000001** - DRAFT - Requester: user1 - Amount: 15,000 PHP - For Office Supplies - Date Requested: 2025-12-27
+2. **RFP-000002** - SUBMITTED - Requester: user1 - Amount: 25,000 PHP - For Software Licenses - Date Requested: 2025-12-27
+3. **RFP-000003** - APPROVED - Requester: user1 - Amount: 50,000 PHP - For Consulting Services - Date Requested: 2025-12-27
+
+### Sample Requisition Slips
+
+1. **REQ-000001** - DRAFT - Office Equipment Request
+2. **REQ-000002** - SUBMITTED - IT Supplies Request
+3. **REQ-000003** - APPROVED - Marketing Materials Request
+4. **REQ-000004** - APPROVED - Facilities Upgrade Request
 
 ### Test Users
 
@@ -559,7 +638,7 @@ docker compose down       # Stop services
 
 ---
 
-## 🎉 Phase 2 Implementation - Structurally Complete!
+## 🎉 Phase 2 Implementation - Complete!
 
 **Summary**: Full frontend UI implementation successfully delivered with:
 
@@ -567,13 +646,51 @@ docker compose down       # Stop services
 - ✅ Sidebar/TopBar integration for consistent navigation
 - ✅ Design system standardization matching Requisitions module
 - ✅ Responsive padding and spacing aligned with dashboard
-- ✅ Date handling fixed with date-fns ISO 8601 parsing
+- ✅ Date handling with dateRequested field and validation
+- ✅ Auto-increment numbering system (RFP-000001, REQ-000001)
+- ✅ Sequential number generation via database sequences
+- ✅ Hidden requisitionSlip relation from frontend while maintaining backend capability
 - ✅ All components properly styled with shadcn/ui
 
-**Status**: 🟡 Implementation Complete | Testing Pending
+**Recent Enhancements** (December 27, 2025):
+
+- ✅ Database auto-increment with prefix implementation:
+  - Added `rfpSeq` and `reqSeq` auto-increment fields to schema
+  - Two-step create pattern: insert with 'TEMP', update with formatted number
+  - Format: RFP-000001 (6-digit zero-padding)
+  - Migrations: `20251227125630_add_autoincrement_sequences`
+
+- ✅ Date Requested field implementation:
+  - Added `dateRequested` DateTime field with @default(now())
+  - Frontend validation: dateRequested >= today, dateNeeded >= dateRequested
+  - Auto-adjustment logic in create form
+  - Migration: `20251227104418_add_date_requested_to_rfp`
+
+- ✅ Requisition Slip relation update:
+  - Made `requisitionSlipId` optional/nullable in schema
+  - Removed from frontend create form and DTOs
+  - Maintained backend logic for future use
+
+- ✅ Payment Request Edit Functionality:
+  - Created edit page at `/payments/[id]/edit`
+  - Loads existing payment data and pre-populates form fields
+  - Permission-based access: only DRAFT status + (requester OR admin)
+  - Edit button added to detail page with proper permissions
+  - Updates via `updateRequisitionForPayment` service method
+  - Full form validation matching create page
+  - Redirects to detail page on successful update
+
+- ✅ UI/UX Improvements:
+  - Currency formatting: ₱ symbol with 2 decimal places guaranteed
+  - Series Code hint text: "Select the priority level for this payment request"
+  - Design consistency: Payment Information card matches Requisition styling
+  - Button reorganization: Workflow actions (left) + CRUD actions (right)
+  - Removed Danger Zone section, integrated into action buttons
+
+**Status**: 🟢 Implementation Complete | Testing Recommended
 
 - ✅ Code: Ready for integration testing
-- ⏳ Testing: Awaiting Phase 3 validation before full release
+- ⏳ Testing: Phase 3 validation recommended before full release
 
 **API Testing**:
 
@@ -583,8 +700,8 @@ docker compose down       # Stop services
 
 ---
 
-**Living Document**: Last updated December 18, 2025, 4:30 PM
-**Next Review**: December 19, 2025 (Phase 3 testing begins)
+**Living Document**: Last updated December 27, 2025, 7:30 PM
+**Next Review**: Phase 3 testing (comprehensive workflow validation)
 
 ---
 

@@ -115,6 +115,7 @@ export interface ApprovalRecord {
 export interface RequisitionSlip {
   id: string;
   requisitionNumber: string;
+  reqSeq: number;
   requesterId: string;
   requester?: User;
   departmentId: string;
@@ -154,6 +155,7 @@ export interface RequestItem {
 export interface RequisitionForPayment {
   id: string;
   rfpNumber: string;
+  rfpSeq: number;
   requisitionSlipId?: string;
   requisitionSlip?: RequisitionSlip;
   requesterId: string;
@@ -161,6 +163,7 @@ export interface RequisitionForPayment {
   departmentId: string;
   department?: Department;
   seriesCode: string;
+  dateRequested: string;
   dateNeeded: string;
   payee: string;
   particulars: string;

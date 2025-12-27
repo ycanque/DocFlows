@@ -1,10 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { createRequisitionForPayment, CreateRequisitionForPaymentDto } from '@/services/paymentService';
+import { useRouter, useParams } from 'next/navigation';
+import { 
+  getRequisitionForPayment, 
+  updateRequisitionForPayment, 
+  UpdateRequisitionForPaymentDto 
+} from '@/services/paymentService';
 import { getDepartments } from '@/services/departmentService';
-import { Department } from '@docflows/shared';
+import { Department, RequisitionForPayment, RFPStatus } from '@docflows/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
@@ -21,10 +25,15 @@ function getTodayDateString() {
   return new Date().toISOString().split('T')[0];
 }
 
-export default function CreatePaymentPage() {
+export default function EditPaymentPage() {
   const router = useRouter();
+  const params = useParams();
   const { user } = useAuth();
+  const paymentId = params?.id as string;
+
+  const [payment, setPayment] = useState<RequisitionForPayment | null>(null);
   const [loading, setLoading] = useState(false);
+  const [loadingPayment, setLoadingPayment] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
@@ -42,13 +51,44 @@ export default function CreatePaymentPage() {
 
   useEffect(() => {
     loadDepartments();
-  }, []);
+    loadPayment();
+  }, [paymentId]);
 
-  useEffect(() => {
-    if (user?.departmentId) {
-      setFormData(prev => ({ ...prev, departmentId: user.departmentId! }));
+  async function loadPayment() {
+    try {
+      setLoadingPayment(true);
+      const data = await getRequisitionForPayment(paymentId);
+      setPayment(data);
+      
+      // Check if user can edit
+      if (data.status !== RFPStatus.DRAFT) {
+        setError('Only draft payment requests can be edited');
+        return;
+      }
+      
+      if (data.requesterId !== user?.id && user?.role !== 'ADMIN') {
+        setError('You do not have permission to edit this payment request');
+        return;
+      }
+
+      // Populate form with existing data
+      setFormData({
+        departmentId: data.departmentId,
+        seriesCode: data.seriesCode,
+        dateRequested: new Date(data.dateRequested).toISOString().split('T')[0],
+        dateNeeded: new Date(data.dateNeeded).toISOString().split('T')[0],
+        payee: data.payee,
+        particulars: data.particulars,
+        amount: data.amount.toString(),
+        currency: data.currency,
+      });
+    } catch (err) {
+      console.error('Error loading payment:', err);
+      setError('Failed to load payment request');
+    } finally {
+      setLoadingPayment(false);
     }
-  }, [user]);
+  }
 
   async function loadDepartments() {
     try {
@@ -98,14 +138,7 @@ export default function CreatePaymentPage() {
       return;
     }
 
-    if (!user?.id) {
-      setError('User not authenticated');
-      return;
-    }
-
-    const data: CreateRequisitionForPaymentDto = {
-      requesterId: user.id,
-      departmentId: formData.departmentId,
+    const data: UpdateRequisitionForPaymentDto = {
       seriesCode: formData.seriesCode,
       dateRequested: formData.dateRequested,
       dateNeeded: formData.dateNeeded,
@@ -118,17 +151,47 @@ export default function CreatePaymentPage() {
     try {
       setLoading(true);
       setError(null);
-      const payment = await createRequisitionForPayment(data);
-      if (payment && payment.id) {
-        router.push(`/payments/${payment.id}`);
-      }
+      await updateRequisitionForPayment(paymentId, data);
+      router.push(`/payments/${paymentId}`);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to create payment request';
+      const errorMessage = err instanceof Error ? err.message : 'Failed to update payment request';
       setError(errorMessage);
-      console.error('Error creating payment:', err);
+      console.error('Error updating payment:', err);
     } finally {
       setLoading(false);
     }
+  }
+
+  if (loadingPayment) {
+    return (
+      <ProtectedRoute>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </ProtectedRoute>
+    );
+  }
+
+  if (error && !payment) {
+    return (
+      <ProtectedRoute>
+        <div className="space-y-4">
+          <Button 
+            variant="ghost" 
+            onClick={() => router.push('/payments')}
+            className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Payment Requests
+          </Button>
+          <Card className="border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20">
+            <CardContent className="p-4">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </CardContent>
+          </Card>
+        </div>
+      </ProtectedRoute>
+    );
   }
 
   return (
@@ -138,19 +201,19 @@ export default function CreatePaymentPage() {
         <div className="flex flex-col gap-4">
           <Button 
             variant="ghost" 
-            onClick={() => router.push('/payments')}
+            onClick={() => router.push(`/payments/${paymentId}`)}
             className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Payment Requests
+            Back to Payment Request
           </Button>
           
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-              Create Payment Request
+              Edit Payment Request
             </h1>
             <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-              Fill in the details to create a new payment request
+              Update payment request details
             </p>
           </div>
         </div>
@@ -188,7 +251,7 @@ export default function CreatePaymentPage() {
                         className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
                         required
                       >
-                        <option value="">Select a department</option>
+                        <option value="">Select department</option>
                         {departments.map((dept) => (
                           <option key={dept.id} value={dept.id}>
                             {dept.name}
@@ -218,6 +281,7 @@ export default function CreatePaymentPage() {
                       ))}
                     </select>
                     {formErrors.seriesCode && <p className="text-sm text-red-500 mt-1">{formErrors.seriesCode}</p>}
+                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Select the priority level for this payment request</p>
                   </div>
                 </div>
 
@@ -245,7 +309,6 @@ export default function CreatePaymentPage() {
                       required
                     />
                     {formErrors.dateRequested && <p className="text-sm text-red-500 mt-1">{formErrors.dateRequested}</p>}
-                    <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Today or later</p>
                   </div>
 
                   <div>
@@ -340,16 +403,13 @@ export default function CreatePaymentPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push('/payments')}
+                    onClick={() => router.push(`/payments/${paymentId}`)}
                     disabled={loading}
                   >
                     Cancel
                   </Button>
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                  >
-                    {loading ? 'Creating...' : 'Create Payment Request'}
+                  <Button type="submit" disabled={loading}>
+                    {loading ? 'Saving...' : 'Save Changes'}
                   </Button>
                 </div>
               </div>
@@ -358,4 +418,5 @@ export default function CreatePaymentPage() {
         </form>
       </div>
     </ProtectedRoute>
-  );}
+  );
+}

@@ -10,7 +10,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
 
@@ -48,34 +48,34 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center bg-zinc-50 px-4 dark:bg-zinc-900">
+    <div className="relative flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       {/* Theme Toggle - Top Right */}
       <div className="absolute right-4 top-4">
         <ThemeToggle />
       </div>
-      
-      <div className="w-full max-w-md space-y-8">
-        {/* Header */}
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-            DocFlows
-          </h1>
-          <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
-            Document Workflow Management System
-          </p>
-        </div>
 
-        {/* Login Form */}
+      <div className="w-full max-w-md space-y-8">
+        {/* Card Container with Logo/Header and Login Form */}
         <div className="rounded-lg bg-white px-8 py-10 shadow-sm dark:bg-zinc-800">
+          {/* Header with Logo */}
+          <div className="text-center flex flex-col items-center mb-8">
+            <img
+              src="/favicon.svg"
+              alt="DocFlows Logo"
+              className="mx-auto mb-4 h-16 w-16 drop-shadow-lg animate-fade-in"
+              draggable="false"
+            />
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              DocFlows
+            </h1>
+            <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+              Document Workflow Management System
+            </p>
+          </div>
+
+          {/* Login Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-50">
-                Sign in to your account
-              </h2>
-              <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-                Enter your credentials to access the system
-              </p>
-            </div>
+            {/* ...removed sign in header and description... */}
 
             {/* Error Message */}
             {error && (

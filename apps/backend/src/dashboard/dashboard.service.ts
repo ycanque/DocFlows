@@ -228,7 +228,11 @@ export class DashboardService {
 
   async getRequisitionTrends(userId?: string) {
     const now = new Date();
-    const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+    const threeMonthsAgo = new Date();
+    threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
+
+    console.log('📊 Requisition Trends Request');
+    console.log('Date range:', threeMonthsAgo.toISOString(), 'to', now.toISOString());
 
     // Get all requisitions from the last 3 months
     const requisitions = await this.prisma.requisitionSlip.findMany({
@@ -244,24 +248,45 @@ export class DashboardService {
       },
     });
 
+    console.log('Found', requisitions.length, 'requisitions');
+    if (requisitions.length > 0) {
+      console.log(
+        'Sample dates:',
+        requisitions.slice(0, 5).map((r) => r.createdAt),
+      );
+    }
+
     // Group by week
     const weeklyData = new Map<string, number>();
 
     requisitions.forEach((req) => {
+      // Normalize date to remove time component
       const date = new Date(req.createdAt);
+      date.setHours(0, 0, 0, 0);
+
       const weekStart = this.getWeekStart(date);
       const key = weekStart.toISOString().split('T')[0];
 
+      console.log(`Date ${date.toISOString()} -> Week ${key}`);
       weeklyData.set(key, (weeklyData.get(key) || 0) + 1);
     });
 
+    console.log('Weekly data map:', Array.from(weeklyData.entries()));
+
     // Convert to array and fill missing weeks with 0
     const result: Array<{ date: string; count: number; label: string }> = [];
-    const currentDate = new Date(threeMonthsAgo);
+    let currentDate = new Date(threeMonthsAgo);
     currentDate.setHours(0, 0, 0, 0);
 
-    while (currentDate <= now) {
-      const weekStart = this.getWeekStart(currentDate);
+    // Make sure we include the current week - add buffer to ensure we go past it
+    const endDate = new Date(now);
+    endDate.setDate(endDate.getDate() + 7); // Add 7 days to ensure we include current week
+    endDate.setHours(0, 0, 0, 0);
+
+    console.log('Loop from:', currentDate.toISOString(), 'to:', endDate.toISOString());
+
+    while (currentDate < endDate) {
+      const weekStart = this.getWeekStart(new Date(currentDate));
       const key = weekStart.toISOString().split('T')[0];
 
       result.push({
@@ -274,14 +299,21 @@ export class DashboardService {
       currentDate.setDate(currentDate.getDate() + 7);
     }
 
+    console.log('Returning', result.length, 'weeks of data');
+    console.log('First 3 weeks:', result.slice(0, 3));
+    console.log('Last 3 weeks:', result.slice(-3));
+
     return result;
   }
 
   private getWeekStart(date: Date): Date {
     const d = new Date(date);
-    const day = d.getDay();
-    const diff = d.getDate() - day;
-    return new Date(d.setDate(diff));
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay(); // 0 = Sunday, 6 = Saturday
+    const diff = d.getDate() - day; // Calculate Sunday of this week
+    const weekStart = new Date(d.setDate(diff));
+    weekStart.setHours(0, 0, 0, 0);
+    return weekStart;
   }
 
   private formatWeekLabel(date: Date): string {

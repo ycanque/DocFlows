@@ -216,6 +216,7 @@ enum RequisitionStatus {
 model RequisitionSlip {
   id                    String              @id @default(uuid()) @db.Uuid
   requisitionNumber     String              @unique @map("requisition_number")
+  reqSeq                Int                 @default(autoincrement()) @map("req_seq")
   requesterId           String              @map("requester_id") @db.Uuid
   requester             User                @relation(fields: [requesterId], references: [id])
   departmentId          String              @map("department_id") @db.Uuid
@@ -285,6 +286,7 @@ enum RFPStatus {
 model RequisitionForPayment {
   id                    String            @id @default(uuid()) @db.Uuid
   rfpNumber             String            @unique @map("rfp_number")
+  rfpSeq                Int               @default(autoincrement()) @map("rfp_seq")
   requisitionSlipId     String?           @map("requisition_slip_id") @db.Uuid
   requisitionSlip       RequisitionSlip?  @relation(fields: [requisitionSlipId], references: [id])
   requesterId           String            @map("requester_id") @db.Uuid
@@ -292,6 +294,7 @@ model RequisitionForPayment {
   departmentId          String            @map("department_id") @db.Uuid
   department            Department        @relation(fields: [departmentId], references: [id])
   seriesCode            String            @map("series_code")
+  dateRequested         DateTime          @default(now()) @map("date_requested") @db.Date
   dateNeeded            DateTime          @map("date_needed") @db.Date
   payee                 String
   particulars           String
