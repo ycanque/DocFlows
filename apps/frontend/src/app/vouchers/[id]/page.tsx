@@ -55,8 +55,6 @@ export default function CheckVoucherDetailPage() {
       setLoading(true);
       setError(null);
       const data = await getCheckVoucher(voucherId);
-      console.log('Loaded voucher:', data);
-      console.log('Has check?', !!data.check);
       setVoucher(data);
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Failed to load check voucher');

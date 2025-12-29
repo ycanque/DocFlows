@@ -251,7 +251,6 @@ export class RequisitionsService {
 
       if (existingRecord) {
         // Update existing record with approval
-        console.log(`Updating approval record ${existingRecord.id} with approvedBy: ${userId}`);
         const updated = await tx.approvalRecord.update({
           where: { id: existingRecord.id },
           data: {
@@ -260,7 +259,6 @@ export class RequisitionsService {
             timestamp: new Date(),
           },
         });
-        console.log(`Updated approval record:`, updated);
       } else {
         // Create new approval record if it doesn't exist (fallback)
         await tx.approvalRecord.create({

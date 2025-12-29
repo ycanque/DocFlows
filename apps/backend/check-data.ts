@@ -20,8 +20,6 @@ async function checkData() {
     },
   });
 
-  console.log(`Total requisitions: ${requisitions.length}`);
-  console.log('\nRequisitions by date:');
   requisitions.forEach((req) => {
     console.log(`- ${req.requisitionNumber}: ${req.dateRequested}`);
   });

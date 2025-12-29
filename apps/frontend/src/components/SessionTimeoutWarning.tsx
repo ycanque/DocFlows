@@ -31,11 +31,8 @@ export function SessionTimeoutWarning() {
   const resetTimeoutFn = useCallback((isUserActivity: boolean = true) => {
     // Don't reset timer if warning dialog is showing (ignore user activity on dialog)
     if (isUserActivity && showWarningRef.current) {
-      console.log('⏸️ Ignoring activity - warning dialog is open');
       return;
     }
-
-    console.log('↻ Timeout reset due to user activity');
     // Clear existing timeouts
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
@@ -46,7 +43,6 @@ export function SessionTimeoutWarning() {
 
     // Set new warning timeout
     warningTimeoutRef.current = setTimeout(() => {
-      console.log('⚠️ SessionTimeoutWarning: Showing warning dialog');
       showWarningRef.current = true;
       setShowWarning(true);
       setTimeRemaining(60); // 1 minute remaining
@@ -65,7 +61,6 @@ export function SessionTimeoutWarning() {
 
     // Set logout timeout
     timeoutRef.current = setTimeout(() => {
-      console.log('🚪 SessionTimeoutWarning: Auto-logout triggered');
       showWarningRef.current = false;
       setShowWarning(false);
       logout();
@@ -80,8 +75,6 @@ export function SessionTimeoutWarning() {
   // Track user activity - only run once on mount
   useEffect(() => {
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
-
-    console.log('🔄 SessionTimeoutWarning: Timer initialized');
     
     // Initialize timeout on mount (not from user activity)
     resetTimeoutFn(false);
@@ -117,7 +110,6 @@ export function SessionTimeoutWarning() {
   const handleLogoutNow = (e: React.MouseEvent) => {
     // Prevent this click from being captured by activity listeners
     e.stopPropagation();
-    console.log('🚪 User clicked Logout Now');
     
     // Mark that we're logging out to prevent onOpenChange from interfering
     isLoggingOutRef.current = true;
@@ -136,7 +128,6 @@ export function SessionTimeoutWarning() {
   const handleDialogOpenChange = (open: boolean) => {
     // When closing the dialog (e.g., via X button or ESC), extend session instead of closing
     if (!open && !isLoggingOutRef.current) {
-      console.log('⏸️ Dialog closed via X button - extending session');
       handleExtendSession();
       return;
     }
