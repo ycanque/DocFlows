@@ -53,7 +53,7 @@ export default function CashAdvancesPage() {
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm">
                       The cash advances module is currently being developed. 
-                      You'll be able to request cash advances here soon.
+                      You&apos;ll be able to request cash advances here soon.
                     </p>
                   </div>
                 </CardContent>

@@ -53,7 +53,7 @@ export default function OtherRequestsPage() {
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm">
                       The other requests module is currently being developed. 
-                      You'll be able to submit various requests here soon.
+                      You&apos;ll be able to submit various requests here soon.
                     </p>
                   </div>
                 </CardContent>

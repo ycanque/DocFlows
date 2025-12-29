@@ -233,7 +233,7 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                     )}
                     {record.comments && record.comments !== 'Submitted for approval' && record.comments !== `Awaiting approval at level ${record.approvalLevel}` && (
                       <p className={`mt-1 text-sm ${isRejected ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-300'}`}>
-                        "{record.comments}"
+                        &quot;{record.comments}&quot;
                       </p>
                     )}
                     <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 sm:hidden">

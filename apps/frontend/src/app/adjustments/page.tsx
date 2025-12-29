@@ -53,7 +53,7 @@ export default function AdjustmentRequestsPage() {
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm">
                       The adjustment requests module is currently being developed. 
-                      You'll be able to request document adjustments here soon.
+                      You&apos;ll be able to request document adjustments here soon.
                     </p>
                   </div>
                 </CardContent>

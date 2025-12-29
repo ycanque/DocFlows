@@ -53,7 +53,7 @@ export default function PlaneTicketsPage() {
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm">
                       The plane tickets module is currently being developed. 
-                      You'll be able to request travel bookings here soon.
+                      You&apos;ll be able to request travel bookings here soon.
                     </p>
                   </div>
                 </CardContent>

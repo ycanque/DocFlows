@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { RequisitionSlip, RequisitionStatus } from '@docflows/shared';
 import { getRequisitions } from '@/services/requisitionService';
@@ -20,7 +20,7 @@ const statusTabs = [
   { label: 'Rejected', value: RequisitionStatus.REJECTED },
 ];
 
-export default function RequisitionsListPage() {
+function RequisitionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
@@ -48,8 +48,8 @@ export default function RequisitionsListPage() {
       setError(null);
       const data = await getRequisitions();
       setRequisitions(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load requisitions');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load requisitions');
       console.error('Error loading requisitions:', err);
     } finally {
       setLoading(false);
@@ -290,5 +290,21 @@ export default function RequisitionsListPage() {
       </Card>
     </div>
     </ProtectedRoute>
+  );
+}
+
+export default function RequisitionsListPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 p-6">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-center items-center h-64">
+            <div className="text-zinc-500 dark:text-zinc-400">Loading...</div>
+          </div>
+        </div>
+      </div>
+    }>
+      <RequisitionsContent />
+    </Suspense>
   );
 }

@@ -12,7 +12,12 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<string, { label: string; className: string }> = {
+interface StatusConfig {
+  label: string;
+  className: string;
+}
+
+const requisitionStatusConfig: Record<string, StatusConfig> = {
   // Requisition Statuses
   [RequisitionStatus.DRAFT]: {
     label: 'Draft',
@@ -42,7 +47,9 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: 'Completed',
     className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
   },
+};
 
+const rfpStatusConfig: Record<string, StatusConfig> = {
   // RFP (Request for Payment) Statuses
   [RFPStatus.DRAFT]: {
     label: 'Draft',
@@ -80,7 +87,9 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: 'Cancelled',
     className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
   },
+};
 
+const checkVoucherStatusConfig: Record<string, StatusConfig> = {
   // Check Voucher Statuses
   [CheckVoucherStatus.DRAFT]: {
     label: 'Draft',
@@ -106,7 +115,9 @@ const statusConfig: Record<string, { label: string; className: string }> = {
     label: 'Rejected',
     className: 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300',
   },
+};
 
+const checkStatusConfig: Record<string, StatusConfig> = {
   // Check Statuses
   [CheckStatus.ISSUED]: {
     label: 'Issued',
@@ -126,11 +137,27 @@ const statusConfig: Record<string, { label: string; className: string }> = {
   },
 };
 
-export default function StatusBadge({ status, className = '' }: StatusBadgeProps) {
-  const config = statusConfig[status] || {
-    label: status,
+function getStatusConfig(status: AllStatusTypes): StatusConfig {
+  if (status in requisitionStatusConfig) {
+    return requisitionStatusConfig[status];
+  }
+  if (status in rfpStatusConfig) {
+    return rfpStatusConfig[status];
+  }
+  if (status in checkVoucherStatusConfig) {
+    return checkVoucherStatusConfig[status];
+  }
+  if (status in checkStatusConfig) {
+    return checkStatusConfig[status];
+  }
+  return {
+    label: 'Unknown',
     className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300',
   };
+}
+
+export default function StatusBadge({ status, className = '' }: StatusBadgeProps) {
+  const config = getStatusConfig(status);
 
   return (
     <span

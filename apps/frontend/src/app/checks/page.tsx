@@ -42,8 +42,8 @@ export default function ChecksPage() {
       setError(null);
       const data = await getChecks();
       setChecks(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load checks');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load checks');
       console.error('Error loading checks:', err);
     } finally {
       setLoading(false);

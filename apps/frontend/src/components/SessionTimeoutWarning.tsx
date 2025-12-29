@@ -24,7 +24,7 @@ export function SessionTimeoutWarning() {
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
   const warningTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const countdownIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const handleActivityRef = useRef<(() => void) | null>(null);
+  const handleActivityRef = useRef<((isUserActivity: boolean) => void) | null>(null);
   const isLoggingOutRef = useRef(false);
   const showWarningRef = useRef(false);
 
@@ -76,9 +76,6 @@ export function SessionTimeoutWarning() {
   useEffect(() => {
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
     
-    // Initialize timeout on mount (not from user activity)
-    resetTimeoutFn(false);
-
     // Create activity handler that uses ref to get latest function
     const handleActivity = () => {
       if (handleActivityRef.current) {
@@ -89,8 +86,12 @@ export function SessionTimeoutWarning() {
     events.forEach((event) => {
       window.addEventListener(event, handleActivity);
     });
+    
+    // Initialize timeout on mount (not from user activity) - wrapped in setTimeout to avoid direct setState
+    const timerId = setTimeout(() => resetTimeoutFn(false), 0);
 
     return () => {
+      clearTimeout(timerId);
       events.forEach((event) => {
         window.removeEventListener(event, handleActivity);
       });

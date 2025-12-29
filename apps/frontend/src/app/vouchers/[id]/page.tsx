@@ -56,8 +56,8 @@ export default function CheckVoucherDetailPage() {
       setError(null);
       const data = await getCheckVoucher(voucherId);
       setVoucher(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load check voucher');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load check voucher');
       console.error('Error loading check voucher:', err);
     } finally {
       setLoading(false);
@@ -71,8 +71,8 @@ export default function CheckVoucherDetailPage() {
       setActionLoading(true);
       await verifyCheckVoucher(voucherId);
       await loadVoucher();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to verify check voucher');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to verify check voucher');
     } finally {
       setActionLoading(false);
     }
@@ -85,8 +85,8 @@ export default function CheckVoucherDetailPage() {
       setActionLoading(true);
       await approveCheckVoucher(voucherId);
       await loadVoucher();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to approve check voucher');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to approve check voucher');
     } finally {
       setActionLoading(false);
     }
@@ -104,8 +104,8 @@ export default function CheckVoucherDetailPage() {
       await loadVoucher();
       setShowRejectModal(false);
       setRejectReason('');
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to reject check voucher');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to reject check voucher');
     } finally {
       setActionLoading(false);
     }
@@ -141,8 +141,8 @@ export default function CheckVoucherDetailPage() {
       setShowIssueCheckModal(false);
       setSelectedBankAccount('');
       setNextCheckNumber('');
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to issue check');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to issue check');
     } finally {
       setActionLoading(false);
     }

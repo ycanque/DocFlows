@@ -38,9 +38,9 @@ export default function BankSelector({
       setLoadError(null);
       const accounts = await getActiveBankAccounts();
       setBankAccounts(accounts);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Failed to load bank accounts:', err);
-      setLoadError(err.response?.data?.message || 'Failed to load bank accounts');
+      setLoadError((err as any)?.response?.data?.message || 'Failed to load bank accounts');
     } finally {
       setLoading(false);
     }

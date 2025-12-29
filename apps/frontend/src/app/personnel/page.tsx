@@ -53,7 +53,7 @@ export default function PersonnelRequestsPage() {
                     </h3>
                     <p className="text-sm text-zinc-500 dark:text-zinc-400 max-w-sm">
                       The personnel requests module is currently being developed. 
-                      You'll be able to manage HR requests here soon.
+                      You&apos;ll be able to manage HR requests here soon.
                     </p>
                   </div>
                 </CardContent>

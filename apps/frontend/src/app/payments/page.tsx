@@ -47,8 +47,8 @@ export default function PaymentsListPage() {
       setError(null);
       const data = await getRequisitionsForPayment();
       setPayments(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load payment requests');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load payment requests');
       console.error('Error loading payments:', err);
     } finally {
       setLoading(false);

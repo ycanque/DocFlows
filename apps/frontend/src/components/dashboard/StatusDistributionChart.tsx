@@ -22,7 +22,21 @@ const STATUS_COLORS: Record<string, string> = {
   COMPLETED: '#22c55e',
 };
 
-const CustomTooltip = ({ active, payload, totalCount }: { active?: boolean; payload?: any; totalCount: number }) => {
+interface TooltipPayload {
+  value: number;
+  payload: {
+    label: string;
+  };
+}
+
+interface LegendPayload {
+  value: string;
+  color: string;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = (props: any) => {
+  const { active, payload, totalCount } = props;
   if (active && payload && payload.length) {
     const data = payload[0];
     return (
@@ -42,10 +56,13 @@ const CustomTooltip = ({ active, payload, totalCount }: { active?: boolean; payl
   return null;
 };
 
-const CustomLegend = ({ payload }: { payload?: any }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomLegend = (props: any) => {
+  const { payload } = props;
   if (!payload) return null;
   return (
     <div className="flex flex-wrap gap-2 justify-center mt-4">
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       {payload.map((entry: any, index: number) => (
         <div key={`legend-${index}`} className="flex items-center gap-1.5">
           <div

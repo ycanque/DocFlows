@@ -231,9 +231,6 @@ export class DashboardService {
     const threeMonthsAgo = new Date();
     threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() - 3);
 
-    console.log('📊 Requisition Trends Request');
-    console.log('Date range:', threeMonthsAgo.toISOString(), 'to', now.toISOString());
-
     // Get all requisitions from the last 3 months
     const requisitions = await this.prisma.requisitionSlip.findMany({
       where: {
@@ -248,14 +245,6 @@ export class DashboardService {
       },
     });
 
-    console.log('Found', requisitions.length, 'requisitions');
-    if (requisitions.length > 0) {
-      console.log(
-        'Sample dates:',
-        requisitions.slice(0, 5).map((r) => r.createdAt),
-      );
-    }
-
     // Group by week
     const weeklyData = new Map<string, number>();
 
@@ -267,11 +256,8 @@ export class DashboardService {
       const weekStart = this.getWeekStart(date);
       const key = weekStart.toISOString().split('T')[0];
 
-      console.log(`Date ${date.toISOString()} -> Week ${key}`);
       weeklyData.set(key, (weeklyData.get(key) || 0) + 1);
     });
-
-    console.log('Weekly data map:', Array.from(weeklyData.entries()));
 
     // Convert to array and fill missing weeks with 0
     const result: Array<{ date: string; count: number; label: string }> = [];
@@ -282,8 +268,6 @@ export class DashboardService {
     const endDate = new Date(now);
     endDate.setDate(endDate.getDate() + 7); // Add 7 days to ensure we include current week
     endDate.setHours(0, 0, 0, 0);
-
-    console.log('Loop from:', currentDate.toISOString(), 'to:', endDate.toISOString());
 
     while (currentDate < endDate) {
       const weekStart = this.getWeekStart(new Date(currentDate));
@@ -298,10 +282,6 @@ export class DashboardService {
       // Move to next week
       currentDate.setDate(currentDate.getDate() + 7);
     }
-
-    console.log('Returning', result.length, 'weeks of data');
-    console.log('First 3 weeks:', result.slice(0, 3));
-    console.log('Last 3 weeks:', result.slice(-3));
 
     return result;
   }

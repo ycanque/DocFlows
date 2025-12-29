@@ -56,8 +56,9 @@ export default function RequisitionDetailsPage() {
       setError(null);
       const data = await getRequisition(requisitionId);
       setRequisition(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load requisition');
+    } catch (err: unknown) {
+      const errorMessage = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
+      setError(errorMessage || 'Failed to load requisition');
       console.error('Error loading requisition:', err);
     } finally {
       setLoading(false);
@@ -81,8 +82,8 @@ export default function RequisitionDetailsPage() {
       await submitRequisition(requisitionId);
       await loadRequisition();
       await loadApprovalHistory();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to submit requisition');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to submit requisition');
     } finally {
       setActionLoading(false);
     }
@@ -96,8 +97,8 @@ export default function RequisitionDetailsPage() {
       await approveRequisition(requisitionId);
       await loadRequisition();
       await loadApprovalHistory();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to approve requisition');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to approve requisition');
     } finally {
       setActionLoading(false);
     }
@@ -116,8 +117,8 @@ export default function RequisitionDetailsPage() {
       await loadApprovalHistory();
       setShowRejectModal(false);
       setRejectReason('');
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to reject requisition');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to reject requisition');
     } finally {
       setActionLoading(false);
     }
@@ -131,8 +132,8 @@ export default function RequisitionDetailsPage() {
       await cancelRequisition(requisitionId);
       await loadRequisition();
       await loadApprovalHistory();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to cancel requisition');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to cancel requisition');
     } finally {
       setActionLoading(false);
     }
@@ -145,8 +146,8 @@ export default function RequisitionDetailsPage() {
       setActionLoading(true);
       await deleteRequisition(requisitionId);
       router.push('/requisitions');
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to delete requisition');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to delete requisition');
       setActionLoading(false);
     }
   }

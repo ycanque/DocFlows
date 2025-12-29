@@ -2,6 +2,7 @@ import api from "../lib/api";
 import { RequisitionForPayment, ApprovalRecord } from "@docflows/shared";
 
 export interface CreateRequisitionForPaymentDto {
+  requisitionSlipId?: string;
   requesterId: string;
   departmentId: string;
   seriesCode: string;
@@ -14,6 +15,7 @@ export interface CreateRequisitionForPaymentDto {
 }
 
 export interface UpdateRequisitionForPaymentDto {
+  requisitionSlipId?: string;
   seriesCode?: string;
   dateRequested?: string;
   dateNeeded?: string;

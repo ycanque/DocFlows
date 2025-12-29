@@ -12,7 +12,9 @@ interface RequisitionTrendsChartProps {
   }>;
 }
 
-const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: any }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const CustomTooltip = (props: any) => {
+  const { active, payload } = props;
   if (active && payload && payload.length) {
     const data = payload[0];
     return (

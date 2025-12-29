@@ -51,8 +51,8 @@ export default function BankAccountsManagementPage() {
       setError(null);
       const data = await getBankAccounts();
       setAccounts(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load bank accounts');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load bank accounts');
       console.error('Error loading bank accounts:', err);
     } finally {
       setLoading(false);
@@ -114,8 +114,8 @@ export default function BankAccountsManagementPage() {
         bankName: '',
         isActive: true,
       });
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to save bank account');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to save bank account');
     } finally {
       setActionLoading(false);
     }
@@ -130,8 +130,8 @@ export default function BankAccountsManagementPage() {
       setActionLoading(true);
       await deleteBankAccount(account.id);
       await loadAccounts();
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to delete bank account');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to delete bank account');
     } finally {
       setActionLoading(false);
     }

@@ -123,10 +123,10 @@ export default function CreateRequisitionPage() {
 
   function isItemValid(item: RequisitionItem): boolean {
     return (
-      item.particulars?.trim() !== '' &&
-      item.quantity && item.quantity > 0 &&
-      item.unit?.trim() !== '' &&
-      item.unitCost && item.unitCost > 0
+      (item.particulars?.trim() ?? '') !== '' &&
+      (item.quantity ?? 0) > 0 &&
+      (item.unit?.trim() ?? '') !== '' &&
+      (item.unitCost ?? 0) > 0
     );
   }
 
@@ -146,7 +146,7 @@ export default function CreateRequisitionPage() {
     setItems(items.filter((_, i) => i !== index));
   }
 
-  function handleItemChange(index: number, field: keyof RequisitionItem, value: any) {
+  function handleItemChange(index: number, field: keyof RequisitionItem, value: string | number) {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -227,8 +227,8 @@ export default function CreateRequisitionPage() {
 
       const newRequisition = await createRequisition(dto);
       router.push(`/requisitions/${newRequisition.id}`);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to create requisition');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to create requisition');
       console.error('Error creating requisition:', err);
     } finally {
       setLoading(false);

@@ -3,7 +3,7 @@
 Deployment architecture:
 
 - **Database:** Neon PostgreSQL (Production) | Docker PostgreSQL (Development)
-- **Backend:** Render (Production) | Docker Compose (Development)
+- **Backend:** Render (Production) | npm run start:dev (Development)
 - **Frontend:** Vercel (Production) | npm run dev (Development)
 
 ---
@@ -63,6 +63,7 @@ Deployment architecture:
    ````
 
 4. **Start development servers:**
+
    ```bash
    npm run dev
    ```

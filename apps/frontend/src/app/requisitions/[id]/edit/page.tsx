@@ -135,8 +135,8 @@ export default function EditRequisitionPage() {
           subtotal: item.subtotal || 0,
         })));
       }
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load requisition');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load requisition');
       console.error('Error loading requisition:', err);
     } finally {
       setLoadingRequisition(false);
@@ -169,10 +169,10 @@ export default function EditRequisitionPage() {
 
   function isItemValid(item: RequisitionItem): boolean {
     return (
-      item.particulars?.trim() !== '' &&
-      item.quantity && item.quantity > 0 &&
-      item.unit?.trim() !== '' &&
-      item.unitCost && item.unitCost > 0
+      (item.particulars?.trim() ?? '') !== '' &&
+      (item.quantity ?? 0) > 0 &&
+      (item.unit?.trim() ?? '') !== '' &&
+      (item.unitCost ?? 0) > 0
     );
   }
 
@@ -192,7 +192,7 @@ export default function EditRequisitionPage() {
     setItems(items.filter((_, i) => i !== index));
   }
 
-  function handleItemChange(index: number, field: keyof RequisitionItem, value: any) {
+  function handleItemChange(index: number, field: keyof RequisitionItem, value: string | number) {
     const newItems = [...items];
     newItems[index] = { ...newItems[index], [field]: value };
     setItems(newItems);
@@ -268,8 +268,8 @@ export default function EditRequisitionPage() {
 
       await updateRequisition(requisitionId, dto);
       router.push(`/requisitions/${requisitionId}`);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to update requisition');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to update requisition');
       console.error('Error updating requisition:', err);
     } finally {
       setLoading(false);

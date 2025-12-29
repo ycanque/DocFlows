@@ -52,8 +52,8 @@ export default function CheckDetailPage() {
       setError(null);
       const data = await getCheck(checkId);
       setCheck(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load check');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load check');
       console.error('Error loading check:', err);
     } finally {
       setLoading(false);
@@ -72,8 +72,8 @@ export default function CheckDetailPage() {
       await loadCheck();
       setShowDisburseModal(false);
       setRecipientName('');
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to disburse check');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to disburse check');
     } finally {
       setActionLoading(false);
     }
@@ -91,8 +91,8 @@ export default function CheckDetailPage() {
       await loadCheck();
       setShowVoidModal(false);
       setVoidReason('');
-    } catch (err: any) {
-      alert(err?.response?.data?.message || 'Failed to void check');
+    } catch (err: unknown) {
+      alert((err as any)?.response?.data?.message || 'Failed to void check');
     } finally {
       setActionLoading(false);
     }
@@ -357,7 +357,7 @@ export default function CheckDetailPage() {
             <DialogHeader>
               <DialogTitle>Disburse Check</DialogTitle>
               <DialogDescription>
-                Confirm check disbursement by entering the recipient's name.
+                Confirm check disbursement by entering the recipient&apos;s name.
               </DialogDescription>
             </DialogHeader>
             <div className="py-4">

@@ -12,10 +12,11 @@ export default function ThemeToggle() {
   
   try {
     const themeContext = useTheme();
-    theme = themeContext.theme;
+    theme = themeContext.theme as 'light' | 'dark';
     toggleTheme = themeContext.toggleTheme;
-  } catch (error) {
+  } catch {
     // ThemeProvider not available during SSR
+    theme = 'light';
   }
 
   useEffect(() => {

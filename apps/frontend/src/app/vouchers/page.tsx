@@ -45,8 +45,8 @@ export default function CheckVouchersListPage() {
       setError(null);
       const data = await getCheckVouchers();
       setVouchers(data);
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Failed to load check vouchers');
+    } catch (err: unknown) {
+      setError((err as any)?.response?.data?.message || 'Failed to load check vouchers');
       console.error('Error loading check vouchers:', err);
     } finally {
       setLoading(false);

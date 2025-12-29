@@ -226,7 +226,7 @@ export default function PaymentStatusTimeline({
                     )}
                     {record.comments && record.comments !== 'Submitted for approval' && !record.comments.includes('Awaiting') && (
                       <p className={`mt-1 text-sm ${isRejected ? 'text-red-600 dark:text-red-400 font-medium' : 'text-gray-600 dark:text-gray-300'}`}>
-                        "{record.comments}"
+                        &quot;{record.comments}&quot;
                       </p>
                     )}
                   </div>

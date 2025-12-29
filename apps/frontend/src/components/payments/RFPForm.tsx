@@ -83,7 +83,7 @@ export default function RFPForm({
       };
 
       await onSubmit(submitData);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Form submission error:', error);
       // Handle error - could set a general error message
     } finally {
