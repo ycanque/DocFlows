@@ -6,13 +6,17 @@ import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
-  // Enable CORS - Allow localhost and network IP for development
+  // 1. Define your base development origins
   const allowedOrigins = [
     'http://localhost:3000',
     'http://127.0.0.1:3000',
-    'http://172.21.176.1:3000',
-    'http://localhost:5040', // Allow backend port for Swagger UI/local tools
+    'http://localhost:5040',
   ];
+
+  // 2. Add the Production Origin from Environment Variables
+  if (process.env.CORS_ORIGIN) {
+    allowedOrigins.push(process.env.CORS_ORIGIN);
+  }
 
   console.log('🔐 CORS Allowed Origins:', allowedOrigins);
 
@@ -21,7 +25,7 @@ async function bootstrap() {
       // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
 
-      if (allowedOrigins.indexOf(origin) !== -1) {
+      if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
         console.warn('⚠️  CORS blocked origin:', origin);
@@ -32,6 +36,7 @@ async function bootstrap() {
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
+
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,
