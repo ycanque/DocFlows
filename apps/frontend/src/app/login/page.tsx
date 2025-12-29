@@ -4,12 +4,14 @@ import { useState, FormEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import { Eye, EyeOff } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login, isAuthenticated } = useAuth();
   const router = useRouter();
@@ -113,17 +115,28 @@ export default function LoginPage() {
               >
                 Password
               </label>
-              <input
-                id="password"
-                type="password"
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:border-zinc-50 dark:focus:ring-zinc-50"
-                placeholder="Enter your password"
-                disabled={isLoading}
-              />
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? "text" : "password"}
+                  autoComplete="current-password"
+                  required
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="mt-1 block w-full rounded-md border border-zinc-300 px-3 py-2 pr-10 text-zinc-900 placeholder-zinc-400 shadow-sm focus:border-zinc-900 focus:outline-none focus:ring-1 focus:ring-zinc-900 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-50 dark:placeholder-zinc-500 dark:focus:border-zinc-50 dark:focus:ring-zinc-50"
+                  placeholder="Enter your password"
+                  disabled={isLoading}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-600 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+                </button>
+              </div>
             </div>
 
             {/* Submit Button */}
@@ -153,12 +166,20 @@ export default function LoginPage() {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     />
                   </svg>
-                  Signing in...
+                  <span>Signing in...</span>
                 </span>
               ) : (
                 'Sign in'
               )}
             </button>
+
+            {/* Backend Startup Notice */}
+            {isLoading && (
+              <div className="rounded-md bg-blue-50 px-4 py-3 text-xs text-blue-800 dark:bg-blue-900/20 dark:text-blue-400">
+                <p className="font-medium">💡 Tip: First request may take up to 50+ seconds</p>
+                <p className="mt-1 text-blue-700 dark:text-blue-300">The backend server initializes on first use. Please be patient while we start up.</p>
+              </div>
+            )}
           </form>
 
           {/* Test Credentials (Development Only) */}
