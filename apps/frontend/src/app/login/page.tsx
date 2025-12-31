@@ -50,7 +50,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center px-4 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
+    <div className="relative flex min-h-screen items-center justify-center px-4 py-8 bg-gradient-to-br from-blue-50 via-blue-100 to-blue-200 dark:from-slate-900 dark:via-blue-900 dark:to-slate-800">
       {/* Theme Toggle - Top Right */}
       <div className="absolute right-4 top-4">
         <ThemeToggle />
@@ -198,9 +198,19 @@ export default function LoginPage() {
         </div>
 
         {/* Footer */}
-        <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
-          &copy; {new Date().getFullYear()} DocFlows. All rights reserved.
-        </p>
+        <div className="flex flex-col items-center gap-2">
+          <img 
+            src="/cubeworks.png" 
+            alt="Cubeworks Logo" 
+            className="h-10 w-10"
+          />
+          <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
+            &copy; {new Date().getFullYear()} Cubeworks Technology Consulting and Solutions, Inc.
+          </p>
+          <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
+            DocFlows &copy; {new Date().getFullYear()}. All rights reserved.
+          </p>
+        </div>
       </div>
     </div>
   );

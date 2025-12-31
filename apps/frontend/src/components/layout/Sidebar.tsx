@@ -147,8 +147,7 @@ export default function Sidebar({
             className="h-9 w-9"
           />
           <div>
-            <h1 className="text-base font-semibold leading-tight text-zinc-900 dark:text-zinc-50">Document Flow</h1>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400 leading-none">Management System</p>
+            <h1 className="text-base font-semibold leading-tight text-zinc-900 dark:text-zinc-50">DocFlows</h1>
           </div>
         </div>
 
@@ -245,6 +244,17 @@ export default function Sidebar({
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <div className="px-2 py-3 flex flex-col items-center gap-2">
+                <img 
+                  src="/cubeworks.png" 
+                  alt="Cubeworks Logo" 
+                  className="h-6 w-6"
+                />
+                <p className="text-xs text-zinc-400 dark:text-zinc-500 text-center">
+                  © Cubeworks Technology Consulting and Solutions, Inc.
+                </p>
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
