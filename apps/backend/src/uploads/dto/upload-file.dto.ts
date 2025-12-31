@@ -8,6 +8,14 @@ export class UploadFileDto {
   @IsString()
   @IsOptional()
   folder?: string;
+
+  @IsString()
+  @IsOptional()
+  workflowStep?: string;
+
+  @IsString()
+  @IsOptional()
+  requisitionId?: string;
 }
 
 export class FileResponseDto {
@@ -19,6 +27,14 @@ export class FileResponseDto {
   mimeType: string;
   url?: string;
   uploadedAt: Date;
+  workflowStep?: string;
+  uploadedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: string;
+  };
 }
 
 export class ListFilesDto {

@@ -8,10 +8,13 @@
 
 import { useState, useRef } from 'react'
 import { uploadFile, type UploadedFile } from '@/services/uploadService'
+import { Upload } from 'lucide-react'
 
 interface FileUploadProps {
   bucket?: string
   folder?: string
+  workflowStep?: string
+  requisitionId?: string
   onUploadComplete?: (file: UploadedFile) => void
   onUploadError?: (error: string) => void
   acceptedFileTypes?: string
@@ -21,6 +24,8 @@ interface FileUploadProps {
 export default function FileUpload({
   bucket = 'documents',
   folder,
+  workflowStep,
+  requisitionId,
   onUploadComplete,
   onUploadError,
   acceptedFileTypes = '.pdf,.jpg,.jpeg,.png,.doc,.docx',
@@ -29,22 +34,52 @@ export default function FileUpload({
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [isDragging, setIsDragging] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (!file) return
-
-    // Validate file size
+  const validateFile = (file: File): boolean => {
     const maxSizeBytes = maxFileSizeMB * 1024 * 1024
     if (file.size > maxSizeBytes) {
       const error = `File size exceeds ${maxFileSizeMB}MB limit`
       onUploadError?.(error)
       alert(error)
-      return
+      return false
     }
+    return true
+  }
 
-    setSelectedFile(file)
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0]
+    if (!file) return
+
+    if (validateFile(file)) {
+      setSelectedFile(file)
+    }
+  }
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(true)
+  }
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+  }
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsDragging(false)
+
+    const file = e.dataTransfer.files?.[0]
+    if (!file) return
+
+    if (validateFile(file)) {
+      setSelectedFile(file)
+    }
   }
 
   const handleUpload = async () => {
@@ -62,7 +97,7 @@ export default function FileUpload({
         setProgress((prev) => Math.min(prev + 10, 90))
       }, 200)
 
-      const result = await uploadFile(selectedFile, bucket, folder)
+      const result = await uploadFile(selectedFile, bucket, folder, workflowStep, requisitionId)
 
       clearInterval(progressInterval)
       setProgress(100)
@@ -97,56 +132,75 @@ export default function FileUpload({
   }
 
   return (
-    <div className="w-full max-w-md">
-      <div className="mb-4">
-        <label
-          htmlFor="file-upload"
-          className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2"
-        >
-          Select File
-        </label>
+    <div className="w-full space-y-4">
+      {/* Drag and Drop Zone */}
+      <div
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+        onDrop={handleDrop}
+        onClick={() => fileInputRef.current?.click()}
+        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+          isDragging
+            ? 'border-blue-500 bg-blue-50 dark:bg-blue-950/20'
+            : 'border-zinc-300 dark:border-zinc-600 hover:border-zinc-400 dark:hover:border-zinc-500'
+        }`}
+      >
         <input
           ref={fileInputRef}
-          id="file-upload"
           type="file"
           accept={acceptedFileTypes}
           onChange={handleFileSelect}
           disabled={uploading}
-          className="block w-full text-sm text-gray-900 dark:text-gray-100 border border-gray-300 dark:border-gray-600 rounded-lg cursor-pointer bg-gray-50 dark:bg-gray-700 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+          className="hidden"
         />
+
+        <Upload className="w-8 h-8 mx-auto text-zinc-400 dark:text-zinc-500 mb-2" />
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-50 mb-1">
+          Drag and drop your file here
+        </h3>
+        <p className="text-xs text-zinc-500 dark:text-zinc-400 mb-3">
+          or click to browse
+        </p>
+
         {selectedFile && (
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Selected: {selectedFile.name} ({formatFileSize(selectedFile.size)})
-          </p>
+          <div className="mt-4 p-3 bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded">
+            <p className="text-sm font-medium text-green-900 dark:text-green-50">
+              ✓ {selectedFile.name}
+            </p>
+            <p className="text-xs text-green-700 dark:text-green-300">
+              {formatFileSize(selectedFile.size)}
+            </p>
+          </div>
         )}
       </div>
 
+      {/* Progress Bar */}
       {uploading && (
-        <div className="mb-4">
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+        <div>
+          <div className="w-full bg-zinc-200 dark:bg-zinc-700 rounded-full h-2">
             <div
-              className="bg-blue-600 h-2.5 rounded-full transition-all duration-300"
+              className="bg-blue-600 h-2 rounded-full transition-all duration-300"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
+          <p className="text-sm text-zinc-600 dark:text-zinc-400 mt-2 text-center">
             Uploading... {progress}%
           </p>
         </div>
       )}
 
+      {/* Upload Button */}
       <button
         onClick={handleUpload}
         disabled={!selectedFile || uploading}
-        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors"
+        className="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-zinc-300 dark:disabled:bg-zinc-700 disabled:cursor-not-allowed transition-colors font-medium text-sm"
       >
-        {uploading ? 'Uploading...' : 'Upload File'}
+        {uploading ? `Uploading... ${progress}%` : 'Upload File'}
       </button>
 
-      <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        Accepted files: {acceptedFileTypes.replace(/\./g, '').toUpperCase()}
-        <br />
-        Max size: {maxFileSizeMB}MB
+      <p className="text-xs text-zinc-500 dark:text-zinc-400 text-center space-y-0.5">
+        <span className="block">Supported: {acceptedFileTypes.replace(/\./g, '').toUpperCase()}</span>
+        <span className="block">Max size: {maxFileSizeMB}MB</span>
       </p>
     </div>
   )

@@ -29,6 +29,7 @@ Next.js Frontend → NestJS Backend API → Supabase Storage
 #### 1. **Prisma Schema Updates** ([apps/backend/prisma/schema.prisma](../apps/backend/prisma/schema.prisma))
 
 New `FileUpload` model added:
+
 ```prisma
 enum FileUploadStatus {
   UPLOADING
@@ -51,7 +52,7 @@ model FileUpload {
   uploadedAt        DateTime          @default(now()) @map("uploaded_at")
   deletedAt         DateTime?         @map("deleted_at")
   metadata          Json?
-  
+
   @@map("file_uploads")
   @@index([userId])
   @@index([bucketName])
@@ -65,6 +66,7 @@ model FileUpload {
 Handles all Supabase Storage interactions using the **service role key** (bypasses RLS for server-side operations).
 
 **Methods:**
+
 - `uploadFile()` - Upload file to Supabase Storage
 - `deleteFile()` - Delete file from storage
 - `listFiles()` - List files in bucket
@@ -78,6 +80,7 @@ Handles all Supabase Storage interactions using the **service role key** (bypass
 Business logic layer for file operations.
 
 **Methods:**
+
 - `uploadFile()` - Validate, upload, and save metadata
 - `listUserFiles()` - Get user's files from database
 - `getFile()` - Get single file details
@@ -86,6 +89,7 @@ Business logic layer for file operations.
 - `downloadFile()` - Download file
 
 **Key Features:**
+
 - File validation (size, type)
 - User isolation (only user's own files)
 - Metadata tracking in PostgreSQL
@@ -110,6 +114,7 @@ Supabase client instance (now primarily for future use; current implementation u
 Updated to use backend API instead of direct Supabase access.
 
 **Methods:**
+
 - `uploadFile()` - POST to `/uploads` endpoint
 - `listFiles()` - GET from `/uploads` endpoint
 - `deleteFile()` - DELETE from `/uploads/:id`
@@ -120,6 +125,7 @@ Updated to use backend API instead of direct Supabase access.
 #### 3. **File Upload Component** ([apps/frontend/src/components/FileUpload.tsx](../apps/frontend/src/components/FileUpload.tsx))
 
 Reusable file input component with:
+
 - File selection
 - Progress tracking
 - Size validation
@@ -128,6 +134,7 @@ Reusable file input component with:
 #### 4. **Test Page** ([apps/frontend/src/app/uploads/page.tsx](../apps/frontend/src/app/uploads/page.tsx))
 
 Demonstration page at `/uploads` route with:
+
 - Upload form
 - File listing table
 - File management (view, delete)
@@ -140,6 +147,7 @@ Demonstration page at `/uploads` route with:
 All endpoints require JWT authentication (Bearer token).
 
 ### Upload File
+
 ```
 POST /uploads
 Content-Type: multipart/form-data
@@ -163,6 +171,7 @@ Response:
 ```
 
 ### List User Files
+
 ```
 GET /uploads?bucket=documents
 
@@ -178,6 +187,7 @@ Response:
 ```
 
 ### Get Single File
+
 ```
 GET /uploads/:id
 
@@ -185,6 +195,7 @@ Response: FileResponseDto
 ```
 
 ### Delete File
+
 ```
 DELETE /uploads/:id
 
@@ -196,6 +207,7 @@ Response:
 ```
 
 ### Get Signed URL
+
 ```
 GET /uploads/:id/signed-url?expiresIn=3600
 
@@ -207,6 +219,7 @@ Response:
 ```
 
 ### Download File
+
 ```
 GET /uploads/:id/download
 
@@ -218,14 +231,17 @@ Response: Blob (file binary data)
 ## 🔐 Security Features
 
 ✅ **JWT Authentication**
+
 - All endpoints require valid JWT token
 - Token auto-added by axios interceptor in frontend
 
 ✅ **User Isolation**
+
 - Users can only access their own files
 - `userId` from JWT enforces this at service level
 
 ✅ **File Validation**
+
 - Maximum file size: 50MB
 - Allowed MIME types:
   - `application/pdf`
@@ -234,11 +250,13 @@ Response: Blob (file binary data)
   - `application/vnd.openxmlformats-officedocument.wordprocessingml.document`
 
 ✅ **Server-Side Security**
+
 - Backend uses Supabase **service role key** (not exposed to client)
 - Bypasses RLS policies (security handled in backend)
 - All validation happens on server
 
 ✅ **Audit Trail**
+
 - Every file upload tracked in `file_uploads` table
 - Metadata includes: user, filename, size, MIME type, timestamp
 - Soft deletes (deleted_at timestamp for historical tracking)
@@ -249,22 +267,23 @@ Response: Blob (file binary data)
 
 ### file_uploads Table
 
-| Column | Type | Description |
-|--------|------|-------------|
-| id | UUID | Primary key |
-| user_id | UUID | Foreign key to users table |
-| file_name | String | Unique internal filename |
-| original_file_name | String | Filename provided by user |
-| bucket_name | String | Supabase bucket name |
-| storage_path | String | Full path in Supabase Storage |
-| file_size | BigInt | File size in bytes |
-| mime_type | String | MIME type (e.g., application/pdf) |
-| status | Enum | UPLOADING, COMPLETED, FAILED, DELETED |
-| uploaded_at | DateTime | When file was uploaded |
-| deleted_at | DateTime | When file was deleted (NULL if active) |
-| metadata | Json | Additional metadata (extensible) |
+| Column             | Type     | Description                            |
+| ------------------ | -------- | -------------------------------------- |
+| id                 | UUID     | Primary key                            |
+| user_id            | UUID     | Foreign key to users table             |
+| file_name          | String   | Unique internal filename               |
+| original_file_name | String   | Filename provided by user              |
+| bucket_name        | String   | Supabase bucket name                   |
+| storage_path       | String   | Full path in Supabase Storage          |
+| file_size          | BigInt   | File size in bytes                     |
+| mime_type          | String   | MIME type (e.g., application/pdf)      |
+| status             | Enum     | UPLOADING, COMPLETED, FAILED, DELETED  |
+| uploaded_at        | DateTime | When file was uploaded                 |
+| deleted_at         | DateTime | When file was deleted (NULL if active) |
+| metadata           | Json     | Additional metadata (extensible)       |
 
 **Indexes:**
+
 - user_id (query user's files)
 - bucket_name (filter by bucket)
 - status (find failed uploads)
@@ -279,45 +298,45 @@ Response: Blob (file binary data)
 #### 1. Upload a File
 
 ```typescript
-import { uploadFile, type UploadedFile } from '@/services/uploadService'
+import { uploadFile, type UploadedFile } from "@/services/uploadService";
 
 const handleUpload = async (file: File) => {
-  const result = await uploadFile(file, 'documents', 'folder')
-  
+  const result = await uploadFile(file, "documents", "folder");
+
   if (result.success && result.file) {
-    console.log('Uploaded:', result.file.id, result.file.url)
+    console.log("Uploaded:", result.file.id, result.file.url);
   } else {
-    console.error('Upload failed:', result.error)
+    console.error("Upload failed:", result.error);
   }
-}
+};
 ```
 
 #### 2. List User's Files
 
 ```typescript
-import { listFiles } from '@/services/uploadService'
+import { listFiles } from "@/services/uploadService";
 
-const files = await listFiles('documents')
-files.forEach(file => {
-  console.log(file.originalFileName, file.fileSize)
-})
+const files = await listFiles("documents");
+files.forEach((file) => {
+  console.log(file.originalFileName, file.fileSize);
+});
 ```
 
 #### 3. Delete a File
 
 ```typescript
-import { deleteFile } from '@/services/uploadService'
+import { deleteFile } from "@/services/uploadService";
 
-const success = await deleteFile(fileId)
+const success = await deleteFile(fileId);
 ```
 
 #### 4. Get Download URL
 
 ```typescript
-import { getSignedUrl } from '@/services/uploadService'
+import { getSignedUrl } from "@/services/uploadService";
 
-const url = await getSignedUrl(fileId, 3600) // 1 hour expiry
-window.location.href = url // Download
+const url = await getSignedUrl(fileId, 3600); // 1 hour expiry
+window.location.href = url; // Download
 ```
 
 ### For Backend Developers
@@ -339,9 +358,9 @@ In [uploads.controller.ts](../apps/backend/src/uploads/uploads.controller.ts):
 
 ```typescript
 // Add custom validation before upload
-const allowedMimeTypes = ['application/pdf', 'image/png']
+const allowedMimeTypes = ["application/pdf", "image/png"];
 if (!allowedMimeTypes.includes(file.mimetype)) {
-  throw new BadRequestException('File type not allowed')
+  throw new BadRequestException("File type not allowed");
 }
 ```
 
@@ -355,11 +374,11 @@ const fileUpload = await this.prisma.fileUpload.create({
     // ... existing fields
     metadata: {
       scanDate: new Date(),
-      virusScan: 'pending',
-      tags: ['invoice', 'important']
-    }
-  }
-})
+      virusScan: "pending",
+      tags: ["invoice", "important"],
+    },
+  },
+});
 ```
 
 ---
@@ -369,6 +388,7 @@ const fileUpload = await this.prisma.fileUpload.create({
 Migration file: `20251231080857_add_file_uploads`
 
 To run migration:
+
 ```powershell
 cd apps/backend
 npm run prisma:migrate dev
@@ -379,11 +399,13 @@ npm run prisma:migrate dev
 ## 📦 Dependencies
 
 ### Backend
+
 - `@supabase/supabase-js` ^2.89.0
 - `@nestjs/platform-express` (for file uploads)
 - Existing: `@prisma/client`, `@nestjs/jwt`, etc.
 
 ### Frontend
+
 - `@supabase/supabase-js` (for future client-side operations)
 - Existing: `axios`, `react`, `next`
 
@@ -394,6 +416,7 @@ npm run prisma:migrate dev
 ### Manual Testing Steps
 
 1. **Navigate to uploads page:**
+
    ```
    http://localhost:3000/uploads
    ```
@@ -418,6 +441,7 @@ npm run prisma:migrate dev
 ### Backend Testing
 
 Check backend logs:
+
 ```
 [Nest] ... LOG [RoutesResolver] UploadsController {/uploads}
 [Nest] ... LOG [RouterExplorer] Mapped {/uploads, POST}
@@ -429,6 +453,7 @@ Check backend logs:
 ## 🔄 Future Enhancements
 
 ### Planned Features
+
 - [ ] Virus scanning integration (ClamAV)
 - [ ] File compression (PDFs, images)
 - [ ] Batch upload
@@ -439,6 +464,7 @@ Check backend logs:
 - [ ] Integration with workflow models (attach to requisitions, payments, etc.)
 
 ### Database Extensions
+
 - Add `workflowType` and `workflowId` to link files to specific documents
 - Add `accessLevel` (private, department, organization)
 - Add `expiresAt` for temporary files
@@ -450,6 +476,7 @@ Check backend logs:
 ### Issue: 404 Not Found on /uploads endpoints
 
 **Solution:** Backend needs to be restarted
+
 ```powershell
 cd apps/backend
 npm run start:dev
@@ -457,7 +484,8 @@ npm run start:dev
 
 ### Issue: 401 Unauthorized
 
-**Solution:** 
+**Solution:**
+
 - Ensure you're logged in
 - Check that JWT token is being sent in Authorization header
 - Token should be in format: `Bearer <token>`
@@ -467,10 +495,11 @@ npm run start:dev
 **Solution:** Files larger than 50MB are rejected by backend validation. To increase:
 
 In [uploads.controller.ts](../apps/backend/src/uploads/uploads.controller.ts):
+
 ```typescript
-const maxSize = 100 * 1024 * 1024 // 100MB
+const maxSize = 100 * 1024 * 1024; // 100MB
 if (file.size > maxSize) {
-  throw new BadRequestException('File size exceeds limit')
+  throw new BadRequestException("File size exceeds limit");
 }
 ```
 

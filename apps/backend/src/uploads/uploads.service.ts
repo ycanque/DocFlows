@@ -18,6 +18,8 @@ export class UploadsService {
     file: Express.Multer.File,
     bucket: string = 'documents',
     folder?: string,
+    workflowStep?: string,
+    requisitionId?: string,
   ): Promise<FileResponseDto> {
     try {
       // Generate unique file name
@@ -40,6 +42,19 @@ export class UploadsService {
           fileSize: BigInt(file.size),
           mimeType: file.mimetype,
           status: 'COMPLETED',
+          workflowStep,
+          requisitionSlipId: requisitionId,
+        },
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              role: true,
+            },
+          },
         },
       });
 
@@ -55,6 +70,8 @@ export class UploadsService {
         mimeType: fileUpload.mimeType,
         url,
         uploadedAt: fileUpload.uploadedAt,
+        workflowStep: fileUpload.workflowStep || undefined,
+        uploadedBy: fileUpload.user,
       };
     } catch (error) {
       throw new BadRequestException(
@@ -74,6 +91,17 @@ export class UploadsService {
         ...(bucket && { bucketName: bucket }),
         deletedAt: null,
       },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
       orderBy: {
         uploadedAt: 'desc',
       },
@@ -88,6 +116,48 @@ export class UploadsService {
       mimeType: file.mimeType,
       url: this.supabase.getPublicUrl(file.bucketName, file.storagePath),
       uploadedAt: file.uploadedAt,
+      workflowStep: file.workflowStep || undefined,
+      uploadedBy: file.user,
+    }));
+  }
+
+  /**
+   * List files for a specific requisition
+   */
+  async listRequisitionFiles(requisitionId: string): Promise<FileResponseDto[]> {
+    const files = await this.prisma.fileUpload.findMany({
+      where: {
+        requisitionSlipId: requisitionId,
+        status: 'COMPLETED',
+        deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
+        },
+      },
+      orderBy: {
+        uploadedAt: 'desc',
+      },
+    });
+
+    return files.map((file) => ({
+      id: file.id,
+      fileName: file.fileName,
+      originalFileName: file.originalFileName,
+      storagePath: file.storagePath,
+      fileSize: Number(file.fileSize),
+      mimeType: file.mimeType,
+      url: this.supabase.getPublicUrl(file.bucketName, file.storagePath),
+      uploadedAt: file.uploadedAt,
+      workflowStep: file.workflowStep || undefined,
+      uploadedBy: file.user,
     }));
   }
 
@@ -100,6 +170,17 @@ export class UploadsService {
         id: fileId,
         userId,
         deletedAt: null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+            role: true,
+          },
+        },
       },
     });
 
@@ -116,6 +197,8 @@ export class UploadsService {
       mimeType: file.mimeType,
       url: this.supabase.getPublicUrl(file.bucketName, file.storagePath),
       uploadedAt: file.uploadedAt,
+      workflowStep: file.workflowStep || undefined,
+      uploadedBy: file.user,
     };
   }
 

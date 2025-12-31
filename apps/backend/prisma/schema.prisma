@@ -240,6 +240,7 @@ model RequisitionSlip {
   // Relations
   items                 RequestItem[]
   requisitionsForPayment RequisitionForPayment[]
+  attachments           FileUpload[]
 
   @@map("requisition_slips")
   @@index([requisitionNumber])
@@ -308,6 +309,7 @@ model RequisitionForPayment {
 
   // Relations
   checkVoucher          CheckVoucher?
+  attachments           FileUpload[]
 
   @@map("requisitions_for_payment")
   @@index([rfpNumber])
@@ -652,6 +654,13 @@ model FileUpload {
   status            FileUploadStatus  @default(UPLOADING)
   uploadedAt        DateTime          @default(now()) @map("uploaded_at")
   deletedAt         DateTime?         @map("deleted_at")
+  workflowStep      String?           @map("workflow_step")
+  
+  // Optional relationships to documents
+  requisitionSlipId       String?       @map("requisition_slip_id") @db.Uuid
+  requisitionSlip         RequisitionSlip? @relation(fields: [requisitionSlipId], references: [id])
+  requisitionForPaymentId String?       @map("requisition_for_payment_id") @db.Uuid
+  requisitionForPayment   RequisitionForPayment? @relation(fields: [requisitionForPaymentId], references: [id])
   
   // Metadata
   metadata          Json?
@@ -661,4 +670,6 @@ model FileUpload {
   @@index([bucketName])
   @@index([status])
   @@index([uploadedAt])
+  @@index([requisitionSlipId])
+  @@index([requisitionForPaymentId])
 }

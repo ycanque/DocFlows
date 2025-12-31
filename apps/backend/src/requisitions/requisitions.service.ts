@@ -46,6 +46,19 @@ export class RequisitionsService {
     // Generate the formatted requisition number with the sequence
     const requisitionNumber = `REQ-${created.reqSeq.toString().padStart(6, '0')}`;
 
+    // Link attached files if provided
+    if (dto.fileIds && dto.fileIds.length > 0) {
+      await this.prisma.fileUpload.updateMany({
+        where: {
+          id: { in: dto.fileIds },
+          userId: dto.requesterId, // Security: only link user's own files
+        },
+        data: {
+          requisitionSlipId: created.id,
+        },
+      });
+    }
+
     // Update the record with the proper requisitionNumber
     return this.prisma.requisitionSlip.update({
       where: { id: created.id },
@@ -57,6 +70,8 @@ export class RequisitionsService {
         costCenter: true,
         project: true,
         businessUnit: true,
+        // Don't include attachments to avoid BigInt serialization issues
+        // Attachments can be fetched separately via the uploads endpoint
       },
     });
   }

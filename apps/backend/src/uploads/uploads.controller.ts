@@ -59,8 +59,17 @@ export class UploadsController {
 
     const bucket = dto.bucket || 'documents';
     const folder = dto.folder;
+    const workflowStep = dto.workflowStep;
+    const requisitionId = dto.requisitionId;
 
-    return this.uploadsService.uploadFile(req.user.id, file, bucket, folder);
+    return this.uploadsService.uploadFile(
+      req.user.id,
+      file,
+      bucket,
+      folder,
+      workflowStep,
+      requisitionId,
+    );
   }
 
   /**
@@ -70,6 +79,15 @@ export class UploadsController {
   @Get()
   async listFiles(@Request() req, @Query() query: ListFilesDto) {
     return this.uploadsService.listUserFiles(req.user.id, query.bucket);
+  }
+
+  /**
+   * List files for a requisition
+   * GET /uploads/requisition/:requisitionId
+   */
+  @Get('requisition/:requisitionId')
+  async listRequisitionFiles(@Param('requisitionId') requisitionId: string) {
+    return this.uploadsService.listRequisitionFiles(requisitionId);
   }
 
   /**

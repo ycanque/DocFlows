@@ -16,6 +16,12 @@ export interface UploadedFile {
   mimeType: string;
   url?: string;
   uploadedAt: string;
+  workflowStep?: string; // e.g., "CREATED", "SUBMITTED", "APPROVED", "REJECTED"
+  uploadedBy?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+  };
 }
 
 export interface UploadResult {
@@ -30,18 +36,24 @@ export interface UploadResult {
  * @param file - The file to upload
  * @param bucket - The storage bucket name (default: 'documents')
  * @param folder - Optional folder within the bucket
+ * @param workflowStep - Optional workflow step to associate with the file
+ * @param requisitionId - Optional requisition ID to associate the file with
  * @returns Upload result with file data or error
  */
 export const uploadFile = async (
   file: File,
   bucket: string = "documents",
-  folder?: string
+  folder?: string,
+  workflowStep?: string,
+  requisitionId?: string
 ): Promise<UploadResult> => {
   try {
     const formData = new FormData();
     formData.append("file", file);
     if (bucket) formData.append("bucket", bucket);
     if (folder) formData.append("folder", folder);
+    if (workflowStep) formData.append("workflowStep", workflowStep);
+    if (requisitionId) formData.append("requisitionId", requisitionId);
 
     const response = await api.post<UploadedFile>("/uploads", formData, {
       headers: {
@@ -72,6 +84,26 @@ export const listFiles = async (bucket?: string): Promise<UploadedFile[]> => {
     return response.data;
   } catch (error) {
     console.error("List files error:", error);
+    return [];
+  }
+};
+
+/**
+ * List files for a specific requisition
+ *
+ * @param requisitionId - The requisition ID
+ * @returns Array of uploaded files for this requisition
+ */
+export const listRequisitionFiles = async (
+  requisitionId: string
+): Promise<UploadedFile[]> => {
+  try {
+    const response = await api.get<UploadedFile[]>(
+      `/uploads/requisition/${requisitionId}`
+    );
+    return response.data;
+  } catch (error) {
+    console.error("List requisition files error:", error);
     return [];
   }
 };

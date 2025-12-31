@@ -15,6 +15,7 @@ export interface CreateRequisitionDto {
     RequestItem,
     "id" | "requisitionSlipId" | "createdAt" | "updatedAt"
   >[];
+  fileIds?: string[];
 }
 
 export interface UpdateRequisitionDto {

@@ -13,9 +13,11 @@ import {
   cancelRequisition,
   deleteRequisition,
 } from '@/services/requisitionService';
-import { ArrowLeft, CheckCircle, XCircle, Ban, Send, Edit, Trash2 } from 'lucide-react';
+import { listRequisitionFiles } from '@/services/uploadService';
+import { ArrowLeft, CheckCircle, XCircle, Ban, Send, Edit, Trash2, FileText, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -27,7 +29,9 @@ import {
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import ItemsTable from '@/components/requisitions/ItemsTable';
 import ApprovalTimeline from '@/components/requisitions/ApprovalTimeline';
+import FileAttachments from '@/components/FileAttachments';
 import { useAuth } from '@/contexts/AuthContext';
+import type { UploadedFile } from '@/services/uploadService';
 
 export default function RequisitionDetailsPage() {
   const router = useRouter();
@@ -37,6 +41,7 @@ export default function RequisitionDetailsPage() {
 
   const [requisition, setRequisition] = useState<RequisitionSlip | null>(null);
   const [approvalHistory, setApprovalHistory] = useState<ApprovalRecord[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<UploadedFile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -47,6 +52,7 @@ export default function RequisitionDetailsPage() {
     if (requisitionId) {
       loadRequisition();
       loadApprovalHistory();
+      loadAttachedFiles();
     }
   }, [requisitionId]);
 
@@ -71,6 +77,15 @@ export default function RequisitionDetailsPage() {
       setApprovalHistory(data);
     } catch (err) {
       console.error('Error loading approval history:', err);
+    }
+  }
+
+  async function loadAttachedFiles() {
+    try {
+      const files = await listRequisitionFiles(requisitionId);
+      setAttachedFiles(files);
+    } catch (err) {
+      console.error('Error loading attached files:', err);
     }
   }
 
@@ -185,6 +200,28 @@ export default function RequisitionDetailsPage() {
     );
   }
 
+  function getCurrentWorkflowStep(): string {
+    if (!requisition) return 'Created';
+    
+    // Map status to workflow step
+    switch (requisition.status) {
+      case RequisitionStatus.DRAFT:
+        return 'Created';
+      case RequisitionStatus.SUBMITTED:
+      case RequisitionStatus.PENDING_APPROVAL:
+        // Files uploaded while submitted or pending should be tagged as "Submitted"
+        return 'Submitted';
+      case RequisitionStatus.APPROVED:
+        return `Approved_Level_${requisition.currentApprovalLevel || 1}`;
+      case RequisitionStatus.REJECTED:
+        return `Rejected_Level_${requisition.currentApprovalLevel || 1}`;
+      case RequisitionStatus.CANCELLED:
+        return 'Cancelled';
+      default:
+        return 'Created';
+    }
+  }
+
   function canEdit(): boolean {
     if (!requisition || !user) return false;
     return (
@@ -238,17 +275,18 @@ export default function RequisitionDetailsPage() {
   return (
     <ProtectedRoute>
       <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4">
-        <Button 
-          variant="ghost" 
-          onClick={() => router.push('/requisitions')}
-          className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
-        >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Back to Requisitions
-        </Button>
-        
+      {/* Back Button */}
+      <Button 
+        variant="ghost" 
+        onClick={() => router.push('/requisitions')}
+        className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
+      >
+        <ArrowLeft className="h-4 w-4 mr-2" />
+        Back to Requisitions
+      </Button>
+
+      {/* Header with CRUD Buttons */}
+      <div className="flex items-start justify-between gap-4">
         {/* Requisition ID and Subtitle */}
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
@@ -259,80 +297,91 @@ export default function RequisitionDetailsPage() {
           </p>
         </div>
 
-        {/* All Action Buttons (Workflow left, CRUD right) */}
-        <div className="flex gap-2 flex-wrap items-center justify-between">
-          {/* Workflow Action Buttons (Left) */}
-          <div className="flex gap-2 flex-wrap">
-            {canSubmit() && (
-              <Button
-                onClick={handleSubmit}
-                disabled={actionLoading}
-                className="flex items-center gap-2"
-              >
-                <Send className="h-4 w-4" />
-                Submit for Approval
-              </Button>
-            )}
-            {canApprove() && (
-              <Button
-                onClick={handleApprove}
-                disabled={actionLoading}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
-              >
-                <CheckCircle className="h-4 w-4" />
-                Approve
-              </Button>
-            )}
-            {canReject() && (
-              <Button
-                onClick={() => setShowRejectModal(true)}
-                disabled={actionLoading}
-                variant="destructive"
-                className="flex items-center gap-2"
-              >
-                <XCircle className="h-4 w-4" />
-                Reject
-              </Button>
-            )}
-            {canCancel() && (
-              <Button
-                onClick={handleCancel}
-                disabled={actionLoading}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Ban className="h-4 w-4" />
-                Cancel
-              </Button>
-            )}
-          </div>
-
-          {/* CRUD Action Buttons (Right) */}
-          <div className="flex gap-2 flex-wrap">
-            {canEdit() && (
-              <Button
-                onClick={() => router.push(`/requisitions/${requisitionId}/edit`)}
-                disabled={actionLoading}
-                variant="outline"
-                className="flex items-center gap-2"
-              >
-                <Edit className="h-4 w-4" />
-                Edit
-              </Button>
-            )}
-            {canDelete() && (
-              <Button
-                onClick={handleDelete}
-                disabled={actionLoading}
-                variant="destructive"
-                className="flex items-center gap-2"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete
-              </Button>
-            )}
-          </div>
+        {/* CRUD Action Buttons (Right) */}
+        <div className="flex gap-2 flex-shrink-0">
+          {canEdit() && (
+            <Button
+              onClick={() => router.push(`/requisitions/${requisitionId}/edit`)}
+              disabled={actionLoading}
+              variant="outline"
+              className="flex items-center gap-2"
+            >
+              <Edit className="h-4 w-4" />
+              Edit
+            </Button>
+          )}
+          {canDelete() && (
+            <Button
+              onClick={handleDelete}
+              disabled={actionLoading}
+              variant="destructive"
+              className="flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          )}
         </div>
+      </div>
+
+      {/* Tabs for Requisition Details and Attachments */}
+      <Tabs defaultValue="details" className="w-full">
+        <TabsList className="w-full">
+          <TabsTrigger value="details" className="flex items-center gap-2">
+            <FileText className="h-4 w-4" />
+            Requisition Details
+          </TabsTrigger>
+          <TabsTrigger value="attachments" className="flex items-center gap-2">
+            <Paperclip className="h-4 w-4" />
+            Attachments {attachedFiles.length > 0 && `(${attachedFiles.length})`}
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="details" className="space-y-6 mt-6">
+      {/* Workflow Action Buttons */}
+      <div className="flex gap-2 flex-wrap">
+        {canSubmit() && (
+          <Button
+            onClick={handleSubmit}
+            disabled={actionLoading}
+            className="flex items-center gap-2"
+          >
+            <Send className="h-4 w-4" />
+            Submit for Approval
+          </Button>
+        )}
+        {canApprove() && (
+          <Button
+            onClick={handleApprove}
+            disabled={actionLoading}
+            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+          >
+            <CheckCircle className="h-4 w-4" />
+            Approve
+          </Button>
+        )}
+        {canReject() && (
+          <Button
+            onClick={() => setShowRejectModal(true)}
+            disabled={actionLoading}
+            variant="destructive"
+            className="flex items-center gap-2"
+          >
+            <XCircle className="h-4 w-4" />
+            Reject
+          </Button>
+        )}
+        {canCancel() && (
+          <Button
+            onClick={handleCancel}
+            disabled={actionLoading}
+            variant="outline"
+            className="flex items-center gap-2"
+          >
+            <Ban className="h-4 w-4" />
+            Cancel
+          </Button>
+        )}
       </div>
 
       {/* Requisition Information and Approval History - Side by Side */}
@@ -435,6 +484,8 @@ export default function RequisitionDetailsPage() {
                 approvalRecords={approvalHistory} 
                 createdAt={requisition.createdAt}
                 requester={requisition.requester}
+                attachments={attachedFiles}
+                requisitionId={requisitionId}
               />
             </CardContent>
           </Card>
@@ -450,6 +501,18 @@ export default function RequisitionDetailsPage() {
           <ItemsTable items={requisition.items || []} />
         </CardContent>
       </Card>
+        </TabsContent>
+
+        <TabsContent value="attachments" className="mt-6">
+          <FileAttachments 
+            files={attachedFiles}
+            onFilesChange={setAttachedFiles}
+            mode="existing"
+            requisitionId={requisitionId}
+            workflowStep={getCurrentWorkflowStep()}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Reject Modal */}
       <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>
