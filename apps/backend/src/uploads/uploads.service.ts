@@ -58,9 +58,6 @@ export class UploadsService {
         },
       });
 
-      // Get public URL
-      const url = this.supabase.getPublicUrl(bucket, filePath);
-
       return {
         id: fileUpload.id,
         fileName: fileUpload.fileName,
@@ -68,7 +65,6 @@ export class UploadsService {
         storagePath: fileUpload.storagePath,
         fileSize: Number(fileUpload.fileSize),
         mimeType: fileUpload.mimeType,
-        url,
         uploadedAt: fileUpload.uploadedAt,
         workflowStep: fileUpload.workflowStep || undefined,
         uploadedBy: fileUpload.user,
@@ -114,7 +110,6 @@ export class UploadsService {
       storagePath: file.storagePath,
       fileSize: Number(file.fileSize),
       mimeType: file.mimeType,
-      url: this.supabase.getPublicUrl(file.bucketName, file.storagePath),
       uploadedAt: file.uploadedAt,
       workflowStep: file.workflowStep || undefined,
       uploadedBy: file.user,
@@ -154,7 +149,6 @@ export class UploadsService {
       storagePath: file.storagePath,
       fileSize: Number(file.fileSize),
       mimeType: file.mimeType,
-      url: this.supabase.getPublicUrl(file.bucketName, file.storagePath),
       uploadedAt: file.uploadedAt,
       workflowStep: file.workflowStep || undefined,
       uploadedBy: file.user,
@@ -195,7 +189,6 @@ export class UploadsService {
       storagePath: file.storagePath,
       fileSize: Number(file.fileSize),
       mimeType: file.mimeType,
-      url: this.supabase.getPublicUrl(file.bucketName, file.storagePath),
       uploadedAt: file.uploadedAt,
       workflowStep: file.workflowStep || undefined,
       uploadedBy: file.user,
@@ -241,17 +234,24 @@ export class UploadsService {
 
   /**
    * Get signed URL for a file
+   * Note: For requisition files, we allow any authenticated user to view
+   * For personal files, we check ownership
    */
   async getSignedUrl(fileId: string, userId: string, expiresIn: number = 3600): Promise<string> {
     const file = await this.prisma.fileUpload.findFirst({
       where: {
         id: fileId,
-        userId,
         deletedAt: null,
       },
     });
 
     if (!file) {
+      throw new NotFoundException('File not found');
+    }
+
+    // Allow access if file is linked to a requisition (shared document)
+    // or if user owns the file (personal document)
+    if (!file.requisitionSlipId && !file.requisitionForPaymentId && file.userId !== userId) {
       throw new NotFoundException('File not found');
     }
 

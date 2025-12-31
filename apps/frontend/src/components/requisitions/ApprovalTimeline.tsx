@@ -10,7 +10,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { UploadedFile } from '@/services/uploadService';
+import { UploadedFile, getSignedUrl } from '@/services/uploadService';
 
 interface ApprovalTimelineProps {
   approvalRecords: ApprovalRecord[];
@@ -86,31 +86,35 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
     setIsDocumentsDialogOpen(true);
   };
 
-  const handleViewFile = (file: UploadedFile) => {
-    if (file.url) {
-      window.open(file.url, '_blank');
+  const handleViewFile = async (file: UploadedFile) => {
+    try {
+      const url = await getSignedUrl(file.id);
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        alert('Failed to generate download link. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      alert('Failed to open file. Please try again.');
     }
   };
 
-  const handleDownloadFile = async (fileId: string, fileName: string) => {
+  const handleDownloadFile = async (file: UploadedFile) => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${fileId}`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
+      const url = await getSignedUrl(file.id);
+      if (!url) {
+        alert('Failed to generate download link. Please try again.');
+        return;
+      }
 
-      if (!response.ok) throw new Error('Failed to fetch file');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = fileName;
+      link.download = file.originalFileName;
       link.click();
-      window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again.');
     }
   };
 
@@ -167,6 +171,7 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                 </div>
                 <div className="flex items-center gap-2 flex-shrink-0">
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     onClick={() => handleViewFile(file)}
@@ -175,9 +180,10 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                     <FileText className="h-4 w-4" />
                   </Button>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleDownloadFile(file.id, file.originalFileName)}
+                    onClick={() => handleDownloadFile(file)}
                     title="Download file"
                   >
                     <Download className="h-4 w-4" />
@@ -234,6 +240,7 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                     </div>
                     {getDocumentsForStep('Created').length > 0 && (
                       <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => showDocuments('Created')}
@@ -381,6 +388,7 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                     </div>
                     {getDocumentsForStep(getWorkflowStepName(record)).length > 0 && (
                       <Button
+                        type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => showDocuments(getWorkflowStepName(record))}

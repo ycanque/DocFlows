@@ -8,7 +8,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { uploadFile, listFiles, listRequisitionFiles, deleteFile, type UploadedFile } from '@/services/uploadService'
+import { uploadFile, listFiles, listRequisitionFiles, deleteFile, getSignedUrl, type UploadedFile } from '@/services/uploadService'
 import FileUpload from '@/components/FileUpload'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -127,9 +127,17 @@ export default function FileAttachments({
     }
   }
 
-  const handleViewFile = (file: UploadedFile) => {
-    if (file.url) {
-      window.open(file.url, '_blank')
+  const handleViewFile = async (file: UploadedFile) => {
+    try {
+      const url = await getSignedUrl(file.id)
+      if (url) {
+        window.open(url, '_blank')
+      } else {
+        alert('Failed to generate download link. Please try again.')
+      }
+    } catch (error) {
+      console.error('Error getting file URL:', error)
+      alert('Failed to open file. Please try again.')
     }
   }
 
@@ -295,6 +303,7 @@ export default function FileAttachments({
 
                       <div className="flex items-center gap-2 flex-shrink-0 ml-4">
                         <Button
+                          type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => handleViewFile(file)}
@@ -303,6 +312,7 @@ export default function FileAttachments({
                           <Eye className="h-4 w-4" />
                         </Button>
                         <Button
+                          type="button"
                           variant="outline"
                           size="sm"
                           onClick={() => handleDeleteFile(file)}
