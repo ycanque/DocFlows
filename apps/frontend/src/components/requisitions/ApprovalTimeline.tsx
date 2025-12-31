@@ -1,10 +1,23 @@
 import { ApprovalRecord, User } from '@docflows/shared';
-import { CheckCircle2, XCircle, FileText, Send, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, FileText, Send, Clock, Download } from 'lucide-react';
+import { useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { UploadedFile } from '@/services/uploadService';
 
 interface ApprovalTimelineProps {
   approvalRecords: ApprovalRecord[];
   createdAt?: string;
   requester?: User;
+  attachments?: UploadedFile[];
+  requisitionId?: string;
 }
 
 function formatTimestamp(timestamp: string, format: 'short' | 'full' = 'full'): string {
@@ -56,9 +69,50 @@ function formatTimeOnly(timestamp: string): string {
   });
 }
 
-export default function ApprovalTimeline({ approvalRecords, createdAt, requester }: ApprovalTimelineProps) {
+export default function ApprovalTimeline({ approvalRecords, createdAt, requester, attachments = [], requisitionId }: ApprovalTimelineProps) {
+  const [selectedWorkflowStep, setSelectedWorkflowStep] = useState<string | null>(null);
+  const [isDocumentsDialogOpen, setIsDocumentsDialogOpen] = useState(false);
+
   const hasApprovalRecords = approvalRecords && approvalRecords.length > 0;
   const hasAnyTimeline = createdAt || hasApprovalRecords;
+
+  // Get documents for a specific workflow step
+  const getDocumentsForStep = (workflowStep: string) => {
+    return attachments.filter(file => file.workflowStep === workflowStep);
+  };
+
+  const showDocuments = (workflowStep: string) => {
+    setSelectedWorkflowStep(workflowStep);
+    setIsDocumentsDialogOpen(true);
+  };
+
+  const handleViewFile = (file: UploadedFile) => {
+    if (file.url) {
+      window.open(file.url, '_blank');
+    }
+  };
+
+  const handleDownloadFile = async (fileId: string, fileName: string) => {
+    try {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/uploads/${fileId}`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (!response.ok) throw new Error('Failed to fetch file');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+    }
+  };
 
   if (!hasAnyTimeline) {
     return (
@@ -76,7 +130,70 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
       })
     : [];
 
+  // Helper to get workflow step name
+  const getWorkflowStepName = (record: ApprovalRecord) => {
+    if (record.approvalLevel === -1) return 'Cancelled';
+    if (record.approvalLevel === 0) return 'Submitted';
+    if (record.approvedBy) return `Approved_Level_${record.approvalLevel}`;
+    if (record.rejectedBy) return `Rejected_Level_${record.approvalLevel}`;
+    return `Pending_Level_${record.approvalLevel}`;
+  };
+
   return (
+    <>
+      <Dialog open={isDocumentsDialogOpen} onOpenChange={setIsDocumentsDialogOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Documents - {selectedWorkflowStep}</DialogTitle>
+            <DialogDescription>
+              Files attached at this workflow step
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            {selectedWorkflowStep && getDocumentsForStep(selectedWorkflowStep).map((file) => (
+              <div
+                key={file.id}
+                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+              >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{file.originalFileName}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {(file.fileSize / 1024).toFixed(2)} KB
+                      {file.uploadedBy && ` • Uploaded by ${file.uploadedBy.firstName} ${file.uploadedBy.lastName}`}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleViewFile(file)}
+                    title="Open file in new tab"
+                  >
+                    <FileText className="h-4 w-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownloadFile(file.id, file.originalFileName)}
+                    title="Download file"
+                  >
+                    <Download className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+            {selectedWorkflowStep && getDocumentsForStep(selectedWorkflowStep).length === 0 && (
+              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+                No documents attached at this step
+              </p>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
     <div className="flow-root">
       <ul role="list" className="-mb-8">
         {/* Created Entry */}
@@ -108,11 +225,24 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-col items-end text-nowrap text-xs text-gray-500 dark:text-gray-400">
-                    <span className="sm:hidden">{formatDateOnly(createdAt)}</span>
-                    <span className="sm:hidden">{formatTimeOnly(createdAt)}</span>
-                    <span className="hidden sm:inline">{formatDateOnly(createdAt)}</span>
-                    <span className="hidden sm:inline">{formatTimeOnly(createdAt)}</span>
+                  <div className="flex-shrink-0 flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end text-nowrap text-xs text-gray-500 dark:text-gray-400">
+                      <span className="sm:hidden">{formatDateOnly(createdAt)}</span>
+                      <span className="sm:hidden">{formatTimeOnly(createdAt)}</span>
+                      <span className="hidden sm:inline">{formatDateOnly(createdAt)}</span>
+                      <span className="hidden sm:inline">{formatTimeOnly(createdAt)}</span>
+                    </div>
+                    {getDocumentsForStep('Created').length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => showDocuments('Created')}
+                        className="text-xs"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        View documents ({getDocumentsForStep('Created').length})
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -242,11 +372,24 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
                       </time>
                     </div>
                   </div>
-                  <div className="hidden sm:block text-right text-gray-500 dark:text-gray-400 flex-shrink-0">
-                    <time dateTime={record.timestamp} className="text-xs md:text-sm flex flex-col gap-1 whitespace-nowrap">
-                      <span>{formatDateOnly(record.timestamp)}</span>
-                      <span>{formatTimeOnly(record.timestamp)}</span>
-                    </time>
+                  <div className="flex-shrink-0 flex flex-col items-end gap-2">
+                    <div className="hidden sm:block text-right text-gray-500 dark:text-gray-400">
+                      <time dateTime={record.timestamp} className="text-xs md:text-sm flex flex-col gap-1 whitespace-nowrap">
+                        <span>{formatDateOnly(record.timestamp)}</span>
+                        <span>{formatTimeOnly(record.timestamp)}</span>
+                      </time>
+                    </div>
+                    {getDocumentsForStep(getWorkflowStepName(record)).length > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => showDocuments(getWorkflowStepName(record))}
+                        className="text-xs"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        View documents ({getDocumentsForStep(getWorkflowStepName(record)).length})
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -255,5 +398,6 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
         })}
       </ul>
     </div>
+    </>
   );
 }

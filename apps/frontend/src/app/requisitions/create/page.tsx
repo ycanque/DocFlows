@@ -7,10 +7,13 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { createRequisition, CreateRequisitionDto } from '@/services/requisitionService';
 import { getDepartments } from '@/services/departmentService';
 import { getCostCenters } from '@/services/costCenterService';
-import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAuth } from '@/contexts/AuthContext';
+import FileAttachments from '@/components/FileAttachments';
+import type { UploadedFile } from '@/services/uploadService';
 
 // Unit of measure categories
 const UNIT_OF_MEASURE = {
@@ -71,6 +74,7 @@ export default function CreateRequisitionPage() {
 
   const [departments, setDepartments] = useState<Department[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [attachedFiles, setAttachedFiles] = useState<UploadedFile[]>([]);
   const [formData, setFormData] = useState({
     departmentId: '',
     costCenterId: '',
@@ -223,6 +227,7 @@ export default function CreateRequisitionPage() {
           unitCost: item.unitCost || undefined,
           subtotal: item.subtotal || undefined,
         })),
+        fileIds: attachedFiles.map(f => f.id),
       };
 
       const newRequisition = await createRequisition(dto);
@@ -268,6 +273,20 @@ export default function CreateRequisitionPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Tabs for form and attachments */}
+        <Tabs defaultValue="form" className="w-full">
+          <TabsList className="w-full">
+            <TabsTrigger value="form" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Requisition Details
+            </TabsTrigger>
+            <TabsTrigger value="attachments" className="flex items-center gap-2">
+              <Paperclip className="h-4 w-4" />
+              Attachments {attachedFiles.length > 0 && `(${attachedFiles.length})`}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="form" className="space-y-6 mt-6">
         {/* Basic Information */}
         <Card>
           <CardHeader>
@@ -661,6 +680,17 @@ export default function CreateRequisitionPage() {
             {loading ? 'Creating...' : 'Create Requisition'}
           </Button>
         </div>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="mt-6">
+            <FileAttachments 
+              files={attachedFiles}
+              onFilesChange={setAttachedFiles}
+              mode="draft"
+              workflowStep="Created"
+            />
+          </TabsContent>
+        </Tabs>
       </form>
     </div>
     </ProtectedRoute>

@@ -6,6 +6,7 @@ import {
   IsEnum,
   IsOptional,
   IsString,
+  IsUUID,
   ValidateNested,
 } from 'class-validator';
 import { CreateRequestItemDto } from './create-request-item.dto';
@@ -50,4 +51,9 @@ export class CreateRequisitionDto {
   @ValidateNested({ each: true })
   @Type(() => CreateRequestItemDto)
   items!: CreateRequestItemDto[];
+
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  fileIds?: string[];
 }

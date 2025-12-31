@@ -18,7 +18,7 @@ const SESSION_TIMEOUT_MS = 15 * 60 * 1000; // 2 minutes (change to 15 * 60 * 100
 const WARNING_TIME_MS = 60 * 1000; // Show warning 1 minute before timeout
 
 export function SessionTimeoutWarning() {
-  const { logout } = useAuth();
+  const { logout, isAuthenticated } = useAuth();
   const [showWarning, setShowWarning] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(0);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -72,8 +72,18 @@ export function SessionTimeoutWarning() {
     handleActivityRef.current = resetTimeoutFn;
   }, [resetTimeoutFn]);
 
-  // Track user activity - only run once on mount
+  // Track user activity - only run once on mount and when authenticated
   useEffect(() => {
+    // Only set up activity tracking if user is authenticated
+    if (!isAuthenticated) {
+      // Clean up any active timeouts
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+      setShowWarning(false);
+      return;
+    }
+
     const events = ['mousedown', 'keydown', 'scroll', 'touchstart', 'click'];
     
     // Create activity handler that uses ref to get latest function
@@ -100,7 +110,7 @@ export function SessionTimeoutWarning() {
       if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
-  }, [resetTimeoutFn]);
+  }, [resetTimeoutFn, isAuthenticated]);
 
   const handleExtendSession = () => {
     showWarningRef.current = false;
