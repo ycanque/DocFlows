@@ -205,10 +205,10 @@ export default function LoginPage() {
             className="h-10 w-10"
           />
           <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
-            &copy; {new Date().getFullYear()} Cubeworks Technology Consulting and Solutions, Inc.
+            &copy; 2025 Cubeworks Technology Consulting and Solutions, Inc.
           </p>
           <p className="text-center text-xs text-zinc-500 dark:text-zinc-500">
-            DocFlows &copy; {new Date().getFullYear()}. All rights reserved.
+            DocFlows™ All rights reserved.
           </p>
         </div>
       </div>
