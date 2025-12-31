@@ -14,7 +14,15 @@
     "build": "npm run build -w apps/backend && npm run build -w apps/frontend",
     "test": "npm test --workspaces"
   },
-  "keywords": ["document-flow", "workflow", "approval"],
+  "keywords": [
+    "document-flow",
+    "workflow",
+    "approval"
+  ],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.89.0",
+    "@types/multer": "^2.0.0"
+  }
 }

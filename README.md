@@ -5,6 +5,7 @@ A modern full-stack document workflow management system built with Next.js, Nest
 ## 🏗️ Architecture
 
 **Monorepo Structure:**
+
 - `apps/frontend` - Next.js 14 + React + TypeScript + Tailwind CSS
 - `apps/backend` - NestJS 10 + Prisma ORM + PostgreSQL
 - `packages/shared` - Shared TypeScript types, enums, and DTOs
@@ -14,6 +15,7 @@ A modern full-stack document workflow management system built with Next.js, Nest
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 20+ and npm
 - Docker and Docker Compose
 - Git
@@ -21,22 +23,26 @@ A modern full-stack document workflow management system built with Next.js, Nest
 ### Installation
 
 1. **Clone the repository**
+
 ```bash
 git clone <repository-url>
 cd DocFlows
 ```
 
 2. **Install dependencies**
+
 ```bash
 npm install
 ```
 
 3. **Start the database**
+
 ```bash
 npm run dev:db
 ```
 
 4. **Set up the backend database**
+
 ```bash
 cd apps/backend
 npm run prisma:generate
@@ -44,15 +50,25 @@ npm run prisma:migrate
 cd ../..
 ```
 
-5. **Start development servers**
+5. **Start Supabase local stack** (for Storage & Auth)
+
+```bash
+npx supabase start
+```
+
+6. **Start development servers**
+
 ```bash
 npm run dev
 ```
 
 This starts:
+
 - Frontend: http://localhost:3000
 - Backend: http://localhost:5040
 - PgAdmin: http://localhost:5050
+- Supabase Studio: http://127.0.0.1:54323
+- Supabase API: http://127.0.0.1:54321
 
 ## 📦 Project Structure
 
@@ -99,6 +115,7 @@ DocFlows/
 ## 🎯 Key Features
 
 ### Implemented Workflows
+
 - ✅ Requisition Slips (with items and approval flow)
 - ✅ Requisition for Payment (RFP with CV generation)
 - ✅ Check Vouchers & Check Disbursement
@@ -109,6 +126,7 @@ DocFlows/
 - ✅ Cash Advance Agreements
 
 ### Core Functionality
+
 - 🔐 JWT Authentication with role-based access control
 - 📋 Multi-level approval workflows
 - 🔄 Real-time status tracking
@@ -121,14 +139,21 @@ DocFlows/
 ### Available Scripts
 
 **Root Level:**
+
 ```bash
 npm run dev          # Start all development servers
 npm run dev:db       # Start PostgreSQL container
 npm run build        # Build all apps
 npm test             # Run tests in all workspaces
+
+# Supabase commands
+npx supabase start   # Start Supabase local stack
+npx supabase stop    # Stop Supabase (keeps data)
+npx supabase status  # Check Supabase status
 ```
 
 **Backend (apps/backend):**
+
 ```bash
 npm run start:dev           # Start NestJS in watch mode
 npm run prisma:generate     # Generate Prisma client
@@ -140,6 +165,7 @@ npm run start:prod          # Start production build
 ```
 
 **Frontend (apps/frontend):**
+
 ```bash
 npm run dev          # Start Next.js development server
 npm run build        # Build for production
@@ -148,6 +174,7 @@ npm run lint         # Run ESLint
 ```
 
 **Shared Package (packages/shared):**
+
 ```bash
 npm run build        # Compile TypeScript
 npm run dev          # Watch mode for development
@@ -156,12 +183,14 @@ npm run dev          # Watch mode for development
 ## 🗄️ Database
 
 ### Connection Details
+
 - **Host:** localhost:5432
 - **Database:** document_flow
 - **Username:** postgres
 - **Password:** postgres
 
 ### Schema Management
+
 ```bash
 # Create a new migration
 cd apps/backend
@@ -180,6 +209,7 @@ npm run prisma:studio
 ## 🔑 Environment Variables
 
 ### Backend (.env)
+
 ```env
 DATABASE_URL="postgresql://postgres:postgres@localhost:5432/document_flow"
 JWT_SECRET="your-super-secret-jwt-key-change-in-production"
@@ -189,9 +219,14 @@ PORT=5040
 ```
 
 ### Frontend (.env.local)
+
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:5040
+NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
 ```
+
+> **Note:** For detailed Supabase setup and Storage configuration, see [Supabase Local Setup Guide](docs/Setup%20Guides/SUPABASE_LOCAL_SETUP.md)
 
 ## 📝 Model-First Development
 
@@ -204,6 +239,7 @@ This project follows a **model-first methodology**:
 5. **Verify consistency** between models and implementation
 
 ### Model Types
+
 - **DBML**: Domain entities, processes, business rules
 - **SDML**: Security assets, threats, controls, policies
 - **UXML**: UI views, forms, navigation flows
@@ -212,6 +248,7 @@ This project follows a **model-first methodology**:
 ## 🎨 UI Conventions
 
 ### Status Badges
+
 ```tsx
 // Approved
 <span className="bg-emerald-50 text-emerald-700">Approved</span>
@@ -224,6 +261,7 @@ This project follows a **model-first methodology**:
 ```
 
 ### Buttons
+
 ```tsx
 // Primary
 <button className="bg-slate-900 text-white">Submit</button>
@@ -235,10 +273,12 @@ This project follows a **model-first methodology**:
 ## 🔐 Authentication
 
 ### Default Admin Account
+
 - **Email:** admin@docflow.com
 - **Password:** admin123 (change in production)
 
 ### JWT Token
+
 - Expires in 15 minutes by default
 - Stored in httpOnly cookie (recommended) or localStorage
 - Include in requests via `Authorization: Bearer <token>` header
@@ -259,6 +299,7 @@ npm test -- --coverage
 ## 📚 API Documentation
 
 When the backend is running, Swagger API documentation is available at:
+
 ```
 http://localhost:5040/api
 ```
@@ -266,6 +307,7 @@ http://localhost:5040/api
 ## 🚢 Deployment
 
 ### Production Build
+
 ```bash
 # Build all apps
 npm run build
@@ -280,6 +322,7 @@ npm run start
 ```
 
 ### Docker Deployment
+
 (Coming soon)
 
 ## 🤝 Contributing
@@ -298,6 +341,7 @@ npm run start
 ## 🙏 Acknowledgments
 
 Built with modern technologies:
+
 - [Next.js](https://nextjs.org/)
 - [NestJS](https://nestjs.com/)
 - [Prisma](https://www.prisma.io/)
