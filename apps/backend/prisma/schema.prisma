@@ -64,6 +64,7 @@ model User {
   personnelRequests    PersonnelRequest[]
   planeTicketRequests  PlaneTicketRequest[]
   cashAdvanceAgreements CashAdvanceAgreement[]
+  fileUploads          FileUpload[]
   
   @@map("users")
   @@index([email])
@@ -625,4 +626,39 @@ model CashAdvanceAgreement {
   @@index([agreementNumber])
   @@index([employeeId])
   @@index([status])
+}
+
+// ============================================
+// File Upload System
+// ============================================
+
+enum FileUploadStatus {
+  UPLOADING
+  COMPLETED
+  FAILED
+  DELETED
+}
+
+model FileUpload {
+  id                String            @id @default(uuid()) @db.Uuid
+  userId            String            @map("user_id") @db.Uuid
+  user              User              @relation(fields: [userId], references: [id])
+  fileName          String            @map("file_name")
+  originalFileName  String            @map("original_file_name")
+  bucketName        String            @map("bucket_name")
+  storagePath       String            @map("storage_path")
+  fileSize          BigInt            @map("file_size")
+  mimeType          String            @map("mime_type")
+  status            FileUploadStatus  @default(UPLOADING)
+  uploadedAt        DateTime          @default(now()) @map("uploaded_at")
+  deletedAt         DateTime?         @map("deleted_at")
+  
+  // Metadata
+  metadata          Json?
+  
+  @@map("file_uploads")
+  @@index([userId])
+  @@index([bucketName])
+  @@index([status])
+  @@index([uploadedAt])
 }

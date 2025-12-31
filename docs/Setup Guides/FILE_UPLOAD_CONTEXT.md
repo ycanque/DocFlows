@@ -3,6 +3,7 @@
 ## 🎯 Complete System Overview
 
 ### Project Structure
+
 - **Monorepo**: Root with workspace management
   - `apps/backend` - NestJS API (port 5040)
   - `apps/frontend` - Next.js 16 (port 3000)
@@ -11,6 +12,7 @@
   - `supabase/` - Supabase local config
 
 ### Additional Docker Services (Already Running)
+
 - **Supabase Stack** on separate ports:
   - Main API Gateway: `http://127.0.0.1:54321`
   - Storage API: `http://127.0.0.1:54321/storage/v1`
@@ -23,12 +25,14 @@
 ## 🔐 Authentication & Security
 
 ### JWT Configuration
+
 ```env
 JWT_SECRET="dev-secret-key-min-32-chars-replace-in-prod"
 JWT_EXPIRES_IN="24h"
 ```
 
 ### CORS Configuration
+
 ```
 Allowed Origins:
 - http://localhost:3000
@@ -37,6 +41,7 @@ Allowed Origins:
 ```
 
 ### Supabase Auth Keys
+
 ```
 SUPABASE_URL: http://127.0.0.1:54321
 Publishable Key: sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH
@@ -50,6 +55,7 @@ Service Role Key: sb_secret_N7UND0UgjKTVK-Uodkm0Hg_xSvEMPvz
 ### Environment Variables
 
 **Backend (.env)**
+
 ```env
 SUPABASE_URL="http://127.0.0.1:54321"
 SUPABASE_ANON_KEY="sb_publishable_ACJWlzQHlZjBrEguHvfOxg_3BJgxAaH"
@@ -62,6 +68,7 @@ SUPABASE_S3_REGION="local"
 ```
 
 **Frontend (.env.local)**
+
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:5040
 NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"
@@ -70,6 +77,7 @@ NEXT_PUBLIC_SUPABASE_STORAGE_URL="http://127.0.0.1:54321/storage/v1"
 ```
 
 ### Storage Configuration (supabase/config.toml)
+
 ```toml
 [storage]
 enabled = true
@@ -80,6 +88,7 @@ enabled = true
 ```
 
 ### File Storage Location
+
 - **Docker Volume**: `supabase_storage_DocFlows`
 - **Host Path**: `/var/lib/docker/volumes/supabase_storage_DocFlows/_data`
 - **Container Path**: `/mnt` (inside storage container)
@@ -90,9 +99,11 @@ enabled = true
 ## 📚 Database Schema
 
 ### Current Models (Relevant to File Uploads)
+
 From `apps/backend/prisma/schema.prisma`:
 
 **User Model**
+
 ```prisma
 model User {
   id            String    @id @default(uuid()) @db.Uuid
@@ -105,13 +116,14 @@ model User {
   isActive      Boolean   @default(true) @map("is_active")
   createdAt     DateTime  @default(now()) @map("created_at")
   updatedAt     DateTime  @updatedAt @map("updated_at")
-  
+
   // File-related relations would go here
   @@map("users")
 }
 ```
 
 **Available Workflow Models** (that may need file attachments):
+
 - RequisitionSlip
 - RequisitionForPayment
 - CheckVoucher
@@ -122,6 +134,7 @@ model User {
 - CashAdvanceAgreement
 
 ### Database Connections
+
 - **DocFlows DB**: `postgresql://postgres:postgres@localhost:5433/document_flow` (for main app data)
 - **Supabase DB**: `postgresql://postgres:postgres@127.0.0.1:54322/postgres` (for storage metadata)
 
@@ -130,6 +143,7 @@ model User {
 ## 🔗 API Architecture
 
 ### Backend Structure
+
 ```
 apps/backend/src/
 ├── app.module.ts           # Main module (add new modules here)
@@ -146,6 +160,7 @@ apps/backend/src/
 ```
 
 ### API Request Flow
+
 ```
 Next.js Client
     ↓
@@ -163,17 +178,18 @@ Database/Storage
 ```
 
 ### API Request Format
+
 ```typescript
 // Frontend axios config (lib/api.ts)
 const api = axios.create({
-  baseURL: 'http://localhost:5040',
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 30000
+  baseURL: "http://localhost:5040",
+  headers: { "Content-Type": "application/json" },
+  timeout: 30000,
 });
 
 // Auto-adds JWT token to requests:
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
+  const token = localStorage.getItem("token");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;
 });
@@ -184,6 +200,7 @@ api.interceptors.request.use((config) => {
 ## 📦 Installed Dependencies
 
 ### Backend
+
 ```json
 {
   "@nestjs/common": "^11.0.1",
@@ -193,7 +210,7 @@ api.interceptors.request.use((config) => {
   "@nestjs/platform-express": "^11.0.1",
   "@nestjs/swagger": "^11.2.3",
   "@prisma/client": "^7.1.0",
-  "@supabase/supabase-js": "^2.89.0",     // ← For Supabase
+  "@supabase/supabase-js": "^2.89.0", // ← For Supabase
   "class-validator": "^0.14.1",
   "passport": "^0.7.0",
   "passport-jwt": "^4.0.1"
@@ -201,15 +218,16 @@ api.interceptors.request.use((config) => {
 ```
 
 ### Frontend
+
 ```json
 {
-  "@supabase/supabase-js": "^2.89.0",     // ← Already installed!
-  "axios": "^1.13.2",                      // ← For API calls
+  "@supabase/supabase-js": "^2.89.0", // ← Already installed!
+  "axios": "^1.13.2", // ← For API calls
   "next": "16.0.10",
   "react": "19.2.1",
   "react-dom": "19.2.1",
   "date-fns": "^4.1.0",
-  "@radix-ui/react-dialog": "^1.1.15"     // ← For file dialogs
+  "@radix-ui/react-dialog": "^1.1.15" // ← For file dialogs
 }
 ```
 
@@ -218,6 +236,7 @@ api.interceptors.request.use((config) => {
 ## 🛠️ Shared Types & Enums
 
 ### Available User Roles (packages/shared/src/enums.ts)
+
 ```typescript
 enum UserRole {
   ADMIN = "ADMIN",
@@ -231,6 +250,7 @@ enum UserRole {
 ```
 
 ### Available Workflow Statuses
+
 - RequisitionStatus
 - RFPStatus (Requisition for Payment)
 - CheckVoucherStatus
@@ -245,6 +265,7 @@ enum UserRole {
 ## 🚀 Development Commands
 
 ### Start Everything
+
 ```powershell
 # Terminal 1: Start PostgreSQL + pgAdmin
 npm run dev:db
@@ -257,6 +278,7 @@ npm run dev
 ```
 
 ### Backend-Specific
+
 ```powershell
 cd apps/backend
 
@@ -277,6 +299,7 @@ npm run start:dev
 ```
 
 ### Supabase-Specific
+
 ```powershell
 # Start Supabase stack
 npx supabase start
@@ -299,6 +322,7 @@ npx supabase logs
 ## 📋 File Upload Implementation Checklist
 
 ### Backend (NestJS)
+
 - [ ] Create `uploads` module (or `files` module)
 - [ ] Create upload service with Supabase client
 - [ ] Create upload controller with endpoints:
@@ -312,12 +336,14 @@ npx supabase logs
 - [ ] Create upload DTO (Data Transfer Object)
 
 ### Database Schema (Prisma)
+
 - [ ] Create `FileUpload` or `Attachment` model
   - Fields: id, userId, fileName, bucketName, storagePath, fileSize, mimeType, createdAt, updatedAt
 - [ ] Create relation models (e.g., RequisitionFile, PaymentFile, etc.)
 - [ ] Run `npm run prisma:migrate`
 
 ### Frontend (Next.js)
+
 - [ ] Create file upload service
 - [ ] Create file input component
 - [ ] Create upload progress component
@@ -327,6 +353,7 @@ npx supabase logs
 - [ ] Handle file download/access
 
 ### Supabase Storage
+
 - [ ] Create storage buckets via Studio
   - Suggested: `documents`, `requisitions`, `payments`, `attachments`
 - [ ] Set bucket policies (public/private)
@@ -334,6 +361,7 @@ npx supabase logs
 - [ ] Set file size limits
 
 ### Testing
+
 - [ ] Test local file uploads
 - [ ] Test file permissions (JWT validation)
 - [ ] Test signed URLs
@@ -345,6 +373,7 @@ npx supabase logs
 ## 🔑 Key API Endpoints to Create
 
 ### Upload File
+
 ```
 POST /uploads/upload
 Body: FormData {
@@ -362,6 +391,7 @@ Response: {
 ```
 
 ### Get Signed URL
+
 ```
 GET /uploads/signed-url/:bucket/:filename?expiresIn=3600
 Response: {
@@ -371,6 +401,7 @@ Response: {
 ```
 
 ### List Files
+
 ```
 GET /uploads/:bucket/list?folder=requisitions
 Response: {
@@ -383,6 +414,7 @@ Response: {
 ```
 
 ### Delete File
+
 ```
 DELETE /uploads/:bucket/:filename
 Response: {
@@ -395,22 +427,26 @@ Response: {
 ## 🔒 Security Considerations
 
 ### Authentication
+
 - All endpoints require JWT token (already implemented)
 - Token auto-added by axios interceptor
 - Validate token in NestJS guards
 
 ### Authorization
+
 - Check user role and department
 - Only allow users to access their own files
 - Implement RLS policies in Supabase
 
 ### File Validation
+
 - Validate file size (max 50MB in local, configurable)
 - Validate MIME type (only allow PDF, images, etc.)
 - Scan filename for malicious content
 - Sanitize paths to prevent directory traversal
 
 ### Storage Security
+
 - **Local Dev**: Files plaintext in Docker volume (acceptable for dev)
 - **Production**: Supabase Cloud provides encryption
 - Use signed URLs for temporary access
@@ -433,38 +469,41 @@ Response: {
 ## 📝 Example: Complete Upload Flow
 
 ### Step 1: Create Bucket (One-time setup)
+
 ```typescript
 // In NestJS service
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
-)
+);
 
-await supabase.storage.createBucket('documents', {
+await supabase.storage.createBucket("documents", {
   public: false,
-  fileSizeLimit: 52428800 // 50MB
-})
+  fileSizeLimit: 52428800, // 50MB
+});
 ```
 
 ### Step 2: Upload File (Frontend)
+
 ```typescript
 // In Next.js component
 const handleFileUpload = async (file: File) => {
-  const formData = new FormData()
-  formData.append('file', file)
-  formData.append('bucket', 'documents')
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("bucket", "documents");
 
-  const response = await api.post('/uploads/upload', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' }
-  })
+  const response = await api.post("/uploads/upload", formData, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 
-  return response.data // { id, fileName, storagePath, url }
-}
+  return response.data; // { id, fileName, storagePath, url }
+};
 ```
 
 ### Step 3: Handle Upload (Backend)
+
 ```typescript
 // In NestJS controller
 @Post('upload')
@@ -476,7 +515,7 @@ async uploadFile(@UploadedFile() file: Express.Multer.File) {
 // In service
 async upload(file: Express.Multer.File, userId: string) {
   const fileName = `${userId}/${Date.now()}_${file.originalname}`
-  
+
   const { data, error } = await this.supabase.storage
     .from('documents')
     .upload(fileName, file.buffer)
@@ -500,13 +539,14 @@ async upload(file: Express.Multer.File, userId: string) {
 ```
 
 ### Step 4: Access File (Signed URL)
+
 ```typescript
 // Get temporary download URL
 const { data } = await supabase.storage
-  .from('documents')
-  .createSignedUrl(storagePath, 3600) // 1 hour
+  .from("documents")
+  .createSignedUrl(storagePath, 3600); // 1 hour
 
-return { url: data.signedUrl }
+return { url: data.signedUrl };
 ```
 
 ---

@@ -9,6 +9,7 @@ import { RequisitionsModule } from './requisitions/requisitions.module';
 import { CostCentersModule } from './cost-centers/cost-centers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PaymentsModule } from './payments/payments.module';
+import { UploadsModule } from './uploads/uploads.module';
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { PaymentsModule } from './payments/payments.module';
     CostCentersModule,
     DashboardModule,
     PaymentsModule,
+    UploadsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
