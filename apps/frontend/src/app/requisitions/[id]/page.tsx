@@ -203,13 +203,12 @@ export default function RequisitionDetailsPage() {
   function getCurrentWorkflowStep(): string {
     if (!requisition) return 'Created';
     
-    // Map status to workflow step
+    // Map status to workflow step for file tagging
     switch (requisition.status) {
       case RequisitionStatus.DRAFT:
         return 'Created';
       case RequisitionStatus.SUBMITTED:
       case RequisitionStatus.PENDING_APPROVAL:
-        // Files uploaded while submitted or pending should be tagged as "Submitted"
         return 'Submitted';
       case RequisitionStatus.APPROVED:
         return `Approved_Level_${requisition.currentApprovalLevel || 1}`;

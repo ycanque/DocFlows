@@ -246,7 +246,8 @@ export default function CheckVoucherDetailPage() {
               {voucher.check && (
                 <Button 
                   onClick={() => router.push(`/checks/${voucher.check?.id}`)}
-                  className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white font-semibold"
+                  variant="outline"
+                  className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-950/20"
                 >
                   <FileCheck className="h-4 w-4" />
                   View Check

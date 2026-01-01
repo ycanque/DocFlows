@@ -38,6 +38,7 @@ export interface UploadResult {
  * @param folder - Optional folder within the bucket
  * @param workflowStep - Optional workflow step to associate with the file
  * @param requisitionId - Optional requisition ID to associate the file with
+ * @param paymentId - Optional payment ID to associate the file with (mutually exclusive with requisitionId)
  * @returns Upload result with file data or error
  */
 export const uploadFile = async (
@@ -45,7 +46,8 @@ export const uploadFile = async (
   bucket: string = "documents",
   folder?: string,
   workflowStep?: string,
-  requisitionId?: string
+  requisitionId?: string,
+  paymentId?: string
 ): Promise<UploadResult> => {
   try {
     const formData = new FormData();
@@ -54,6 +56,7 @@ export const uploadFile = async (
     if (folder) formData.append("folder", folder);
     if (workflowStep) formData.append("workflowStep", workflowStep);
     if (requisitionId) formData.append("requisitionId", requisitionId);
+    if (paymentId) formData.append("paymentId", paymentId);
 
     const response = await api.post<UploadedFile>("/uploads", formData, {
       headers: {

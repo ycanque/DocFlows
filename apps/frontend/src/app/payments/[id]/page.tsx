@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { format, parseISO } from 'date-fns';
 import { RequisitionForPayment, RFPStatus, UserRole, CheckVoucher } from '@docflows/shared';
 import {
   getRequisitionForPayment,
@@ -25,10 +26,13 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import PaymentStatusTimeline from '@/components/payments/PaymentStatusTimeline';
+import FileAttachments from '@/components/FileAttachments';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
-import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt, Edit, ArrowRight, CreditCard } from 'lucide-react';
-import { format, parseISO } from 'date-fns';
+import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt, Edit, Paperclip, CreditCard } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { listRequisitionFiles } from '@/services/uploadService';
+import type { UploadedFile } from '@/services/uploadService';
 
 export default function PaymentDetailPage() {
   const router = useRouter();
@@ -43,12 +47,37 @@ export default function PaymentDetailPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
+  const [attachedFiles, setAttachedFiles] = useState<UploadedFile[]>([]);
+  const [paymentInfoHeight, setPaymentInfoHeight] = useState<number | null>(null);
+  const paymentInfoRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (paymentId) {
       loadPayment();
+      loadAttachedFiles();
     }
   }, [paymentId]);
+
+  useEffect(() => {
+    const measureHeight = () => {
+      if (paymentInfoRef.current) {
+        setPaymentInfoHeight(paymentInfoRef.current.offsetHeight);
+      }
+    };
+
+    measureHeight();
+    window.addEventListener('resize', measureHeight);
+    return () => window.removeEventListener('resize', measureHeight);
+  }, [payment]);
+
+  async function loadAttachedFiles() {
+    try {
+      const files = await listRequisitionFiles(paymentId);
+      setAttachedFiles(files);
+    } catch (err) {
+      console.error('Error loading attached files:', err);
+    }
+  }
 
   async function loadPayment() {
     try {
@@ -158,6 +187,31 @@ export default function PaymentDetailPage() {
     }
   }
 
+  const getCurrentWorkflowStep = (payment: RequisitionForPayment): string => {
+    // Map payment status to workflow step for file tagging
+    switch (payment.status) {
+      case RFPStatus.DRAFT:
+        return 'Created';
+      case RFPStatus.SUBMITTED:
+      case RFPStatus.PENDING_APPROVAL:
+        return 'Submitted';
+      case RFPStatus.APPROVED:
+        return `Approved_Level_${payment.currentApprovalLevel || 1}`;
+      case RFPStatus.REJECTED:
+        return `Rejected_Level_${payment.currentApprovalLevel || 1}`;
+      case RFPStatus.CV_GENERATED:
+        return 'CV_Generated';
+      case RFPStatus.CHECK_ISSUED:
+        return 'Check_Issued';
+      case RFPStatus.DISBURSED:
+        return 'Disbursed';
+      case RFPStatus.CANCELLED:
+        return 'Cancelled';
+      default:
+        return 'Created';
+    }
+  };
+
   function canSubmit() {
     return payment?.status === RFPStatus.DRAFT && 
            (user?.role === UserRole.USER || user?.role === UserRole.ADMIN);
@@ -234,131 +288,54 @@ export default function PaymentDetailPage() {
   return (
     <ProtectedRoute>
       <div className="space-y-6">
-              {/* Header */}
-              <div className="flex flex-col gap-4">
-                <Button 
-                  variant="ghost" 
-                  onClick={() => router.push('/payments')}
-                  className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Payment Requests
-                </Button>
-                
-                <div>
-                  <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
-                    {payment.rfpNumber || payment.seriesCode || `RFP #${payment.id}`}
-                  </h1>
-                  <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
-                    Payment Request Details
-                  </p>
-                </div>
+        {/* Back Button */}
+        <Button 
+          variant="ghost" 
+          onClick={() => router.push('/payments')}
+          className="w-fit text-zinc-600 hover:text-zinc-900 hover:bg-zinc-100 dark:text-zinc-400 dark:hover:text-zinc-50 dark:hover:bg-zinc-800 -ml-2"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Payment Requests
+        </Button>
 
-                {/* All Action Buttons (Workflow left, CRUD right) */}
-                <div className="flex gap-2 flex-wrap items-center justify-between">
-                  {/* Workflow Action Buttons (Left) */}
-                  <div className="flex gap-2 flex-wrap">
-                    {canSubmit() && (
-                      <Button
-                        onClick={handleSubmit}
-                        disabled={actionLoading}
-                        className="flex items-center gap-2"
-                      >
-                        <FileText className="h-4 w-4" />
-                        Submit for Approval
-                      </Button>
-                    )}
-                    {canApprove() && (
-                      <Button
-                        onClick={handleApprove}
-                        disabled={actionLoading}
-                        className="flex items-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white"
-                      >
-                        <CheckCircle className="h-4 w-4" />
-                        Approve
-                      </Button>
-                    )}
-                    {canReject() && (
-                      <Button
-                        variant="destructive"
-                        onClick={() => setShowRejectModal(true)}
-                        disabled={actionLoading}
-                        className="flex items-center gap-2"
-                      >
-                        <XCircle className="h-4 w-4" />
-                        Reject
-                      </Button>
-                    )}
-                    {canGenerateCV() && (
-                      <Button
-                        onClick={handleGenerateCV}
-                        disabled={actionLoading}
-                        className="flex items-center gap-2"
-                      >
-                        <Receipt className="h-4 w-4" />
-                        Generate Check Voucher
-                      </Button>
-                    )}
-                    {canCancel() && (
-                      <Button
-                        onClick={handleCancel}
-                        disabled={actionLoading}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        <Ban className="h-4 w-4" />
-                        Cancel
-                      </Button>
-                    )}
-                    {payment.checkVoucher && (
-                      <Button
-                        onClick={() => router.push(`/vouchers/${payment.checkVoucher?.id}`)}
-                        disabled={actionLoading}
-                        className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white"
-                      >
-                        <Receipt className="h-4 w-4" />
-                        View Check Voucher
-                      </Button>
-                    )}
-                    {payment.checkVoucher?.check && (
-                      <Button
-                        onClick={() => router.push(`/checks/${payment.checkVoucher?.check?.id}`)}
-                        disabled={actionLoading}
-                        className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white"
-                      >
-                        <CreditCard className="h-4 w-4" />
-                        View Check
-                      </Button>
-                    )}
-                  </div>
+        {/* Header with CRUD Buttons */}
+        <div className="flex items-start justify-between gap-4">
+          {/* Payment ID and Subtitle */}
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">
+              {payment.rfpNumber || payment.seriesCode || `RFP #${payment.id}`}
+            </h1>
+            <p className="text-sm text-zinc-500 dark:text-zinc-400 mt-1">
+              Payment Request Details
+            </p>
+          </div>
 
-                  {/* CRUD Action Buttons (Right) */}
-                  <div className="flex gap-2 flex-wrap">
-                    {canEdit() && (
-                      <Button
-                        onClick={() => router.push(`/payments/${paymentId}/edit`)}
-                        disabled={actionLoading}
-                        variant="outline"
-                        className="flex items-center gap-2"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Edit
-                      </Button>
-                    )}
-                    {canDelete() && (
-                      <Button
-                        onClick={handleDelete}
-                        disabled={actionLoading}
-                        variant="destructive"
-                        className="flex items-center gap-2"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                        Delete
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
+          {/* CRUD Action Buttons (Right) */}
+          <div className="flex gap-2 flex-shrink-0">
+            {canEdit() && (
+              <Button
+                onClick={() => router.push(`/payments/${paymentId}/edit`)}
+                disabled={actionLoading}
+                variant="outline"
+                className="flex items-center gap-2"
+              >
+                <Edit className="h-4 w-4" />
+                Edit
+              </Button>
+            )}
+            {canDelete() && (
+              <Button
+                onClick={handleDelete}
+                disabled={actionLoading}
+                variant="destructive"
+                className="flex items-center gap-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete
+              </Button>
+            )}
+          </div>
+        </div>
 
               {/* Error Message */}
               {error && (
@@ -378,16 +355,110 @@ export default function PaymentDetailPage() {
                 </Card>
               )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <div className="flex items-center justify-between">
-                  <CardTitle>Payment Information</CardTitle>
-                  <StatusBadge status={payment.status} />
-                </div>
-              </CardHeader>
-              <CardContent>
+        {/* Tabs for Payment Details and Attachments */}
+        <Tabs defaultValue="details" className="w-full">
+          <TabsList className="w-full">
+            <TabsTrigger value="details" className="flex items-center gap-2">
+              <FileText className="h-4 w-4" />
+              Payment Details
+            </TabsTrigger>
+            <TabsTrigger value="attachments" className="flex items-center gap-2">
+              <Paperclip className="h-4 w-4" />
+              Attachments {attachedFiles.length > 0 && `(${attachedFiles.length})`}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="details" className="space-y-6 mt-6">
+            {/* Workflow Action Buttons */}
+            <div className="flex gap-2 flex-wrap">
+              {canSubmit() && (
+                <Button
+                  onClick={handleSubmit}
+                  disabled={actionLoading}
+                  className="flex items-center gap-2"
+                >
+                  <FileText className="h-4 w-4" />
+                  Submit for Approval
+                </Button>
+              )}
+              {canApprove() && (
+                <Button
+                  onClick={handleApprove}
+                  disabled={actionLoading}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white"
+                >
+                  <CheckCircle className="h-4 w-4" />
+                  Approve
+                </Button>
+              )}
+              {canReject() && (
+                <Button
+                  variant="destructive"
+                  onClick={() => setShowRejectModal(true)}
+                  disabled={actionLoading}
+                  className="flex items-center gap-2"
+                >
+                  <XCircle className="h-4 w-4" />
+                  Reject
+                </Button>
+              )}
+              {canGenerateCV() && (
+                <Button
+                  onClick={handleGenerateCV}
+                  disabled={actionLoading}
+                  className="flex items-center gap-2"
+                >
+                  <Receipt className="h-4 w-4" />
+                  Generate Check Voucher
+                </Button>
+              )}
+              {canCancel() && (
+                <Button
+                  onClick={handleCancel}
+                  disabled={actionLoading}
+                  variant="outline"
+                  className="flex items-center gap-2"
+                >
+                  <Ban className="h-4 w-4" />
+                  Cancel
+                </Button>
+              )}
+              {payment.checkVoucher && (
+                <Button
+                  onClick={() => router.push(`/vouchers/${payment.checkVoucher?.id}`)}
+                  disabled={actionLoading}
+                  variant="outline"
+                  className="flex items-center gap-2 text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-950/20"
+                >
+                  <Receipt className="h-4 w-4" />
+                  View Check Voucher
+                </Button>
+              )}
+              {payment.checkVoucher?.check && (
+                <Button
+                  onClick={() => router.push(`/checks/${payment.checkVoucher?.check?.id}`)}
+                  disabled={actionLoading}
+                  variant="outline"
+                  className="flex items-center gap-2 text-blue-600 border-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:border-blue-400 dark:hover:bg-blue-950/20"
+                >
+                  <CreditCard className="h-4 w-4" />
+                  View Check
+                </Button>
+              )}
+            </div>
+
+            {/* Payment Information and Approval History - Side by Side */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Payment Information */}
+              <div className="md:col-span-2 lg:col-span-2">
+                <Card ref={paymentInfoRef}>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle>Payment Information</CardTitle>
+                    {payment.status && (
+                      <StatusBadge status={payment.status} />
+                    )}
+                  </CardHeader>
+                  <CardContent>
                 <div className="space-y-6">
                   {/* Key Information */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
@@ -502,24 +573,38 @@ export default function PaymentDetailPage() {
 
               </CardContent>
             </Card>
-          </div>
+              </div>
 
-          <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Approval History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <PaymentStatusTimeline 
-                  approvalRecords={payment.approvalRecords || []} 
-                  createdAt={payment.createdAt}
-                  requester={payment.requester}
-                  checkVoucher={payment.checkVoucher}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
+              {/* Approval History */}
+              <div className="md:col-span-2 lg:col-span-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Approval History</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <PaymentStatusTimeline 
+                      approvalRecords={payment.approvalRecords || []} 
+                      createdAt={payment.createdAt}
+                      requester={payment.requester}
+                      attachments={attachedFiles}
+                      checkVoucher={payment.checkVoucher}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="attachments" className="mt-6">
+            <FileAttachments 
+              files={attachedFiles}
+              onFilesChange={setAttachedFiles}
+              mode="existing"
+              paymentId={payment.id}
+              workflowStep={getCurrentWorkflowStep(payment)}
+            />
+          </TabsContent>
+        </Tabs>
 
         {/* Reject Modal */}
         <Dialog open={showRejectModal} onOpenChange={setShowRejectModal}>

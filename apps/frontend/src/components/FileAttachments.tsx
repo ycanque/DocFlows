@@ -26,6 +26,7 @@ interface FileAttachmentsProps {
   bucket?: string
   folder?: string
   requisitionId?: string // For fetching files linked to a specific requisition
+  paymentId?: string // For fetching files linked to a specific payment
   workflowStep?: string // Optional workflow step to tag uploads
   onFilesChange?: (files: UploadedFile[]) => void
   mode?: 'draft' | 'existing' // draft = creating new record, existing = viewing/editing existing record
@@ -36,6 +37,7 @@ export default function FileAttachments({
   bucket = 'documents',
   folder,
   requisitionId,
+  paymentId,
   workflowStep,
   onFilesChange,
   mode = 'existing',
@@ -48,9 +50,9 @@ export default function FileAttachments({
   const loadFiles = async () => {
     setLoading(true)
     try {
-      // If requisitionId is provided, fetch files for that specific requisition
-      const fileList = requisitionId 
-        ? await listRequisitionFiles(requisitionId)
+      // If requisitionId or paymentId is provided, fetch files for that specific record
+      const fileList = requisitionId || paymentId
+        ? await listRequisitionFiles(requisitionId || paymentId || '')
         : await listFiles(bucket)
       setFiles(fileList)
       onFilesChange?.(fileList)
@@ -63,14 +65,14 @@ export default function FileAttachments({
 
   // Only fetch files from server in 'existing' mode
   useEffect(() => {
-    if (mode === 'existing' && requisitionId) {
+    if (mode === 'existing' && (requisitionId || paymentId)) {
       loadFiles()
     } else if (mode === 'draft' && externalFiles) {
       // In draft mode, sync with external files prop
       setFiles(externalFiles)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [refreshKey, requisitionId, mode])
+  }, [refreshKey, requisitionId, paymentId, mode])
 
   // Separate effect to sync external files in draft mode
   useEffect(() => {
@@ -204,6 +206,7 @@ export default function FileAttachments({
             folder={folder}
             workflowStep={workflowStep}
             requisitionId={requisitionId}
+            paymentId={paymentId}
             onUploadComplete={(file) => {
               handleUploadComplete(file)
             }}

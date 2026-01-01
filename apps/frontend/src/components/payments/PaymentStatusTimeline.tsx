@@ -1,13 +1,24 @@
 'use client';
 
 import { ApprovalRecord, User, CheckVoucher } from '@docflows/shared';
-import { CheckCircle2, XCircle, FileText, Send, Clock, Receipt, ArrowRight, CreditCard, CheckCircle } from 'lucide-react';
+import { CheckCircle2, XCircle, FileText, Send, Clock, Receipt, ArrowRight, CreditCard, CheckCircle, Download } from 'lucide-react';
 import Link from 'next/link';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { useState } from 'react';
+import { UploadedFile, getSignedUrl } from '@/services/uploadService';
 
 interface PaymentStatusTimelineProps {
   approvalRecords: ApprovalRecord[];
   createdAt?: string;
   requester?: User;
+  attachments?: UploadedFile[];
   checkVoucher?: CheckVoucher | null;
   className?: string;
 }
@@ -35,11 +46,79 @@ export default function PaymentStatusTimeline({
   approvalRecords,
   createdAt,
   requester,
+  attachments = [],
   checkVoucher,
   className = '',
 }: PaymentStatusTimelineProps) {
+  const [selectedWorkflowStep, setSelectedWorkflowStep] = useState<string | null>(null);
+  const [isDocumentsDialogOpen, setIsDocumentsDialogOpen] = useState(false);
+
   const hasApprovalRecords = approvalRecords && approvalRecords.length > 0;
   const hasAnyTimeline = createdAt || hasApprovalRecords || checkVoucher;
+
+  // Get documents for a specific workflow step
+  const getDocumentsForStep = (workflowStep: string | null) => {
+    if (!workflowStep) return [];
+    
+    // Handle multiple possible names for the same workflow step
+    const possibleSteps: string[] = [workflowStep];
+    
+    // If looking for "Approved_Level_X", also check for "Level X"
+    if (workflowStep.startsWith('Approved_Level_')) {
+      possibleSteps.push(workflowStep.replace('Approved_', ''));
+    }
+    // If looking for "Level X", also check for "Approved_Level_X"
+    if (workflowStep.match(/^Level \d+$/)) {
+      possibleSteps.push(`Approved_${workflowStep}`);
+    }
+    // Handle Rejected workflow steps - bidirectional mapping
+    if (workflowStep.startsWith('Rejected_Level_')) {
+      possibleSteps.push('Rejected');
+    }
+    // If looking for "Rejected", also check for "Rejected_Level_X" variants
+    if (workflowStep === 'Rejected') {
+      possibleSteps.push('Rejected_Level_1', 'Rejected_Level_2', 'Rejected_Level_3');
+    }
+    
+    return attachments.filter(file => possibleSteps.includes(file.workflowStep || ''));
+  };
+
+  const showDocuments = (workflowStep: string) => {
+    setSelectedWorkflowStep(workflowStep);
+    setIsDocumentsDialogOpen(true);
+  };
+
+  const handleViewFile = async (file: UploadedFile) => {
+    try {
+      const url = await getSignedUrl(file.id);
+      if (url) {
+        window.open(url, '_blank');
+      } else {
+        alert('Failed to generate download link. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error getting file URL:', error);
+      alert('Failed to open file. Please try again.');
+    }
+  };
+
+  const handleDownloadFile = async (file: UploadedFile) => {
+    try {
+      const url = await getSignedUrl(file.id);
+      if (!url) {
+        alert('Failed to generate download link. Please try again.');
+        return;
+      }
+
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = file.originalFileName;
+      link.click();
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      alert('Failed to download file. Please try again.');
+    }
+  };
 
   if (!hasAnyTimeline) {
     return (
@@ -101,9 +180,23 @@ export default function PaymentStatusTimeline({
                       </p>
                     )}
                   </div>
-                  <div className="flex flex-col items-end text-nowrap text-xs text-gray-500 dark:text-gray-400">
-                    <span>{formatDateOnly(createdAt)}</span>
-                    <span>{formatTimeOnly(createdAt)}</span>
+                  <div className="flex-shrink-0 flex flex-col items-end gap-2">
+                    <div className="flex flex-col items-end text-nowrap text-xs text-gray-500 dark:text-gray-400">
+                      <span>{formatDateOnly(createdAt)}</span>
+                      <span>{formatTimeOnly(createdAt)}</span>
+                    </div>
+                    {getDocumentsForStep('Created').length > 0 && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => showDocuments('Created')}
+                        className="text-xs"
+                      >
+                        <FileText className="h-3 w-3 mr-1" />
+                        View documents ({getDocumentsForStep('Created').length})
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -230,11 +323,35 @@ export default function PaymentStatusTimeline({
                       </p>
                     )}
                   </div>
-                  <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0">
-                    <time dateTime={record.timestamp} className="text-xs flex flex-col gap-1 whitespace-nowrap">
+                  <div className="flex-shrink-0 flex flex-col items-end gap-2">
+                    <time dateTime={record.timestamp} className="text-xs flex flex-col items-end gap-1 whitespace-nowrap text-gray-500 dark:text-gray-400">
                       <span>{formatDateOnly(record.timestamp)}</span>
                       <span>{formatTimeOnly(record.timestamp)}</span>
                     </time>
+                    {(() => {
+                      // Build possible workflow step names for this approval level
+                      const possibleSteps = [
+                        `Level ${record.approvalLevel}`,
+                        `Approved_Level_${record.approvalLevel}`,
+                        record.approvalLevel === 0 ? 'Submitted' : null,
+                        isRejected ? `Rejected_Level_${record.approvalLevel}` : null,
+                      ].filter(Boolean);
+                      
+                      const docsForStep = attachments.filter(file => possibleSteps.includes(file.workflowStep || ''));
+                      
+                      return docsForStep.length > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => showDocuments(docsForStep[0].workflowStep || `Level ${record.approvalLevel}`)}
+                          className="text-xs"
+                        >
+                          <FileText className="h-3 w-3 mr-1" />
+                          View documents ({docsForStep.length})
+                        </Button>
+                      );
+                    })()}
                   </div>
                 </div>
               </div>
@@ -276,11 +393,23 @@ export default function PaymentStatusTimeline({
                     </Link>
                   </div>
                 </div>
-                <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0">
+                <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0 flex flex-col items-end gap-2">
                   <time dateTime={checkVoucher.createdAt} className="text-xs flex flex-col gap-1 whitespace-nowrap">
                     <span>{formatDateOnly(checkVoucher.createdAt)}</span>
                     <span>{formatTimeOnly(checkVoucher.createdAt)}</span>
                   </time>
+                  {getDocumentsForStep('CV_Generated').length > 0 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => showDocuments('CV_Generated')}
+                      className="text-xs bg-white dark:bg-gray-800"
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      View documents ({getDocumentsForStep('CV_Generated').length})
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -321,11 +450,23 @@ export default function PaymentStatusTimeline({
                   </Link>
                 </div>
               </div>
-              <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0">
+              <div className="text-right text-gray-500 dark:text-gray-400 flex-shrink-0 flex flex-col items-end gap-2">
                 <time dateTime={checkVoucher.check.createdAt} className="text-xs flex flex-col gap-1 whitespace-nowrap">
                   <span>{formatDateOnly(checkVoucher.check.createdAt)}</span>
                   <span>{formatTimeOnly(checkVoucher.check.createdAt)}</span>
                 </time>
+                {getDocumentsForStep('Check_Issued').length > 0 && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => showDocuments('Check_Issued')}
+                    className="text-xs bg-white dark:bg-gray-800"
+                  >
+                    <FileText className="h-3 w-3 mr-1" />
+                    View documents ({getDocumentsForStep('Check_Issued').length})
+                  </Button>
+                )}
               </div>
               </div>
             </div>
@@ -358,11 +499,23 @@ export default function PaymentStatusTimeline({
                     </p>
                   )}
                 </div>
-                <div className="text-right text-green-600 dark:text-green-400 flex-shrink-0">
+                <div className="text-right text-green-600 dark:text-green-400 flex-shrink-0 flex flex-col items-end gap-2">
                   <time dateTime={disbursedRecord.timestamp} className="text-xs flex flex-col gap-1 whitespace-nowrap">
                     <span>{formatDateOnly(disbursedRecord.timestamp)}</span>
                     <span>{formatTimeOnly(disbursedRecord.timestamp)}</span>
                   </time>
+                  {getDocumentsForStep('Disbursed').length > 0 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => showDocuments('Disbursed')}
+                      className="text-xs bg-white dark:bg-gray-800"
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      View documents ({getDocumentsForStep('Disbursed').length})
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
@@ -395,17 +548,85 @@ export default function PaymentStatusTimeline({
                     </p>
                   )}
                 </div>
-                <div className="text-right text-red-600 dark:text-red-400 flex-shrink-0">
+                <div className="text-right text-red-600 dark:text-red-400 flex-shrink-0 flex flex-col items-end gap-2">
                   <time dateTime={rejectedRecord.timestamp} className="text-xs flex flex-col gap-1 whitespace-nowrap">
                     <span>{formatDateOnly(rejectedRecord.timestamp)}</span>
                     <span>{formatTimeOnly(rejectedRecord.timestamp)}</span>
                   </time>
+                  {getDocumentsForStep('Rejected').length > 0 && (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => showDocuments('Rejected')}
+                      className="text-xs bg-white dark:bg-gray-800"
+                    >
+                      <FileText className="h-3 w-3 mr-1" />
+                      View documents ({getDocumentsForStep('Rejected').length})
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
           </li>
         )}
       </ul>
+
+    {/* View Documents Dialog */}
+    <Dialog open={isDocumentsDialogOpen} onOpenChange={setIsDocumentsDialogOpen}>
+      <DialogContent className="max-w-2xl">
+        <DialogHeader>
+          <DialogTitle>Documents - {selectedWorkflowStep}</DialogTitle>
+          <DialogDescription>
+            Files attached at this workflow step
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-2">
+          {selectedWorkflowStep && getDocumentsForStep(selectedWorkflowStep).map((file) => (
+            <div
+              key={file.id}
+              className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
+            >
+              <div className="flex items-center gap-3 min-w-0 flex-1">
+                <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium truncate">{file.originalFileName}</p>
+                  <p className="text-xs text-gray-500 dark:text-gray-400">
+                    {(file.fileSize / 1024).toFixed(2)} KB
+                    {file.uploadedBy && ` • Uploaded by ${file.uploadedBy.firstName} ${file.uploadedBy.lastName}`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleViewFile(file)}
+                  title="Open file in new tab"
+                >
+                  <FileText className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDownloadFile(file)}
+                  title="Download file"
+                >
+                  <Download className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+          {selectedWorkflowStep && getDocumentsForStep(selectedWorkflowStep).length === 0 && (
+            <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
+              No documents attached at this step
+            </p>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
     </div>
   );
 }
