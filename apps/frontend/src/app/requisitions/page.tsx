@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/requisitions/StatusBadge';
+import RichTextDisplay from '@/components/RichTextDisplay';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
@@ -268,8 +269,10 @@ function RequisitionsContent() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {requisition.department?.name || 'N/A'}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 max-w-xs truncate">
-                      {requisition.purpose}
+                    <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 max-w-xs">
+                      <div className="truncate">
+                        <RichTextDisplay content={requisition.purpose} singleLine={true} className="truncate" />
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {new Date(requisition.dateNeeded).toLocaleDateString()}

@@ -16,6 +16,10 @@ export class UploadFileDto {
   @IsString()
   @IsOptional()
   requisitionId?: string;
+
+  @IsString()
+  @IsOptional()
+  paymentId?: string;
 }
 
 export class FileResponseDto {

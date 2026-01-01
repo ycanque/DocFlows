@@ -36,7 +36,7 @@ export class PaymentsService {
     const rfpNumber = `RFP-${created.rfpSeq.toString().padStart(6, '0')}`;
 
     // Update the record with the proper rfpNumber
-    return this.prisma.requisitionForPayment.update({
+    const result = await this.prisma.requisitionForPayment.update({
       where: { id: created.id },
       data: { rfpNumber },
       include: {
@@ -45,6 +45,16 @@ export class PaymentsService {
         checkVoucher: true,
       },
     });
+
+    // Associate files if fileIds provided
+    if (data.fileIds && data.fileIds.length > 0) {
+      await this.prisma.fileUpload.updateMany({
+        where: { id: { in: data.fileIds } },
+        data: { requisitionForPaymentId: created.id },
+      });
+    }
+
+    return result;
   }
 
   async findAll(filters?: {
@@ -273,7 +283,8 @@ export class PaymentsService {
         where: { id },
         data: {
           status: RFPStatus.APPROVED,
-          currentApprovalLevel: rfp.currentApprovalLevel + 1,
+          // Do not increment approval level - keep it at current level
+          // currentApprovalLevel represents the level that was just approved
         },
         include: {
           requester: true,

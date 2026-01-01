@@ -30,6 +30,7 @@ import StatusBadge from '@/components/requisitions/StatusBadge';
 import ItemsTable from '@/components/requisitions/ItemsTable';
 import ApprovalTimeline from '@/components/requisitions/ApprovalTimeline';
 import FileAttachments from '@/components/FileAttachments';
+import RichTextDisplay from '@/components/RichTextDisplay';
 import { useAuth } from '@/contexts/AuthContext';
 import type { UploadedFile } from '@/services/uploadService';
 
@@ -203,13 +204,12 @@ export default function RequisitionDetailsPage() {
   function getCurrentWorkflowStep(): string {
     if (!requisition) return 'Created';
     
-    // Map status to workflow step
+    // Map status to workflow step for file tagging
     switch (requisition.status) {
       case RequisitionStatus.DRAFT:
         return 'Created';
       case RequisitionStatus.SUBMITTED:
       case RequisitionStatus.PENDING_APPROVAL:
-        // Files uploaded while submitted or pending should be tagged as "Submitted"
         return 'Submitted';
       case RequisitionStatus.APPROVED:
         return `Approved_Level_${requisition.currentApprovalLevel || 1}`;
@@ -464,9 +464,9 @@ export default function RequisitionDetailsPage() {
                   <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                     Purpose
                   </label>
-                  <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2 leading-relaxed">
-                    {requisition.purpose}
-                  </p>
+                  <div className="mt-2">
+                    <RichTextDisplay content={requisition.purpose} />
+                  </div>
                 </div>
               </div>
             </CardContent>

@@ -1,4 +1,5 @@
 import { RequestItem } from '@docflows/shared';
+import RichTextDisplay from '@/components/RichTextDisplay';
 
 interface ItemsTableProps {
   items: RequestItem[];
@@ -64,7 +65,11 @@ export default function ItemsTable({ items }: ItemsTableProps) {
                   {item.particulars}
                 </td>
                 <td className="px-6 py-4 text-sm text-zinc-600 dark:text-zinc-400">
-                  {item.specification || '-'}
+                  {item.specification ? (
+                    <RichTextDisplay content={item.specification} />
+                  ) : (
+                    '-'
+                  )}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
                   {new Intl.NumberFormat('en-PH', {

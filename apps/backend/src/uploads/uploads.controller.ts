@@ -61,6 +61,7 @@ export class UploadsController {
     const folder = dto.folder;
     const workflowStep = dto.workflowStep;
     const requisitionId = dto.requisitionId;
+    const paymentId = dto.paymentId;
 
     return this.uploadsService.uploadFile(
       req.user.id,
@@ -69,6 +70,7 @@ export class UploadsController {
       folder,
       workflowStep,
       requisitionId,
+      paymentId,
     );
   }
 

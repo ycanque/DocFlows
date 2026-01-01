@@ -15,6 +15,7 @@ interface FileUploadProps {
   folder?: string
   workflowStep?: string
   requisitionId?: string
+  paymentId?: string
   onUploadComplete?: (file: UploadedFile) => void
   onUploadError?: (error: string) => void
   acceptedFileTypes?: string
@@ -26,6 +27,7 @@ export default function FileUpload({
   folder,
   workflowStep,
   requisitionId,
+  paymentId,
   onUploadComplete,
   onUploadError,
   acceptedFileTypes = '.pdf,.jpg,.jpeg,.png,.doc,.docx',
@@ -97,7 +99,7 @@ export default function FileUpload({
         setProgress((prev) => Math.min(prev + 10, 90))
       }, 200)
 
-      const result = await uploadFile(selectedFile, bucket, folder, workflowStep, requisitionId)
+      const result = await uploadFile(selectedFile, bucket, folder, workflowStep, requisitionId, paymentId)
 
       clearInterval(progressInterval)
       setProgress(100)

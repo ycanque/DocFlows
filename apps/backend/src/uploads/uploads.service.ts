@@ -20,6 +20,7 @@ export class UploadsService {
     folder?: string,
     workflowStep?: string,
     requisitionId?: string,
+    paymentId?: string,
   ): Promise<FileResponseDto> {
     try {
       // Generate unique file name
@@ -43,7 +44,8 @@ export class UploadsService {
           mimeType: file.mimetype,
           status: 'COMPLETED',
           workflowStep,
-          requisitionSlipId: requisitionId,
+          requisitionSlipId: requisitionId || null,
+          requisitionForPaymentId: paymentId || null,
         },
         include: {
           user: {
@@ -117,12 +119,12 @@ export class UploadsService {
   }
 
   /**
-   * List files for a specific requisition
+   * List files for a specific requisition or payment
    */
   async listRequisitionFiles(requisitionId: string): Promise<FileResponseDto[]> {
     const files = await this.prisma.fileUpload.findMany({
       where: {
-        requisitionSlipId: requisitionId,
+        OR: [{ requisitionSlipId: requisitionId }, { requisitionForPaymentId: requisitionId }],
         status: 'COMPLETED',
         deletedAt: null,
       },

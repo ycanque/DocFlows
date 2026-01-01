@@ -8,6 +8,7 @@ import { Banknote, Plus, Search } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/requisitions/StatusBadge';
+import RichTextDisplay from '@/components/RichTextDisplay';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { format, parseISO } from 'date-fns';
@@ -214,6 +215,9 @@ export default function PaymentsListPage() {
                       Payee
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                      Particulars
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                       Amount
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
@@ -227,7 +231,7 @@ export default function PaymentsListPage() {
                 <tbody className="bg-white dark:bg-zinc-950 divide-y divide-zinc-200 dark:divide-zinc-800">
                   {loading ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
                         <div className="flex justify-center">
                           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                         </div>
@@ -235,7 +239,7 @@ export default function PaymentsListPage() {
                     </tr>
                   ) : filteredPayments.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-6 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
+                      <td colSpan={6} className="px-6 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
                         {searchQuery || selectedStatus
                           ? 'No payment requests found matching your criteria'
                           : 'No payment requests yet. Create your first one!'}
@@ -246,13 +250,18 @@ export default function PaymentsListPage() {
                       <tr
                         key={payment.id}
                         onClick={() => router.push(`/payments/${payment.id}`)}
-                        className="hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition-colors"
+                        className="hover:bg-zinc-50 dark:hover:bg-zinc-800 cursor-pointer transition-colors align-top"
                       >
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400">
                           {payment.rfpNumber || payment.seriesCode || 'N/A'}
                         </td>
                         <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100">
                           {payment.payee}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-zinc-900 dark:text-zinc-100 max-w-xs">
+                          <div className="truncate">
+                            <RichTextDisplay content={payment.particulars} singleLine={true} className="truncate" />
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-zinc-900 dark:text-zinc-100">
                           {payment.currency === 'PHP' ? '₱' : payment.currency} {Number(payment.amount).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',')}

@@ -10,6 +10,7 @@ import { getCostCenters } from '@/services/costCenterService';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import RichTextEditor from '@/components/RichTextEditor';
 import { useAuth } from '@/contexts/AuthContext';
 
 // Unit of measure categories
@@ -53,7 +54,11 @@ const UNIT_OF_MEASURE = {
 };
 
 function getTodayDateString() {
-  return new Date().toISOString().split('T')[0];
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 interface RequisitionItem {
@@ -75,6 +80,10 @@ export default function EditRequisitionPage() {
   const [requisition, setRequisition] = useState<RequisitionSlip | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
+  const [originalDates, setOriginalDates] = useState<{
+    dateRequested: string;
+    dateNeeded: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     departmentId: '',
     costCenterId: '',
@@ -113,13 +122,21 @@ export default function EditRequisitionPage() {
 
       setRequisition(data);
       
+      // Store original dates to allow them in edit mode
+      const dateReq = new Date(data.dateRequested).toISOString().split('T')[0];
+      const dateNeed = new Date(data.dateNeeded).toISOString().split('T')[0];
+      setOriginalDates({
+        dateRequested: dateReq,
+        dateNeeded: dateNeed,
+      });
+      
       // Populate form data
       setFormData({
         departmentId: data.departmentId || '',
         costCenterId: data.costCenterId || '',
         currency: data.currency || 'PHP',
-        dateRequested: data.dateRequested ? new Date(data.dateRequested).toISOString().split('T')[0] : '',
-        dateNeeded: data.dateNeeded ? new Date(data.dateNeeded).toISOString().split('T')[0] : '',
+        dateRequested: dateReq,
+        dateNeeded: dateNeed,
         purpose: data.purpose || '',
       });
 
@@ -419,11 +436,11 @@ export default function EditRequisitionPage() {
                         dateNeeded: prev.dateNeeded < requested ? requested : prev.dateNeeded,
                       }));
                     }}
-                    min={getTodayDateString()}
+                    min={originalDates?.dateRequested || getTodayDateString()}
                     className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
                     required
                   />
-                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Today or later</p>
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Today or later (or original date if editing)</p>
                 </div>
 
                 <div>
@@ -470,14 +487,14 @@ export default function EditRequisitionPage() {
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Purpose <span className="text-red-500">*</span>
                 </label>
-                <textarea
+                <RichTextEditor
                   value={formData.purpose}
-                  onChange={(e) => setFormData({ ...formData, purpose: e.target.value })}
-                  rows={3}
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
+                  onChange={(value) => setFormData({ ...formData, purpose: value })}
                   placeholder="Enter the purpose of this requisition..."
-                  required
                 />
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  Describe the purpose and details of this requisition. You can use formatting (bold, italic, lists) to organize your information.
+                </p>
               </div>
             </div>
           </CardContent>
@@ -543,13 +560,11 @@ export default function EditRequisitionPage() {
                       <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                         Specification
                       </label>
-                      <textarea
+                      <RichTextEditor
                         value={item.specification || ''}
-                        onChange={(e) =>
-                          handleItemChange(index, 'specification', e.target.value)
+                        onChange={(value) =>
+                          handleItemChange(index, 'specification', value)
                         }
-                        rows={2}
-                        className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
                         placeholder="Additional description or technical details (optional)"
                       />
                       <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">

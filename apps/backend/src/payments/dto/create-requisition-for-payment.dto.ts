@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsDate, IsNumber, IsUUID } from 'class-validator';
+import { IsString, IsOptional, IsDate, IsNumber, IsUUID, IsArray } from 'class-validator';
 import { Type } from 'class-transformer';
 
 export class CreateRequisitionForPaymentDto {
@@ -36,4 +36,9 @@ export class CreateRequisitionForPaymentDto {
   @IsString()
   @IsOptional()
   currency?: string;
+
+  @IsArray()
+  @IsUUID('4', { each: true })
+  @IsOptional()
+  fileIds?: string[];
 }

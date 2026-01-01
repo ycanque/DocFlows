@@ -12,6 +12,7 @@ export interface CreateRequisitionForPaymentDto {
   particulars: string;
   amount: number;
   currency?: string;
+  fileIds?: string[];
 }
 
 export interface UpdateRequisitionForPaymentDto {

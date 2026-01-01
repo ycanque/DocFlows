@@ -192,7 +192,8 @@ export default function CheckDetailPage() {
                 <Button
                   onClick={() => router.push(`/vouchers/${check.checkVoucherId}`)}
                   disabled={actionLoading}
-                  className="flex items-center gap-2 bg-purple-600 hover:bg-purple-700 dark:bg-purple-500 dark:hover:bg-purple-600 text-white"
+                  variant="outline"
+                  className="flex items-center gap-2 text-purple-600 border-purple-600 hover:bg-purple-50 dark:text-purple-400 dark:border-purple-400 dark:hover:bg-purple-950/20"
                 >
                   <Receipt className="h-4 w-4" />
                   View Check Voucher
