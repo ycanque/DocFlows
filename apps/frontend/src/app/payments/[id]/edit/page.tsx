@@ -12,6 +12,7 @@ import { Department, RequisitionForPayment, RFPStatus } from '@docflows/shared';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import RichTextEditor from '@/components/RichTextEditor';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 
@@ -22,7 +23,11 @@ const SERIES_CODE_OPTIONS = [
 ];
 
 function getTodayDateString() {
-  return new Date().toISOString().split('T')[0];
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export default function EditPaymentPage() {
@@ -37,11 +42,15 @@ export default function EditPaymentPage() {
   const [error, setError] = useState<string | null>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
+  const [originalDates, setOriginalDates] = useState<{
+    dateRequested: string;
+    dateNeeded: string;
+  } | null>(null);
   const [formData, setFormData] = useState({
     departmentId: '',
     seriesCode: '',
-    dateRequested: getTodayDateString(),
-    dateNeeded: getTodayDateString(),
+    dateRequested: '',
+    dateNeeded: '',
     payee: '',
     particulars: '',
     amount: '',
@@ -71,12 +80,20 @@ export default function EditPaymentPage() {
         return;
       }
 
+      // Store original dates to allow them in edit mode
+      const dateReq = new Date(data.dateRequested).toISOString().split('T')[0];
+      const dateNeed = new Date(data.dateNeeded).toISOString().split('T')[0];
+      setOriginalDates({
+        dateRequested: dateReq,
+        dateNeeded: dateNeed,
+      });
+
       // Populate form with existing data
       setFormData({
         departmentId: data.departmentId,
         seriesCode: data.seriesCode,
-        dateRequested: new Date(data.dateRequested).toISOString().split('T')[0],
-        dateNeeded: new Date(data.dateNeeded).toISOString().split('T')[0],
+        dateRequested: dateReq,
+        dateNeeded: dateNeed,
         payee: data.payee,
         particulars: data.particulars,
         amount: data.amount.toString(),
@@ -304,7 +321,7 @@ export default function EditPaymentPage() {
                           dateNeeded: prev.dateNeeded < requested ? requested : prev.dateNeeded,
                         }));
                       }}
-                      min={getTodayDateString()}
+                      min={originalDates?.dateRequested || getTodayDateString()}
                       className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
                       required
                     />
@@ -350,13 +367,10 @@ export default function EditPaymentPage() {
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                     Particulars <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    name="particulars"
+                  <RichTextEditor
                     value={formData.particulars}
-                    onChange={(e) => setFormData({ ...formData, particulars: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
+                    onChange={(value) => setFormData({ ...formData, particulars: value })}
                     placeholder="Enter payment details"
-                    rows={4}
                   />
                   {formErrors.particulars && <p className="text-sm text-red-500 mt-1">{formErrors.particulars}</p>}
                 </div>

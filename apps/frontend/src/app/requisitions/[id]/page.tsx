@@ -30,6 +30,7 @@ import StatusBadge from '@/components/requisitions/StatusBadge';
 import ItemsTable from '@/components/requisitions/ItemsTable';
 import ApprovalTimeline from '@/components/requisitions/ApprovalTimeline';
 import FileAttachments from '@/components/FileAttachments';
+import RichTextDisplay from '@/components/RichTextDisplay';
 import { useAuth } from '@/contexts/AuthContext';
 import type { UploadedFile } from '@/services/uploadService';
 
@@ -463,9 +464,9 @@ export default function RequisitionDetailsPage() {
                   <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                     Purpose
                   </label>
-                  <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2 leading-relaxed">
-                    {requisition.purpose}
-                  </p>
+                  <div className="mt-2">
+                    <RichTextDisplay content={requisition.purpose} />
+                  </div>
                 </div>
               </div>
             </CardContent>

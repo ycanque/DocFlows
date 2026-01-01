@@ -12,6 +12,7 @@ import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, FileText, Paperclip } from 'lucide-react';
 import FileAttachments from '@/components/FileAttachments';
+import RichTextEditor from '@/components/RichTextEditor';
 import type { UploadedFile } from '@/services/uploadService';
 
 const SERIES_CODE_OPTIONS = [
@@ -21,7 +22,11 @@ const SERIES_CODE_OPTIONS = [
 ];
 
 function getTodayDateString() {
-  return new Date().toISOString().split('T')[0];
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export default function CreatePaymentPage() {
@@ -35,8 +40,8 @@ export default function CreatePaymentPage() {
   const [formData, setFormData] = useState({
     departmentId: '',
     seriesCode: '',
-    dateRequested: getTodayDateString(),
-    dateNeeded: getTodayDateString(),
+    dateRequested: '',
+    dateNeeded: '',
     payee: '',
     particulars: '',
     amount: '',
@@ -45,14 +50,16 @@ export default function CreatePaymentPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
+    // Initialize dates on client side to avoid timezone issues
+    const today = getTodayDateString();
+    setFormData(prev => ({
+      ...prev,
+      dateRequested: today,
+      dateNeeded: today,
+      departmentId: user?.departmentId || '',
+    }));
     loadDepartments();
-  }, []);
-
-  useEffect(() => {
-    if (user?.departmentId) {
-      setFormData(prev => ({ ...prev, departmentId: user.departmentId! }));
-    }
-  }, [user]);
+  }, [user?.departmentId, user?.id]);
 
   async function loadDepartments() {
     try {
@@ -306,13 +313,10 @@ export default function CreatePaymentPage() {
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                     Particulars <span className="text-red-500">*</span>
                   </label>
-                  <textarea
-                    name="particulars"
+                  <RichTextEditor
                     value={formData.particulars}
-                    onChange={(e) => setFormData({ ...formData, particulars: e.target.value })}
-                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
+                    onChange={(value) => setFormData({ ...formData, particulars: value })}
                     placeholder="Enter payment details"
-                    rows={4}
                   />
                   {formErrors.particulars && <p className="text-sm text-red-500 mt-1">{formErrors.particulars}</p>}
                 </div>

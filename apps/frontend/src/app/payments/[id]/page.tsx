@@ -27,6 +27,7 @@ import { Textarea } from '@/components/ui/textarea';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import PaymentStatusTimeline from '@/components/payments/PaymentStatusTimeline';
 import FileAttachments from '@/components/FileAttachments';
+import RichTextDisplay from '@/components/RichTextDisplay';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft, FileText, CheckCircle, XCircle, Ban, Trash2, Receipt, Edit, Paperclip, CreditCard } from 'lucide-react';
@@ -563,9 +564,9 @@ export default function PaymentDetailPage() {
                       <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                         Particulars
                       </label>
-                      <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2 leading-relaxed">
-                        {payment.particulars}
-                      </p>
+                      <div className="mt-2">
+                        <RichTextDisplay content={payment.particulars} />
+                      </div>
                     </div>
                   )}
                 </div>
