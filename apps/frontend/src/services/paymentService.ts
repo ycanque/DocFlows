@@ -17,6 +17,7 @@ export interface CreateRequisitionForPaymentDto {
 
 export interface UpdateRequisitionForPaymentDto {
   requisitionSlipId?: string;
+  departmentId?: string;
   seriesCode?: string;
   dateRequested?: string;
   dateNeeded?: string;
