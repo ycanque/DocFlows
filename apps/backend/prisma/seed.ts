@@ -34,6 +34,7 @@ async function main() {
   await prisma.project.deleteMany();
   await prisma.businessUnit.deleteMany();
   await prisma.approver.deleteMany();
+  await prisma.fileUpload.deleteMany();
   await prisma.user.deleteMany();
   await prisma.department.deleteMany();
 
