@@ -135,6 +135,7 @@ export class PaymentsService {
     return this.prisma.requisitionForPayment.update({
       where: { id },
       data: {
+        ...(data.departmentId && { department: { connect: { id: data.departmentId } } }),
         ...(data.seriesCode && { seriesCode: data.seriesCode }),
         ...(data.dateRequested && { dateRequested: data.dateRequested }),
         ...(data.dateNeeded && { dateNeeded: data.dateNeeded }),
@@ -219,18 +220,17 @@ export class PaymentsService {
         },
       });
 
-      // Create pending approval records for each required level
-      for (let level = 1; level <= maxApprovalLevel; level++) {
-        await tx.approvalRecord.create({
-          data: {
-            entityType: 'RequisitionForPayment',
-            entityId: id,
-            approvalLevel: level,
-            comments: `Awaiting approval at level ${level}`,
-            timestamp: new Date(),
-          },
-        });
-      }
+      // Create pending approval record for level 1 only
+      // Subsequent levels will be created when previous level is approved
+      await tx.approvalRecord.create({
+        data: {
+          entityType: 'RequisitionForPayment',
+          entityId: id,
+          approvalLevel: 1,
+          comments: `Awaiting approval at level 1`,
+          timestamp: new Date(),
+        },
+      });
 
       return updated;
     });
@@ -253,6 +253,20 @@ export class PaymentsService {
     if (!approver) {
       throw new NotFoundException(`Approver with ID ${approverId} not found`);
     }
+
+    // Get approvers for this department to determine approval levels
+    const approvers = await this.prisma.approver.findMany({
+      where: {
+        departmentId: rfp.departmentId,
+        isActive: true,
+      },
+      orderBy: { approvalLevel: 'asc' },
+    });
+
+    const currentLevel = rfp.currentApprovalLevel;
+    const maxApprovalLevel =
+      approvers.length > 0 ? Math.max(...approvers.map((a) => a.approvalLevel)) : 1;
+    const isLastLevel = currentLevel >= maxApprovalLevel;
 
     return this.prisma.$transaction(async (tx) => {
       // Find the pending approval record for current level
@@ -278,13 +292,25 @@ export class PaymentsService {
         });
       }
 
+      // If not the last level, create pending approval record for next level
+      if (!isLastLevel) {
+        await tx.approvalRecord.create({
+          data: {
+            entityType: 'RequisitionForPayment',
+            entityId: id,
+            approvalLevel: currentLevel + 1,
+            comments: `Awaiting approval at level ${currentLevel + 1}`,
+            timestamp: new Date(),
+          },
+        });
+      }
+
       // Update RFP status
       const updated = await tx.requisitionForPayment.update({
         where: { id },
         data: {
-          status: RFPStatus.APPROVED,
-          // Do not increment approval level - keep it at current level
-          // currentApprovalLevel represents the level that was just approved
+          currentApprovalLevel: isLastLevel ? currentLevel : currentLevel + 1,
+          status: isLastLevel ? RFPStatus.APPROVED : RFPStatus.SUBMITTED,
         },
         include: {
           requester: true,

@@ -202,17 +202,16 @@ export class RequisitionsService {
         },
       });
 
-      // Create pending approval records for each required level
-      for (let level = 1; level <= maxApprovalLevel; level++) {
-        await tx.approvalRecord.create({
-          data: {
-            entityType: 'RequisitionSlip',
-            entityId: id,
-            approvalLevel: level,
-            comments: `Awaiting approval at level ${level}`,
-          },
-        });
-      }
+      // Create pending approval record for level 1 only
+      // Subsequent levels will be created when previous level is approved
+      await tx.approvalRecord.create({
+        data: {
+          entityType: 'RequisitionSlip',
+          entityId: id,
+          approvalLevel: 1,
+          comments: `Awaiting approval at level 1`,
+        },
+      });
 
       // Update requisition status
       return tx.requisitionSlip.update({
@@ -283,6 +282,18 @@ export class RequisitionsService {
             approvalLevel: currentLevel,
             approvedBy: userId,
             comments: comments || `Approved at level ${currentLevel}`,
+          },
+        });
+      }
+
+      // If not the last level, create pending approval record for next level
+      if (!isLastLevel) {
+        await tx.approvalRecord.create({
+          data: {
+            entityType: 'RequisitionSlip',
+            entityId: id,
+            approvalLevel: currentLevel + 1,
+            comments: `Awaiting approval at level ${currentLevel + 1}`,
           },
         });
       }

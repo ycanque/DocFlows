@@ -307,26 +307,6 @@ async function main() {
         isActive: true,
       },
     }),
-    // Level 2 approver (Department Head)
-    prisma.approver.create({
-      data: {
-        userId: deptHead.id,
-        departmentId: opsDept.id,
-        approvalLevel: 2,
-        approvalLimit: 200000, // $200,000 limit
-        isActive: true,
-      },
-    }),
-    // Level 3 approver (Finance Manager - highest authority)
-    prisma.approver.create({
-      data: {
-        userId: financeManager.id,
-        departmentId: opsDept.id,
-        approvalLevel: 3,
-        approvalLimit: 1000000, // $1,000,000 limit
-        isActive: true,
-      },
-    }),
     // Admin user as approver for IT
     prisma.approver.create({
       data: {
@@ -349,7 +329,7 @@ async function main() {
     }),
   ]);
 
-  console.log(`✅ Created 5 approvers with hierarchy`);
+  console.log(`✅ Created 3 approvers`);
 
   // Create sample requisitions
   console.log('📝 Creating sample requisitions...');

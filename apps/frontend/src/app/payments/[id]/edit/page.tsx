@@ -156,6 +156,7 @@ export default function EditPaymentPage() {
     }
 
     const data: UpdateRequisitionForPaymentDto = {
+      departmentId: formData.departmentId,
       seriesCode: formData.seriesCode,
       dateRequested: formData.dateRequested,
       dateNeeded: formData.dateNeeded,
