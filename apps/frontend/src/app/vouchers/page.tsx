@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { CheckVoucher, CheckVoucherStatus } from '@docflows/shared';
 import { getCheckVouchers } from '@/services/checkVoucherService';
 import { CheckSquare, Search } from 'lucide-react';
@@ -45,8 +46,9 @@ export default function CheckVouchersListPage() {
       setError(null);
       const data = await getCheckVouchers();
       setVouchers(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load check vouchers');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load check vouchers');
       console.error('Error loading check vouchers:', err);
     } finally {
       setLoading(false);

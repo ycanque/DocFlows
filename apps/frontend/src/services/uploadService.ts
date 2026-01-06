@@ -5,6 +5,7 @@
  * Backend manages Supabase Storage interaction with proper security
  */
 
+import { AxiosError } from "axios";
 import api from "@/lib/api";
 
 export interface UploadedFile {
@@ -65,11 +66,15 @@ export const uploadFile = async (
     });
 
     return { success: true, file: response.data };
-  } catch (error: any) {
+  } catch (error) {
     console.error("Upload error:", error);
+    const axiosError = error as AxiosError<{ message?: string }>;
     return {
       success: false,
-      error: error.response?.data?.message || error.message || "Upload failed",
+      error:
+        axiosError?.response?.data?.message ||
+        axiosError?.message ||
+        "Upload failed",
     };
   }
 };

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { CheckVoucher, CheckVoucherStatus, UserRole } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
@@ -53,8 +54,9 @@ export default function CheckVoucherDetailPage() {
       setError(null);
       const data = await getCheckVoucher(voucherId);
       setVoucher(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load check voucher');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load check voucher');
       console.error('Error loading check voucher:', err);
     } finally {
       setLoading(false);
@@ -68,8 +70,9 @@ export default function CheckVoucherDetailPage() {
       setActionLoading(true);
       await verifyCheckVoucher(voucherId);
       await loadVoucher();
-    } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to verify check voucher');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to verify check voucher');
     } finally {
       setActionLoading(false);
     }
@@ -82,8 +85,9 @@ export default function CheckVoucherDetailPage() {
       setActionLoading(true);
       await approveCheckVoucher(voucherId);
       await loadVoucher();
-    } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to approve check voucher');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to approve check voucher');
     } finally {
       setActionLoading(false);
     }
@@ -105,8 +109,9 @@ export default function CheckVoucherDetailPage() {
       await loadVoucher();
       setShowIssueCheckModal(false);
       router.push(`/payments/checks/${check.id}`);
-    } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to issue check');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to issue check');
       setActionLoading(false);
     }
   }

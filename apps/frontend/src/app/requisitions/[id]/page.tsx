@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { RequisitionSlip, ApprovalRecord, RequisitionStatus, UserRole } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
@@ -99,7 +100,8 @@ export default function RequisitionDetailsPage() {
       await loadRequisition();
       await loadApprovalHistory();
     } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to submit requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to submit requisition');
     } finally {
       setActionLoading(false);
     }
@@ -114,7 +116,8 @@ export default function RequisitionDetailsPage() {
       await loadRequisition();
       await loadApprovalHistory();
     } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to approve requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to approve requisition');
     } finally {
       setActionLoading(false);
     }
@@ -134,7 +137,8 @@ export default function RequisitionDetailsPage() {
       setShowRejectModal(false);
       setRejectReason('');
     } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to reject requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to reject requisition');
     } finally {
       setActionLoading(false);
     }
@@ -149,7 +153,8 @@ export default function RequisitionDetailsPage() {
       await loadRequisition();
       await loadApprovalHistory();
     } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to cancel requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to cancel requisition');
     } finally {
       setActionLoading(false);
     }
@@ -163,7 +168,8 @@ export default function RequisitionDetailsPage() {
       await deleteRequisition(requisitionId);
       router.push('/requisitions');
     } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to delete requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to delete requisition');
       setActionLoading(false);
     }
   }

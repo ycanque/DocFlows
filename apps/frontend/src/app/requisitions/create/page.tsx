@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { Department, CostCenter } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { createRequisition, CreateRequisitionDto } from '@/services/requisitionService';
@@ -245,7 +246,8 @@ export default function CreateRequisitionPage() {
       const newRequisition = await createRequisition(dto);
       router.push(`/requisitions/${newRequisition.id}`);
     } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to create requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to create requisition');
       console.error('Error creating requisition:', err);
     } finally {
       setLoading(false);

@@ -23,14 +23,6 @@ export default function RichTextEditor({
   const [isFocused, setIsFocused] = useState(false);
   const [charCount, setCharCount] = useState(0);
 
-  useEffect(() => {
-    // Initialize editor content from value prop
-    if (editorRef.current && !isFocused && editorRef.current.innerHTML !== value) {
-      editorRef.current.innerHTML = value || '';
-      updateCharCount();
-    }
-  }, [value, isFocused]);
-
   const updateCharCount = () => {
     if (editorRef.current) {
       // Get text content and remove extra whitespace from empty paragraphs
@@ -38,6 +30,14 @@ export default function RichTextEditor({
       setCharCount(text.length);
     }
   };
+
+  useEffect(() => {
+    // Initialize editor content from value prop
+    if (editorRef.current && !isFocused && editorRef.current.innerHTML !== value) {
+      editorRef.current.innerHTML = value || '';
+      updateCharCount();
+    }
+  }, [value, isFocused, updateCharCount]);
 
   const applyFormat = (command: string, commandValue?: string) => {
     // Ensure editor is focused before applying format

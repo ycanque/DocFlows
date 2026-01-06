@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { format, parseISO } from 'date-fns';
 import { RequisitionForPayment, RFPStatus, UserRole, CheckVoucher } from '@docflows/shared';
 import {
@@ -86,8 +87,9 @@ export default function PaymentDetailPage() {
       setError(null);
       const data = await getRequisitionForPayment(paymentId);
       setPayment(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load payment request');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load payment request');
       console.error('Error loading payment:', err);
     } finally {
       setLoading(false);
@@ -102,8 +104,9 @@ export default function PaymentDetailPage() {
       await submitRequisitionForPayment(payment.id);
       setSuccess('Payment request submitted successfully!');
       await loadPayment();
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to submit payment request');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to submit payment request');
     } finally {
       setActionLoading(false);
     }
@@ -117,8 +120,9 @@ export default function PaymentDetailPage() {
       await approveRequisitionForPayment(payment.id);
       setSuccess('Payment request approved successfully!');
       await loadPayment();
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to approve payment request');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to approve payment request');
     } finally {
       setActionLoading(false);
     }
@@ -137,8 +141,9 @@ export default function PaymentDetailPage() {
       setShowRejectModal(false);
       setRejectReason('');
       await loadPayment();
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to reject payment request');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to reject payment request');
     } finally {
       setActionLoading(false);
     }
@@ -152,8 +157,9 @@ export default function PaymentDetailPage() {
       await cancelRequisitionForPayment(payment.id);
       setSuccess('Payment request cancelled');
       await loadPayment();
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to cancel payment request');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to cancel payment request');
     } finally {
       setActionLoading(false);
     }
@@ -167,8 +173,9 @@ export default function PaymentDetailPage() {
       await deleteRequisitionForPayment(payment.id);
       setSuccess('Payment request deleted');
       router.push('/payments');
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to delete payment request');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to delete payment request');
       setActionLoading(false);
     }
   }
@@ -181,8 +188,9 @@ export default function PaymentDetailPage() {
       const cv = await generateCheckVoucher(payment.id);
       setSuccess('Check voucher generated successfully!');
       await loadPayment();
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to generate check voucher');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to generate check voucher');
     } finally {
       setActionLoading(false);
     }

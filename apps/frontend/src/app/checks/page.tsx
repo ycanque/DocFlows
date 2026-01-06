@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { Check, CheckStatus } from '@docflows/shared';
 import { getChecks } from '@/services/checkService';
 import { CreditCard, Search } from 'lucide-react';
@@ -42,8 +43,9 @@ export default function ChecksPage() {
       setError(null);
       const data = await getChecks();
       setChecks(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load checks');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load checks');
       console.error('Error loading checks:', err);
     } finally {
       setLoading(false);

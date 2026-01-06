@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { AxiosError } from 'axios';
 import { BankAccount } from '@docflows/shared';
 import { getActiveBankAccounts } from '@/services/bankAccountService';
 import { ChevronDown } from 'lucide-react';
@@ -38,9 +39,10 @@ export default function BankSelector({
       setLoadError(null);
       const accounts = await getActiveBankAccounts();
       setBankAccounts(accounts);
-    } catch (err: unknown) {
+    } catch (err) {
       console.error('Failed to load bank accounts:', err);
-      setLoadError((err as any)?.response?.data?.message || 'Failed to load bank accounts');
+      const axiosError = err as AxiosError<{message?: string}>;
+      setLoadError(axiosError?.response?.data?.message || 'Failed to load bank accounts');
     } finally {
       setLoading(false);
     }

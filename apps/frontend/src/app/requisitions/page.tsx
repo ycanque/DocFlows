@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { RequisitionSlip, RequisitionStatus } from '@docflows/shared';
 import { getRequisitions } from '@/services/requisitionService';
 import { FileText, Plus, Search, Filter } from 'lucide-react';
@@ -50,7 +51,8 @@ function RequisitionsContent() {
       const data = await getRequisitions();
       setRequisitions(data);
     } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load requisitions');
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load requisitions');
       console.error('Error loading requisitions:', err);
     } finally {
       setLoading(false);

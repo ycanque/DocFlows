@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { Department, CostCenter, RequisitionSlip, RequisitionStatus } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { getRequisition, updateRequisition } from '@/services/requisitionService';
@@ -153,7 +154,8 @@ export default function EditRequisitionPage() {
         })));
       }
     } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load requisition');
       console.error('Error loading requisition:', err);
     } finally {
       setLoadingRequisition(false);
@@ -286,7 +288,8 @@ export default function EditRequisitionPage() {
       await updateRequisition(requisitionId, dto);
       router.push(`/requisitions/${requisitionId}`);
     } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to update requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to update requisition');
       console.error('Error updating requisition:', err);
     } finally {
       setLoading(false);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { RequisitionForPayment, RFPStatus } from '@docflows/shared';
 import { getRequisitionsForPayment } from '@/services/paymentService';
 import { Banknote, Plus, Search } from 'lucide-react';
@@ -48,8 +49,9 @@ export default function PaymentsListPage() {
       setError(null);
       const data = await getRequisitionsForPayment();
       setPayments(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load payment requests');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load payment requests');
       console.error('Error loading payments:', err);
     } finally {
       setLoading(false);
