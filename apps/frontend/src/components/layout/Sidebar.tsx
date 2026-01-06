@@ -78,9 +78,9 @@ const navGroups: { label: string; items: NavItem[] }[] = [
   {
     label: 'Finance',
     items: [
-      { icon: Banknote, label: 'Cash Advances', href: 'advances' },
       { icon: CheckSquare, label: 'Check Vouchers', href: 'vouchers' },
       { icon: CreditCard, label: 'Checks', href: 'checks' },
+      { icon: Banknote, label: 'Cash Advances', href: 'advances' },
     ],
   },
 ];
@@ -230,10 +230,6 @@ export default function Sidebar({
               <DropdownMenuItem onClick={() => console.log('Get help')}>
                 <HelpCircle className="mr-2 h-4 w-4" />
                 <span>Get Help</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => console.log('Billing')}>
-                <BillingIcon className="mr-2 h-4 w-4" />
-                <span>Billing</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => console.log('Notifications')}>
                 <Bell className="mr-2 h-4 w-4" />

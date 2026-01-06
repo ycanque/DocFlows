@@ -37,23 +37,6 @@ export default function TopBar({ onMenuToggle, showMobileMenu = true }: TopBarPr
       </div>
 
       <div className="flex items-center gap-1">
-        <div className="hidden items-center gap-2 lg:flex">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-          >
-            Role Simulator
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 text-xs"
-          >
-            BU Simulator
-          </Button>
-        </div>
-
         <Button
           variant="ghost"
           size="icon"

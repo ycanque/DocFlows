@@ -160,13 +160,47 @@ export default function RequisitionFilters({
 
         {/* Advanced Filters */}
         {showAdvanced && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
-            {/* Department Filter */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+          <div className="space-y-4 pt-4 border-t border-zinc-200 dark:border-zinc-700">
+            {/* Sorting & Department Section */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+                  <ArrowUpDown className="h-4 w-4" />
+                  Sort By
+                </label>
+                <Select
+                  value={filters.sortBy}
+                  onValueChange={(value) => updateFilter('sortBy', value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">&nbsp;</label>
+                <Button
+                  variant="outline"
+                  onClick={() => updateFilter('sortOrder', filters.sortOrder === 'asc' ? 'desc' : 'asc')}
+                  className="h-10"
+                >
+                  {filters.sortOrder === 'asc' ? 'Ascending ↑' : 'Descending ↓'}
+                </Button>
+              </div>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                 <Building2 className="h-4 w-4" />
                 Department
-              </label>
+              </h4>
               <Select
                 value={filters.departmentId || 'all'}
                 onValueChange={(value) => updateFilter('departmentId', value === 'all' ? null : value)}
@@ -185,92 +219,60 @@ export default function RequisitionFilters({
               </Select>
             </div>
 
-            {/* Sort By */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                <ArrowUpDown className="h-4 w-4" />
-                Sort By
-              </label>
-              <div className="flex gap-2">
-                <Select
-                  value={filters.sortBy}
-                  onValueChange={(value) => updateFilter('sortBy', value)}
-                >
-                  <SelectTrigger className="flex-1">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sortOptions.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => updateFilter('sortOrder', filters.sortOrder === 'asc' ? 'desc' : 'asc')}
-                >
-                  {filters.sortOrder === 'asc' ? '↑' : '↓'}
-                </Button>
+            {/* Date Needed Range Section */}
+            <div>
+              <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
+                <Calendar className="h-4 w-4" />
+                Date Needed
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">From</label>
+                  <input
+                    type="date"
+                    value={filters.dateNeededFrom || ''}
+                    onChange={(e) => updateFilter('dateNeededFrom', e.target.value || null)}
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">To</label>
+                  <input
+                    type="date"
+                    value={filters.dateNeededTo || ''}
+                    onChange={(e) => updateFilter('dateNeededTo', e.target.value || null)}
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
               </div>
             </div>
 
-            {/* Date Needed From */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
+            {/* Created Date Range Section */}
+            <div>
+              <h4 className="text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-3 flex items-center gap-2">
                 <Calendar className="h-4 w-4" />
-                Date Needed From
-              </label>
-              <input
-                type="date"
-                value={filters.dateNeededFrom || ''}
-                onChange={(e) => updateFilter('dateNeededFrom', e.target.value || null)}
-                className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Date Needed To */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Date Needed To
-              </label>
-              <input
-                type="date"
-                value={filters.dateNeededTo || ''}
-                onChange={(e) => updateFilter('dateNeededTo', e.target.value || null)}
-                className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Created Date From */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Created From
-              </label>
-              <input
-                type="date"
-                value={filters.createdFrom || ''}
-                onChange={(e) => updateFilter('createdFrom', e.target.value || null)}
-                className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Created Date To */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-300 flex items-center gap-2">
-                <Calendar className="h-4 w-4" />
-                Created To
-              </label>
-              <input
-                type="date"
-                value={filters.createdTo || ''}
-                onChange={(e) => updateFilter('createdTo', e.target.value || null)}
-                className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
+                Created Date
+              </h4>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">From</label>
+                  <input
+                    type="date"
+                    value={filters.createdFrom || ''}
+                    onChange={(e) => updateFilter('createdFrom', e.target.value || null)}
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-zinc-600 dark:text-zinc-400">To</label>
+                  <input
+                    type="date"
+                    value={filters.createdTo || ''}
+                    onChange={(e) => updateFilter('createdTo', e.target.value || null)}
+                    className="w-full px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
             </div>
           </div>
         )}

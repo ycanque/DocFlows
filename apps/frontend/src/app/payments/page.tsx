@@ -172,7 +172,20 @@ export default function PaymentsListPage() {
         )}
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-zinc-600 dark:text-zinc-400">Total</p>
+                  <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
+                    {stats.total}
+                  </p>
+                </div>
+                <Banknote className="h-8 w-8 text-zinc-400" />
+              </div>
+            </CardContent>
+          </Card>
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center justify-between">

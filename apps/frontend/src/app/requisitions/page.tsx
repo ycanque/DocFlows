@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { AxiosError } from 'axios';
 import { RequisitionSlip, RequisitionStatus, Department } from '@docflows/shared';
 import { getRequisitions } from '@/services/requisitionService';
-import { FileText, Plus, Filter } from 'lucide-react';
+import { FileText, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/requisitions/StatusBadge';
@@ -201,7 +201,7 @@ function RequisitionsContent() {
                   {requisitions.filter((r) => r.status === RequisitionStatus.PENDING_APPROVAL).length}
                 </p>
               </div>
-              <Filter className="h-8 w-8 text-yellow-400" />
+              <FileText className="h-8 w-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
