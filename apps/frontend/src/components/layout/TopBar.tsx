@@ -40,15 +40,6 @@ export default function TopBar({ onMenuToggle, showMobileMenu = true }: TopBarPr
         <Button
           variant="ghost"
           size="icon"
-          className="hidden h-9 w-9 md:inline-flex hover:bg-zinc-100 dark:hover:bg-zinc-800"
-          aria-label="Search"
-        >
-          <Search className="h-4 w-4" />
-        </Button>
-
-        <Button
-          variant="ghost"
-          size="icon"
           className="relative h-9 w-9 hover:bg-zinc-100 dark:hover:bg-zinc-800"
           aria-label="Notifications"
         >
