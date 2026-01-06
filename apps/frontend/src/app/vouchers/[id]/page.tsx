@@ -337,7 +337,7 @@ export default function CheckVoucherDetailPage() {
                       Particulars
                     </label>
                     <div className="mt-2">
-                      <RichTextDisplay content={voucher.requisitionForPayment?.particulars} />
+                      <RichTextDisplay content={voucher.requisitionForPayment?.particulars || ''} />
                     </div>
                   </div>
                 </div>

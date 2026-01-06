@@ -201,7 +201,6 @@ export default function RequisitionDetailsPage() {
     return (
       (requisition.requesterId === user.id || user.role === UserRole.ADMIN) &&
       requisition.status !== RequisitionStatus.CANCELLED &&
-      requisition.status !== RequisitionStatus.COMPLETED &&
       requisition.status !== RequisitionStatus.APPROVED &&
       requisition.status !== RequisitionStatus.REJECTED
     );
