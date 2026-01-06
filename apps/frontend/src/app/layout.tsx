@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { SessionTimeoutWarning } from "@/components/SessionTimeoutWarning";
+import { BfcacheHandler } from "@/components/BfcacheHandler";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -33,6 +34,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <BfcacheHandler />
         <ThemeProvider>
           <AuthProvider>
             <SessionTimeoutWarning />
