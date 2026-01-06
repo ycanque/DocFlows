@@ -10,6 +10,7 @@
 import { useState, useEffect } from 'react'
 import { uploadFile, listFiles, listRequisitionFiles, deleteFile, getSignedUrl, type UploadedFile } from '@/services/uploadService'
 import FileUpload from '@/components/FileUpload'
+import FileViewer from '@/components/FileViewer'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -46,6 +47,9 @@ export default function FileAttachments({
   const [loading, setLoading] = useState(false)
   const [refreshKey, setRefreshKey] = useState(0)
   const [showUploadDialog, setShowUploadDialog] = useState(false)
+  const [viewerFile, setViewerFile] = useState<UploadedFile | null>(null)
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null)
+  const [viewerOpen, setViewerOpen] = useState(false)
 
   const loadFiles = async () => {
     setLoading(true)
@@ -130,16 +134,73 @@ export default function FileAttachments({
   }
 
   const handleViewFile = async (file: UploadedFile) => {
+    // Check if it's a document file that should open in a new tab
+    const isDocument = 
+      file.mimeType === 'application/pdf' ||
+      file.mimeType.includes('word') ||
+      file.mimeType.includes('document') ||
+      file.mimeType.includes('sheet') ||
+      file.mimeType.includes('excel') ||
+      file.mimeType.includes('powerpoint') ||
+      file.mimeType.includes('presentation')
+
+    if (isDocument) {
+      // Open window synchronously to bypass Safari's pop-up blocking
+      const newWindow = window.open('about:blank', '_blank')
+      
+      if (!newWindow) {
+        alert('Pop-ups are blocked. Please enable pop-ups for this site.')
+        return
+      }
+
+      try {
+        const url = await getSignedUrl(file.id)
+        if (url) {
+          // Set the location on the already-open window
+          newWindow.location.href = url
+        } else {
+          newWindow.close()
+          alert('Failed to generate download link. Please try again.')
+        }
+      } catch (error) {
+        newWindow.close()
+        console.error('Error getting file URL:', error)
+        alert('Failed to open file. Please try again.')
+      }
+    } else {
+      // For images, use the in-app viewer
+      try {
+        const url = await getSignedUrl(file.id)
+        if (url) {
+          setViewerFile(file)
+          setViewerUrl(url)
+          setViewerOpen(true)
+        } else {
+          alert('Failed to generate download link. Please try again.')
+        }
+      } catch (error) {
+        console.error('Error getting file URL:', error)
+        alert('Failed to open file. Please try again.')
+      }
+    }
+  }
+
+  const handleDownloadFile = async (file: UploadedFile) => {
     try {
       const url = await getSignedUrl(file.id)
       if (url) {
-        window.open(url, '_blank')
+        const link = document.createElement('a')
+        link.href = url
+        link.download = file.originalFileName
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
       } else {
         alert('Failed to generate download link. Please try again.')
       }
     } catch (error) {
-      console.error('Error getting file URL:', error)
-      alert('Failed to open file. Please try again.')
+      console.error('Error downloading file:', error)
+      alert('Failed to download file. Please try again.')
     }
   }
 
@@ -192,6 +253,19 @@ export default function FileAttachments({
 
   return (
     <div className="space-y-6">
+      {/* File Viewer Modal */}
+      <FileViewer
+        file={viewerFile}
+        fileUrl={viewerUrl}
+        isOpen={viewerOpen}
+        onClose={() => {
+          setViewerOpen(false)
+          setViewerFile(null)
+          setViewerUrl(null)
+        }}
+        onDownload={() => viewerFile && handleDownloadFile(viewerFile)}
+      />
+
       {/* Upload Dialog */}
       <Dialog open={showUploadDialog} onOpenChange={setShowUploadDialog}>
         <DialogContent className="max-w-md">
