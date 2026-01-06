@@ -1,48 +1,44 @@
 'use client';
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AxiosError } from 'axios';
-import { RequisitionSlip, RequisitionStatus } from '@docflows/shared';
+import { RequisitionSlip, RequisitionStatus, Department } from '@docflows/shared';
 import { getRequisitions } from '@/services/requisitionService';
-import { FileText, Plus, Search, Filter } from 'lucide-react';
+import { FileText, Plus, Filter } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import RichTextDisplay from '@/components/RichTextDisplay';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
-
-const statusTabs = [
-  { label: 'All', value: null },
-  { label: 'Draft', value: RequisitionStatus.DRAFT },
-  { label: 'Pending', value: RequisitionStatus.PENDING_APPROVAL },
-  { label: 'Approved', value: RequisitionStatus.APPROVED },
-  { label: 'Rejected', value: RequisitionStatus.REJECTED },
-];
+import RequisitionFilters, { RequisitionFiltersState } from '@/components/requisitions/RequisitionFilters';
 
 function RequisitionsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user } = useAuth();
   const [requisitions, setRequisitions] = useState<RequisitionSlip[]>([]);
-  const [filteredRequisitions, setFilteredRequisitions] = useState<RequisitionSlip[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<RequisitionStatus | null>(() => {
+  const [filters, setFilters] = useState<RequisitionFiltersState>(() => {
     const statusParam = searchParams.get('status');
-    return statusParam === 'PENDING_APPROVAL' ? RequisitionStatus.PENDING_APPROVAL : null;
+    return {
+      searchQuery: '',
+      status: statusParam === 'PENDING_APPROVAL' ? RequisitionStatus.PENDING_APPROVAL : null,
+      departmentId: null,
+      dateNeededFrom: null,
+      dateNeededTo: null,
+      createdFrom: null,
+      createdTo: null,
+      sortBy: 'createdAt',
+      sortOrder: 'desc',
+    };
   });
 
   useEffect(() => {
     loadRequisitions();
   }, []);
-
-  useEffect(() => {
-    filterRequisitions();
-  }, [requisitions, searchQuery, selectedStatus]);
 
   async function loadRequisitions() {
     try {
@@ -59,17 +55,24 @@ function RequisitionsContent() {
     }
   }
 
-  function filterRequisitions() {
+  // Extract unique departments and requesters from requisitions
+  const departments = useMemo(() => {
+    const deptMap = new Map<string, Department>();
+    requisitions.forEach(req => {
+      if (req.department) {
+        deptMap.set(req.department.id, req.department);
+      }
+    });
+    return Array.from(deptMap.values());
+  }, [requisitions]);
+
+// Apply filters and sorting
+  const filteredRequisitions = useMemo(() => {
     let filtered = [...requisitions];
 
-    // Filter by status
-    if (selectedStatus) {
-      filtered = filtered.filter((req) => req.status === selectedStatus);
-    }
-
     // Filter by search query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
+    if (filters.searchQuery.trim()) {
+      const query = filters.searchQuery.toLowerCase();
       filtered = filtered.filter(
         (req) =>
           req.requisitionNumber.toLowerCase().includes(query) ||
@@ -79,8 +82,56 @@ function RequisitionsContent() {
       );
     }
 
-    setFilteredRequisitions(filtered);
-  }
+    // Filter by status
+    if (filters.status) {
+      filtered = filtered.filter((req) => req.status === filters.status);
+    }
+
+    // Filter by department
+    if (filters.departmentId) {
+      filtered = filtered.filter((req) => req.department?.id === filters.departmentId);
+    }
+
+    // Filter by date needed range
+    if (filters.dateNeededFrom) {
+      filtered = filtered.filter((req) => new Date(req.dateNeeded) >= new Date(filters.dateNeededFrom!));
+    }
+    if (filters.dateNeededTo) {
+      filtered = filtered.filter((req) => new Date(req.dateNeeded) <= new Date(filters.dateNeededTo!));
+    }
+
+    // Filter by created date range
+    if (filters.createdFrom) {
+      filtered = filtered.filter((req) => new Date(req.createdAt) >= new Date(filters.createdFrom!));
+    }
+    if (filters.createdTo) {
+      filtered = filtered.filter((req) => new Date(req.createdAt) <= new Date(filters.createdTo!));
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (filters.sortBy) {
+        case 'number':
+          comparison = a.requisitionNumber.localeCompare(b.requisitionNumber);
+          break;
+        case 'dateNeeded':
+          comparison = new Date(a.dateNeeded).getTime() - new Date(b.dateNeeded).getTime();
+          break;
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+      }
+
+      return filters.sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [requisitions, filters]);
 
   function handleRowClick(id: string) {
     router.push(`/requisitions/${id}`);
@@ -183,36 +234,11 @@ function RequisitionsContent() {
       </div>
 
       {/* Filters */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
-              <input
-                type="text"
-                placeholder="Search by number, purpose, or requester..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              />
-            </div>
-            {/* Status Filter Tabs */}
-            <div className="flex gap-2 overflow-x-auto">
-              {statusTabs.map((tab) => (
-                <Button
-                  key={tab.label}
-                  variant={selectedStatus === tab.value ? 'default' : 'secondary'}
-                  className="px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
-                  onClick={() => setSelectedStatus(tab.value)}
-                >
-                  {tab.label}
-                </Button>
-              ))}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <RequisitionFilters
+        filters={filters}
+        onFiltersChange={setFilters}
+        departments={departments}
+      />
 
       {/* Requisitions Table */}
       <Card>
@@ -248,7 +274,8 @@ function RequisitionsContent() {
               {filteredRequisitions.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-                    {searchQuery || selectedStatus
+                    {filters.searchQuery || filters.status || filters.departmentId || 
+                     filters.dateNeededFrom || filters.dateNeededTo || filters.createdFrom || filters.createdTo
                       ? 'No requisitions found matching your criteria'
                       : 'No requisitions yet. Create your first one!'}
                   </td>
