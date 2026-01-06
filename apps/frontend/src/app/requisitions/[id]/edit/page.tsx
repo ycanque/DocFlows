@@ -11,6 +11,8 @@ import { getCostCenters } from '@/services/costCenterService';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { NumericInput } from '@/components/ui/numeric-input';
 import RichTextEditor from '@/components/RichTextEditor';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -588,8 +590,7 @@ export default function EditRequisitionPage() {
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
                           Quantity <span className="text-red-500">*</span>
                         </label>
-                        <input
-                          type="number"
+                        <NumericInput
                           value={item.quantity || ''}
                           onChange={(e) => {
                           const newItems = [...items];
@@ -672,8 +673,8 @@ export default function EditRequisitionPage() {
                         <div className="relative">
                           <span className="absolute left-3 top-2 text-zinc-500 dark:text-zinc-400">₱</span>
                           <input
-                            type="number"
-                            value={item.unitCost || ''}
+                            type="number"                            inputMode="decimal"
+                            pattern="[0-9]+(\.[0-9]{1,2})?"                            value={item.unitCost || ''}
                             onChange={(e) => {
                               const newItems = [...items];
                               newItems[index].unitCost = e.target.valueAsNumber || 0;
