@@ -1,8 +1,9 @@
 'use client';
 
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { TrendingUp } from 'lucide-react';
+import { format, parseISO } from 'date-fns';
 
 interface RequisitionTrendsChartProps {
   data: Array<{
@@ -17,13 +18,17 @@ const CustomTooltip = (props: any) => {
   const { active, payload } = props;
   if (active && payload && payload.length) {
     const data = payload[0];
+    const weekStart = parseISO(data.payload.date);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    
     return (
       <div className="bg-white dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-lg p-3">
-        <p className="text-sm font-medium text-zinc-900 dark:text-zinc-50">
-          {data.payload.label}
+        <p className="text-xs text-zinc-600 dark:text-zinc-400 mb-1">
+          {format(weekStart, 'MMM d')} - {format(weekEnd, 'MMM d, yyyy')}
         </p>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400">
-          Requisitions: <span className="font-semibold text-blue-600 dark:text-blue-400">{data.value}</span>
+        <p className="text-sm font-semibold text-blue-600 dark:text-blue-400">
+          {data.value} {data.value === 1 ? 'requisition' : 'requisitions'}
         </p>
       </div>
     );
@@ -33,6 +38,7 @@ const CustomTooltip = (props: any) => {
 
 export default function RequisitionTrendsChart({ data }: RequisitionTrendsChartProps) {
   const totalCount = data.reduce((sum, item) => sum + item.count, 0);
+  const avgPerWeek = data.length > 0 ? (totalCount / data.length).toFixed(1) : '0';
 
   return (
     <Card>
@@ -44,12 +50,12 @@ export default function RequisitionTrendsChart({ data }: RequisitionTrendsChartP
             </div>
             <div>
               <CardTitle>Requisition Trends</CardTitle>
-              <CardDescription>Last 3 months activity</CardDescription>
+              <CardDescription>Weekly submissions (last 3 months)</CardDescription>
             </div>
           </div>
           <div className="text-right">
             <p className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">{totalCount}</p>
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">Total submissions</p>
+            <p className="text-xs text-zinc-500 dark:text-zinc-400">{avgPerWeek} avg/week</p>
           </div>
         </div>
       </CardHeader>
@@ -62,30 +68,39 @@ export default function RequisitionTrendsChart({ data }: RequisitionTrendsChartP
             </p>
           </div>
         ) : (
-          <div className="w-full h-75">
+          <div className="w-full h-80">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={data}>
+              <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" className="dark:stroke-zinc-800" />
                 <XAxis
                   dataKey="label"
                   stroke="#71717a"
-                  style={{ fontSize: '12px' }}
+                  style={{ fontSize: '11px' }}
                   tickLine={false}
+                  interval="preserveStartEnd"
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
                 />
                 <YAxis
                   stroke="#71717a"
                   style={{ fontSize: '12px' }}
                   tickLine={false}
                   allowDecimals={false}
+                  width={40}
                 />
                 <Tooltip content={(props) => <CustomTooltip {...props} />} />
+                <Legend 
+                  wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }}
+                  iconType="line"
+                />
                 <Line
                   type="monotone"
                   dataKey="count"
                   stroke="#3b82f6"
-                  strokeWidth={2}
-                  dot={{ fill: '#3b82f6', r: 4 }}
-                  activeDot={{ r: 6 }}
+                  strokeWidth={2.5}
+                  dot={{ fill: '#3b82f6', r: 4, strokeWidth: 2, stroke: '#fff' }}
+                  activeDot={{ r: 6, strokeWidth: 2 }}
                   name="Requisitions"
                 />
               </LineChart>

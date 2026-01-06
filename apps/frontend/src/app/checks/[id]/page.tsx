@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { Check, CheckStatus, UserRole } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
@@ -9,7 +10,7 @@ import {
   clearCheck,
   voidCheck,
 } from '@/services/checkService';
-import { ArrowLeft, CheckCircle, XCircle, Printer, Building2, FileText, CreditCard, Receipt, User } from 'lucide-react';
+import { ArrowLeft, CheckCircle, XCircle, Printer, Receipt } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -52,8 +53,9 @@ export default function CheckDetailPage() {
       setError(null);
       const data = await getCheck(checkId);
       setCheck(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load check');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load check');
       console.error('Error loading check:', err);
     } finally {
       setLoading(false);
@@ -72,8 +74,9 @@ export default function CheckDetailPage() {
       await loadCheck();
       setShowDisburseModal(false);
       setRecipientName('');
-    } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to disburse check');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to disburse check');
     } finally {
       setActionLoading(false);
     }
@@ -91,8 +94,9 @@ export default function CheckDetailPage() {
       await loadCheck();
       setShowVoidModal(false);
       setVoidReason('');
-    } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to void check');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to void check');
     } finally {
       setActionLoading(false);
     }

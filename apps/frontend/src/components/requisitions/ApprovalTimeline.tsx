@@ -1,16 +1,12 @@
 import { ApprovalRecord, User } from '@docflows/shared';
-import { CheckCircle2, XCircle, FileText, Send, Clock, Download } from 'lucide-react';
+import { CheckCircle2, XCircle, FileText, Send, Clock } from 'lucide-react';
 import { useState } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { UploadedFile, getSignedUrl } from '@/services/uploadService';
+import { UploadedFile } from '@/services/uploadService';
+import FileViewer from '@/components/FileViewer';
+import DocumentsDialog from '@/components/DocumentsDialog';
+import { useFileOperations } from '@/hooks/useFileOperations';
+import { formatDateOnly, formatTimeOnly, formatTimestamp } from '@/lib/timelineUtils';
 
 interface ApprovalTimelineProps {
   approvalRecords: ApprovalRecord[];
@@ -20,58 +16,18 @@ interface ApprovalTimelineProps {
   requisitionId?: string;
 }
 
-function formatTimestamp(timestamp: string, format: 'short' | 'full' = 'full'): string {
-  const date = new Date(timestamp);
-  
-  if (format === 'short') {
-    // Short format: "12/16" or "Today" or "Yesterday"
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-    
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit' });
-    }
-  }
-  
-  // Full format with time
-  return date.toLocaleString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-  });
-}
-
-function formatDateOnly(timestamp: string): string {
-  const date = new Date(timestamp);
-  return date.toLocaleDateString('en-US', {
-    month: '2-digit',
-    day: '2-digit',
-    year: 'numeric',
-  });
-}
-
-function formatTimeOnly(timestamp: string): string {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-    hour12: true,
-  });
-}
-
 export default function ApprovalTimeline({ approvalRecords, createdAt, requester, attachments = [], requisitionId }: ApprovalTimelineProps) {
   const [selectedWorkflowStep, setSelectedWorkflowStep] = useState<string | null>(null);
   const [isDocumentsDialogOpen, setIsDocumentsDialogOpen] = useState(false);
+  
+  const {
+    viewerFile,
+    viewerUrl,
+    viewerOpen,
+    handleViewFile,
+    handleDownloadFile,
+    closeViewer,
+  } = useFileOperations();
 
   const hasApprovalRecords = approvalRecords && approvalRecords.length > 0;
   const hasAnyTimeline = createdAt || hasApprovalRecords;
@@ -84,38 +40,6 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
   const showDocuments = (workflowStep: string) => {
     setSelectedWorkflowStep(workflowStep);
     setIsDocumentsDialogOpen(true);
-  };
-
-  const handleViewFile = async (file: UploadedFile) => {
-    try {
-      const url = await getSignedUrl(file.id);
-      if (url) {
-        window.open(url, '_blank');
-      } else {
-        alert('Failed to generate download link. Please try again.');
-      }
-    } catch (error) {
-      console.error('Error getting file URL:', error);
-      alert('Failed to open file. Please try again.');
-    }
-  };
-
-  const handleDownloadFile = async (file: UploadedFile) => {
-    try {
-      const url = await getSignedUrl(file.id);
-      if (!url) {
-        alert('Failed to generate download link. Please try again.');
-        return;
-      }
-
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = file.originalFileName;
-      link.click();
-    } catch (error) {
-      console.error('Error downloading file:', error);
-      alert('Failed to download file. Please try again.');
-    }
   };
 
   if (!hasAnyTimeline) {
@@ -145,60 +69,23 @@ export default function ApprovalTimeline({ approvalRecords, createdAt, requester
 
   return (
     <>
-      <Dialog open={isDocumentsDialogOpen} onOpenChange={setIsDocumentsDialogOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Documents - {selectedWorkflowStep}</DialogTitle>
-            <DialogDescription>
-              Files attached at this workflow step
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-2">
-            {selectedWorkflowStep && getDocumentsForStep(selectedWorkflowStep).map((file) => (
-              <div
-                key={file.id}
-                className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800"
-              >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <FileText className="h-5 w-5 text-blue-500 flex-shrink-0" />
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">{file.originalFileName}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {(file.fileSize / 1024).toFixed(2)} KB
-                      {file.uploadedBy && ` • Uploaded by ${file.uploadedBy.firstName} ${file.uploadedBy.lastName}`}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleViewFile(file)}
-                    title="Open file in new tab"
-                  >
-                    <FileText className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDownloadFile(file)}
-                    title="Download file"
-                  >
-                    <Download className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-            {selectedWorkflowStep && getDocumentsForStep(selectedWorkflowStep).length === 0 && (
-              <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                No documents attached at this step
-              </p>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      <FileViewer
+        file={viewerFile}
+        fileUrl={viewerUrl}
+        isOpen={viewerOpen}
+        onClose={closeViewer}
+        onDownload={() => viewerFile && handleDownloadFile(viewerFile)}
+      />
+
+      <DocumentsDialog
+        isOpen={isDocumentsDialogOpen}
+        onClose={() => setIsDocumentsDialogOpen(false)}
+        workflowStep={selectedWorkflowStep}
+        documents={selectedWorkflowStep ? getDocumentsForStep(selectedWorkflowStep) : []}
+        onViewFile={handleViewFile}
+        onDownloadFile={handleDownloadFile}
+        showDownloadButton={false}
+      />
 
     <div className="flow-root">
       <ul role="list" className="-mb-8">

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { Department, CostCenter } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { createRequisition, CreateRequisitionDto } from '@/services/requisitionService';
@@ -11,6 +12,7 @@ import { ArrowLeft, Plus, Trash2, FileText, Paperclip } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { useAuth } from '@/contexts/AuthContext';
 import FileAttachments from '@/components/FileAttachments';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -191,14 +193,6 @@ export default function CreateRequisitionPage() {
     }
     for (let i = 0; i < items.length; i++) {
       const item = items[i];
-      if (item.quantity <= 0) {
-        setError(`Item ${i + 1}: Quantity must be greater than 0`);
-        return false;
-      }
-      if (!item.unit.trim()) {
-        setError(`Item ${i + 1}: Unit is required`);
-        return false;
-      }
       if (!item.particulars.trim()) {
         setError(`Item ${i + 1}: Particulars is required`);
         return false;
@@ -245,7 +239,8 @@ export default function CreateRequisitionPage() {
       const newRequisition = await createRequisition(dto);
       router.push(`/requisitions/${newRequisition.id}`);
     } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to create requisition');
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to create requisition');
       console.error('Error creating requisition:', err);
     } finally {
       setLoading(false);
@@ -524,10 +519,9 @@ export default function CreateRequisitionPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                          Quantity <span className="text-red-500">*</span>
+                          Quantity
                         </label>
-                        <input
-                          type="number"
+                        <NumericInput
                           value={item.quantity || ''}
                           onChange={(e) => {
                             const newItems = [...items];
@@ -536,23 +530,21 @@ export default function CreateRequisitionPage() {
                             setItems(newItems);
                           }}
                           step="0.01"
-                          min="0.01"
+                          min="0"
                           placeholder="0.00"
                           className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
-                          required
                         />
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">Up to 2 decimals</p>
                       </div>
 
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                          Unit <span className="text-red-500">*</span>
+                          Unit
                         </label>
                         <select
                           value={item.unit}
                           onChange={(e) => handleItemChange(index, 'unit', e.target.value)}
                           className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
-                          required
                         >
                           <option value="">-- Select Unit --</option>
                           <optgroup label="Length">
@@ -605,12 +597,11 @@ export default function CreateRequisitionPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div>
                         <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-1">
-                          Unit Cost <span className="text-red-500">*</span>
+                          Unit Cost
                         </label>
                         <div className="relative">
                           <span className="absolute left-3 top-2 text-zinc-500 dark:text-zinc-400">₱</span>
-                          <input
-                            type="number"
+                          <NumericInput
                             value={item.unitCost || ''}
                             onChange={(e) => {
                               const newItems = [...items];
@@ -622,7 +613,6 @@ export default function CreateRequisitionPage() {
                             min="0"
                             className="w-full px-3 py-2 pl-7 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
                             placeholder="0.00"
-                            required
                           />
                         </div>
                         <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">

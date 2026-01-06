@@ -264,13 +264,18 @@ export class DashboardService {
     let currentDate = new Date(threeMonthsAgo);
     currentDate.setHours(0, 0, 0, 0);
 
-    // Make sure we include the current week - add buffer to ensure we go past it
-    const endDate = new Date(now);
-    endDate.setDate(endDate.getDate() + 7); // Add 7 days to ensure we include current week
-    endDate.setHours(0, 0, 0, 0);
+    // Only include weeks where the week start date is not in the future
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
 
-    while (currentDate < endDate) {
+    while (currentDate <= today) {
       const weekStart = this.getWeekStart(new Date(currentDate));
+
+      // Skip this week if its start date is in the future
+      if (weekStart > today) {
+        break;
+      }
+
       const key = weekStart.toISOString().split('T')[0];
 
       result.push({

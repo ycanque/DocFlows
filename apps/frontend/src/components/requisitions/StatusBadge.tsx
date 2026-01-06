@@ -43,10 +43,6 @@ const requisitionStatusConfig: Record<string, StatusConfig> = {
     label: 'Cancelled',
     className: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-400',
   },
-  [RequisitionStatus.COMPLETED]: {
-    label: 'Completed',
-    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300',
-  },
 };
 
 const rfpStatusConfig: Record<string, StatusConfig> = {

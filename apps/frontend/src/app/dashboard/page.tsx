@@ -77,17 +77,17 @@ export default function DashboardPage() {
     {
       title: 'Create Requisition Slip',
       description: 'Submit a new requisition request',
-      onClick: () => handleNavigate('requisitions'),
+      onClick: () => router.push('/requisitions/create'),
     },
     {
       title: 'Request Payment',
       description: 'Create a new payment request',
-      onClick: () => handleNavigate('payments'),
+      onClick: () => router.push('/payments/create'),
     },
     {
       title: 'View Pending Approvals',
       description: 'Review items awaiting approval',
-      onClick: () => handleNavigate('requisitions'),
+      onClick: () => router.push('/requisitions?status=PENDING_APPROVAL'),
     },
   ];
 

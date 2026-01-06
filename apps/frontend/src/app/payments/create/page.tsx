@@ -10,6 +10,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { ArrowLeft, FileText, Paperclip } from 'lucide-react';
 import FileAttachments from '@/components/FileAttachments';
 import RichTextEditor from '@/components/RichTextEditor';
@@ -327,8 +328,7 @@ export default function CreatePaymentPage() {
                     <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                       Amount <span className="text-red-500">*</span>
                     </label>
-                    <input
-                      type="number"
+                    <NumericInput
                       name="amount"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}

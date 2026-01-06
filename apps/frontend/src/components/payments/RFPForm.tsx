@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { CreateRequisitionForPaymentDto, UpdateRequisitionForPaymentDto } from '@/services/paymentService';
 import { RequisitionForPayment } from '@docflows/shared';
 import { parseISO } from 'date-fns';
+import { NumericInput } from '@/components/ui/numeric-input';
 
 interface RFPFormProps {
   initialData?: RequisitionForPayment;
@@ -170,8 +171,7 @@ export default function RFPForm({
           <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
             Amount <span className="text-red-500">*</span>
           </label>
-          <input
-            type="number"
+          <NumericInput
             id="amount"
             step="0.01"
             min="0"

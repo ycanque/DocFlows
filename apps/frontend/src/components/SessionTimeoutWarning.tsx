@@ -80,7 +80,7 @@ export function SessionTimeoutWarning() {
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
       if (warningTimeoutRef.current) clearTimeout(warningTimeoutRef.current);
       if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-      setShowWarning(false);
+      showWarningRef.current = false;
       return;
     }
 

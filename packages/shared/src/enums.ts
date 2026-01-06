@@ -17,7 +17,6 @@ export enum RequisitionStatus {
   APPROVED = "APPROVED",
   REJECTED = "REJECTED",
   CANCELLED = "CANCELLED",
-  COMPLETED = "COMPLETED",
 }
 
 // Requisition for Payment Status

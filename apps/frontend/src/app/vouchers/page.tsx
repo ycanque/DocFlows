@@ -1,43 +1,39 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import { AxiosError } from 'axios';
 import { CheckVoucher, CheckVoucherStatus } from '@docflows/shared';
 import { getCheckVouchers } from '@/services/checkVoucherService';
-import { CheckSquare, Search } from 'lucide-react';
+import { CheckSquare } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import { useAuth } from '@/contexts/AuthContext';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { format, parseISO } from 'date-fns';
-
-const statusTabs = [
-  { label: 'All', value: null },
-  { label: 'Draft', value: CheckVoucherStatus.DRAFT },
-  { label: 'Verified', value: CheckVoucherStatus.VERIFIED },
-  { label: 'Approved', value: CheckVoucherStatus.APPROVED },
-  { label: 'Check Issued', value: CheckVoucherStatus.CHECK_ISSUED },
-  { label: 'Rejected', value: CheckVoucherStatus.REJECTED },
-];
+import VoucherFilters, { VoucherFiltersState } from '@/components/vouchers/VoucherFilters';
 
 export default function CheckVouchersListPage() {
   const router = useRouter();
   const { user } = useAuth();
   const [vouchers, setVouchers] = useState<CheckVoucher[]>([]);
-  const [filteredVouchers, setFilteredVouchers] = useState<CheckVoucher[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState<CheckVoucherStatus | null>(null);
+  const [filters, setFilters] = useState<VoucherFiltersState>({
+    searchQuery: '',
+    status: null,
+    createdFrom: null,
+    createdTo: null,
+    amountMin: null,
+    amountMax: null,
+    sortBy: 'createdAt',
+    sortOrder: 'desc',
+  });
 
   useEffect(() => {
     loadVouchers();
   }, []);
-
-  useEffect(() => {
-    filterVouchers();
-  }, [vouchers, searchQuery, selectedStatus]);
 
   async function loadVouchers() {
     try {
@@ -45,40 +41,92 @@ export default function CheckVouchersListPage() {
       setError(null);
       const data = await getCheckVouchers();
       setVouchers(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load check vouchers');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load check vouchers');
       console.error('Error loading check vouchers:', err);
     } finally {
       setLoading(false);
     }
   }
 
-  function filterVouchers() {
+  // Apply filters and sorting
+  const filteredVouchers = useMemo(() => {
     let filtered = [...vouchers];
 
-    if (selectedStatus) {
-      filtered = filtered.filter((voucher) => voucher.status === selectedStatus);
-    }
-
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (voucher) =>
-          voucher.cvNumber?.toLowerCase().includes(query) ||
-          voucher.requisitionForPayment?.payee?.toLowerCase().includes(query)
+    // Filter by search query
+    if (filters.searchQuery.trim()) {
+      const query = filters.searchQuery.toLowerCase();
+      filtered = filtered.filter(v =>
+        v.cvNumber?.toLowerCase().includes(query) ||
+        v.requisitionForPayment?.payee?.toLowerCase().includes(query) ||
+        v.requisitionForPayment?.particulars?.toLowerCase().includes(query)
       );
     }
 
-    setFilteredVouchers(filtered);
-  }
+    // Filter by status
+    if (filters.status) {
+      filtered = filtered.filter(v => v.status === filters.status);
+    }
 
-  const stats = {
+    // Filter by amount range
+    if (filters.amountMin) {
+      filtered = filtered.filter(v => {
+        const amount = v.requisitionForPayment?.amount;
+        return amount && Number(amount) >= Number(filters.amountMin);
+      });
+    }
+    if (filters.amountMax) {
+      filtered = filtered.filter(v => {
+        const amount = v.requisitionForPayment?.amount;
+        return amount && Number(amount) <= Number(filters.amountMax);
+      });
+    }
+
+    // Filter by created date range
+    if (filters.createdFrom && filtered.length > 0) {
+      filtered = filtered.filter(v => new Date(v.createdAt) >= new Date(filters.createdFrom!));
+    }
+    if (filters.createdTo && filtered.length > 0) {
+      filtered = filtered.filter(v => new Date(v.createdAt) <= new Date(filters.createdTo!));
+    }
+
+    // Sort
+    filtered.sort((a, b) => {
+      let comparison = 0;
+      
+      switch (filters.sortBy) {
+        case 'cvNumber':
+          comparison = (a.cvNumber || '').localeCompare(b.cvNumber || '');
+          break;
+        case 'payee':
+          comparison = (a.requisitionForPayment?.payee || '').localeCompare(b.requisitionForPayment?.payee || '');
+          break;
+        case 'amount':
+          comparison = Number(a.requisitionForPayment?.amount || 0) - Number(b.requisitionForPayment?.amount || 0);
+          break;
+        case 'createdAt':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+        case 'status':
+          comparison = a.status.localeCompare(b.status);
+          break;
+      }
+
+      return filters.sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+  }, [vouchers, filters]);
+
+  // Calculate statistics
+  const stats = useMemo(() => ({
     total: vouchers.length,
     draft: vouchers.filter((v) => v.status === CheckVoucherStatus.DRAFT).length,
     verified: vouchers.filter((v) => v.status === CheckVoucherStatus.VERIFIED).length,
     approved: vouchers.filter((v) => v.status === CheckVoucherStatus.APPROVED).length,
     issued: vouchers.filter((v) => v.status === CheckVoucherStatus.CHECK_ISSUED).length,
-  };
+  }), [vouchers]);
 
   return (
     <ProtectedRoute>
@@ -164,36 +212,10 @@ export default function CheckVouchersListPage() {
         </div>
 
         {/* Filters */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col lg:flex-row gap-4">
-              {/* Search */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-zinc-400" />
-                <input
-                  type="text"
-                  placeholder="Search by CV number or payee..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                />
-              </div>
-              {/* Status Filter Tabs */}
-              <div className="flex gap-2 overflow-x-auto max-w-full pb-2 lg:pb-0">
-                {statusTabs.map((tab) => (
-                  <Button
-                    key={tab.label}
-                    variant={selectedStatus === tab.value ? 'default' : 'secondary'}
-                    className="px-4 py-2 rounded-md text-sm font-medium whitespace-nowrap"
-                    onClick={() => setSelectedStatus(tab.value)}
-                  >
-                    {tab.label}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <VoucherFilters
+          filters={filters}
+          onFiltersChange={setFilters}
+        />
 
         {/* Vouchers Table */}
         <Card>
@@ -234,7 +256,8 @@ export default function CheckVouchersListPage() {
                   ) : filteredVouchers.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="px-6 py-12 text-center text-sm text-zinc-500 dark:text-zinc-400">
-                        {searchQuery || selectedStatus
+                        {filters.searchQuery || filters.status || filters.amountMin || 
+                         filters.amountMax || filters.createdFrom || filters.createdTo
                           ? 'No check vouchers found matching your criteria'
                           : 'No check vouchers found'}
                       </td>

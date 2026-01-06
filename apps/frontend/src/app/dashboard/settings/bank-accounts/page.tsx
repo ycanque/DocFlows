@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { AxiosError } from 'axios';
 import { BankAccount } from '@docflows/shared';
 import {
   getBankAccounts,
@@ -51,8 +52,9 @@ export default function BankAccountsManagementPage() {
       setError(null);
       const data = await getBankAccounts();
       setAccounts(data);
-    } catch (err: unknown) {
-      setError((err as any)?.response?.data?.message || 'Failed to load bank accounts');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      setError(axiosError?.response?.data?.message || 'Failed to load bank accounts');
       console.error('Error loading bank accounts:', err);
     } finally {
       setLoading(false);
@@ -114,8 +116,9 @@ export default function BankAccountsManagementPage() {
         bankName: '',
         isActive: true,
       });
-    } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to save bank account');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to save bank account');
     } finally {
       setActionLoading(false);
     }
@@ -130,8 +133,9 @@ export default function BankAccountsManagementPage() {
       setActionLoading(true);
       await deleteBankAccount(account.id);
       await loadAccounts();
-    } catch (err: unknown) {
-      alert((err as any)?.response?.data?.message || 'Failed to delete bank account');
+    } catch (err) {
+      const axiosError = err as AxiosError<{message?: string}>;
+      alert(axiosError?.response?.data?.message || 'Failed to delete bank account');
     } finally {
       setActionLoading(false);
     }

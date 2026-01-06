@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import RichTextEditor from '@/components/RichTextEditor';
+import { NumericInput } from '@/components/ui/numeric-input';
 import { useAuth } from '@/contexts/AuthContext';
 import { ArrowLeft } from 'lucide-react';
 
@@ -384,6 +385,8 @@ export default function EditPaymentPage() {
                     </label>
                     <input
                       type="number"
+                      inputMode="decimal"
+                      pattern="[0-9]+(\\.[0-9]{1,2})?"
                       name="amount"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
