@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
 import StatusBadge from '@/components/requisitions/StatusBadge';
+import RichTextDisplay from '@/components/RichTextDisplay';
 import BankSelector from '@/components/payments/BankSelector';
 import { useAuth } from '@/contexts/AuthContext';
 import { format, parseISO } from 'date-fns';
@@ -335,9 +336,9 @@ export default function CheckVoucherDetailPage() {
                     <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
                       Particulars
                     </label>
-                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2 leading-relaxed whitespace-pre-wrap">
-                      {voucher.requisitionForPayment?.particulars}
-                    </p>
+                    <div className="mt-2">
+                      <RichTextDisplay content={voucher.requisitionForPayment?.particulars} />
+                    </div>
                   </div>
                 </div>
               </CardContent>
