@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "Document Flow System - Monorepo",
   "private": true,
+  "packageManager": "npm@11.7.0",
+  "engines": {
+    "node": ">=22.0.0", 
+    "npm": ">=10.0.0"
+  },
   "workspaces": [
     "apps/frontend",
     "apps/backend",
