@@ -1,12 +1,19 @@
-// User Roles
+// User Roles - RBAC Model v4
 export enum UserRole {
-  ADMIN = "ADMIN",
-  USER = "USER",
+  // Base role - can create and submit own requests
+  REQUESTER = "REQUESTER",
+  // Can approve requests (inherits REQUESTER)
   APPROVER = "APPROVER",
+  // Finance/Treasury staff (inherits APPROVER)
+  FINANCE_STAFF = "FINANCE_STAFF",
+  // Head of Finance/Accounting (inherits FINANCE_STAFF)
+  ACCOUNTING_HEAD = "ACCOUNTING_HEAD",
+  // Department head - parallel to APPROVER with department scope
   DEPARTMENT_HEAD = "DEPARTMENT_HEAD",
-  FINANCE = "FINANCE",
-  ACCOUNTING = "ACCOUNTING",
-  TREASURY = "TREASURY",
+  // Administrator - manages users, departments (inherits ACCOUNTING_HEAD)
+  ADMIN = "ADMIN",
+  // System administrator - full system access (inherits ADMIN)
+  SYSTEM_ADMIN = "SYSTEM_ADMIN",
 }
 
 // Requisition Status

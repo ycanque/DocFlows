@@ -215,7 +215,7 @@ async function main() {
       password: hashedPassword,
       firstName: 'Finance',
       lastName: 'Manager',
-      role: UserRole.FINANCE,
+      role: UserRole.FINANCE_STAFF,
       departmentId: financeDept.id,
     },
   });
@@ -248,7 +248,7 @@ async function main() {
       password: hashedPassword,
       firstName: 'John',
       lastName: 'Doe',
-      role: UserRole.USER,
+      role: UserRole.REQUESTER,
       departmentId: opsDept.id,
     },
   });
@@ -259,7 +259,7 @@ async function main() {
       password: hashedPassword,
       firstName: 'Jane',
       lastName: 'Smith',
-      role: UserRole.USER,
+      role: UserRole.REQUESTER,
       departmentId: itDept.id,
     },
   });

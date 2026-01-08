@@ -223,17 +223,17 @@ export default function PaymentDetailPage() {
 
   function canSubmit() {
     return payment?.status === RFPStatus.DRAFT && 
-           (user?.role === UserRole.USER || user?.role === UserRole.ADMIN);
+           (user?.role === UserRole.REQUESTER || user?.role === UserRole.ADMIN);
   }
 
   function canApprove() {
     return payment?.status === RFPStatus.SUBMITTED &&
-           (user?.role === UserRole.APPROVER || user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
+           (user?.role === UserRole.APPROVER || user?.role === UserRole.FINANCE_STAFF || user?.role === UserRole.ADMIN);
   }
 
   function canReject() {
     return payment?.status === RFPStatus.SUBMITTED &&
-           (user?.role === UserRole.APPROVER || user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
+           (user?.role === UserRole.APPROVER || user?.role === UserRole.FINANCE_STAFF || user?.role === UserRole.ADMIN);
   }
 
   function canCancel() {
@@ -253,7 +253,7 @@ export default function PaymentDetailPage() {
   function canGenerateCV() {
     return payment?.status === RFPStatus.APPROVED &&
            !payment?.checkVoucher &&
-           (user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
+           (user?.role === UserRole.FINANCE_STAFF || user?.role === UserRole.ADMIN);
   }
 
   if (loading) {

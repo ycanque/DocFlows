@@ -104,10 +104,10 @@ export default function CheckDetailPage() {
 
   const canClear = 
     check?.status === CheckStatus.ISSUED &&
-    (user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
+    (user?.role === UserRole.FINANCE_STAFF || user?.role === UserRole.ADMIN);
   const canVoid = 
     check?.status === CheckStatus.ISSUED &&
-    (user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
+    (user?.role === UserRole.FINANCE_STAFF || user?.role === UserRole.ADMIN);
 
   if (loading) {
     return (

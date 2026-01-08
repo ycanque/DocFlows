@@ -90,7 +90,7 @@ export class RequisitionsController {
 
   @Post(':id/approve')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.APPROVER, UserRole.DEPARTMENT_HEAD, UserRole.FINANCE, UserRole.ADMIN)
+  @Roles(UserRole.APPROVER, UserRole.DEPARTMENT_HEAD, UserRole.FINANCE_STAFF, UserRole.ADMIN)
   @ApiOperation({ summary: 'Approve requisition at current level' })
   @ApiBody({
     schema: {
@@ -111,7 +111,7 @@ export class RequisitionsController {
 
   @Post(':id/reject')
   @UseGuards(RolesGuard)
-  @Roles(UserRole.APPROVER, UserRole.DEPARTMENT_HEAD, UserRole.FINANCE, UserRole.ADMIN)
+  @Roles(UserRole.APPROVER, UserRole.DEPARTMENT_HEAD, UserRole.FINANCE_STAFF, UserRole.ADMIN)
   @ApiOperation({ summary: 'Reject requisition' })
   @ApiBody({
     schema: {

@@ -20,9 +20,12 @@ import {
   ChevronUp,
   UserCircle,
   CreditCard as BillingIcon,
-  Bell
+  Bell,
+  Shield
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { Permissions } from '@docflows/shared';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import {
@@ -41,6 +44,7 @@ interface NavItem {
   label: string;
   href?: string;
   active?: boolean;
+  permission?: string; // Optional permission required to view this item
 }
 
 interface SidebarProps {
@@ -83,6 +87,13 @@ const navGroups: { label: string; items: NavItem[] }[] = [
       { icon: Banknote, label: 'Cash Advances', href: 'advances' },
     ],
   },
+  {
+    label: 'Administration',
+    items: [
+      { icon: Settings, label: 'Settings', href: 'settings', permission: Permissions.SETTINGS_VIEW },
+      { icon: Shield, label: 'User Management', href: 'settings?tab=users', permission: Permissions.USERS_READ_ALL },
+    ],
+  },
 ];
 
 export default function Sidebar({ 
@@ -92,6 +103,7 @@ export default function Sidebar({
   onToggle 
 }: SidebarProps) {
   const { user, logout } = useAuth();
+  const { hasPermission } = usePermissions();
   const router = useRouter();
 
   useEffect(() => {
@@ -106,11 +118,27 @@ export default function Sidebar({
   }, [isOpen, onToggle]);
 
   const handleNavClick = (href: string) => {
-    router.push(`/${href}`);
+    // Handle query params in href (e.g., settings?tab=users)
+    if (href.includes('?')) {
+      router.push(`/${href}`);
+    } else {
+      router.push(`/${href}`);
+    }
     if (onToggle && isOpen) {
       onToggle();
     }
   };
+
+  // Filter navigation groups based on permissions
+  const filteredNavGroups = navGroups.map(group => ({
+    ...group,
+    items: group.items.filter(item => {
+      // If no permission required, show the item
+      if (!item.permission) return true;
+      // Check if user has the required permission
+      return hasPermission(item.permission);
+    })
+  })).filter(group => group.items.length > 0); // Remove empty groups;
 
   return (
     <>
@@ -153,7 +181,7 @@ export default function Sidebar({
 
 
         <nav className="flex-1 overflow-y-auto px-3 py-3 sidebar-scrollbar" style={{ paddingBottom: '68px' }} aria-label="Primary navigation">
-          {navGroups.map((group) => (
+          {filteredNavGroups.map((group) => (
             <div key={group.label} className="mb-3">
               <div className="px-3 pb-1.5 pt-3 text-xs font-medium tracking-wide text-zinc-500 dark:text-zinc-400">
                 {group.label}
@@ -161,7 +189,9 @@ export default function Sidebar({
               <ul className="space-y-0.5" role="list">
                 {group.items.map((item) => {
                   const Icon = item.icon;
-                  const isActive = currentView === item.href;
+                  // Handle active state for items with query params
+                  const baseHref = item.href?.split('?')[0];
+                  const isActive = currentView === baseHref || currentView === item.href;
                   return (
                     <li key={item.href}>
                       <button

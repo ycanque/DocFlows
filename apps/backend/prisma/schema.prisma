@@ -13,14 +13,15 @@ datasource db {
 // Core Entities
 // ============================================
 
+// User Roles - RBAC Model v4
 enum UserRole {
-  ADMIN
-  USER
-  APPROVER
-  DEPARTMENT_HEAD
-  FINANCE
-  ACCOUNTING
-  TREASURY
+  REQUESTER        // Base role - can create and submit own requests
+  APPROVER         // Can approve requests (inherits REQUESTER)
+  FINANCE_STAFF    // Finance/Treasury staff (inherits APPROVER)
+  ACCOUNTING_HEAD  // Head of Finance/Accounting (inherits FINANCE_STAFF)
+  DEPARTMENT_HEAD  // Department head - parallel to APPROVER with department scope
+  ADMIN            // Administrator - manages users, departments (inherits ACCOUNTING_HEAD)
+  SYSTEM_ADMIN     // System administrator - full system access (inherits ADMIN)
 }
 
 enum CostCenterType {
@@ -46,7 +47,7 @@ model User {
   password      String
   firstName     String    @map("first_name")
   lastName      String    @map("last_name")
-  role          UserRole  @default(USER)
+  role          UserRole  @default(REQUESTER)
   departmentId  String?   @map("department_id") @db.Uuid
   department    Department? @relation(fields: [departmentId], references: [id])
   isActive      Boolean   @default(true) @map("is_active")

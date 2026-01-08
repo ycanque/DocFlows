@@ -118,13 +118,13 @@ export default function CheckVoucherDetailPage() {
 
   const canVerify = 
     voucher?.status === CheckVoucherStatus.DRAFT &&
-    (user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
+    (user?.role === UserRole.FINANCE_STAFF || user?.role === UserRole.ADMIN);
   const canApprove = 
     voucher?.status === CheckVoucherStatus.VERIFIED &&
     (user?.role === UserRole.ADMIN);
   const canIssueCheck = 
     voucher?.status === CheckVoucherStatus.APPROVED &&
-    (user?.role === UserRole.FINANCE || user?.role === UserRole.ADMIN);
+    (user?.role === UserRole.FINANCE_STAFF || user?.role === UserRole.ADMIN);
 
   if (loading) {
     return (
