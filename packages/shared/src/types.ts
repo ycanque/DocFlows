@@ -14,6 +14,8 @@ import {
   CostCenterType,
   BusinessUnitStatus,
   ProjectStatus,
+  RequisitionType,
+  ApprovalLevel,
 } from "./enums";
 
 // Core Entities
@@ -36,6 +38,8 @@ export interface Department {
   code: string;
   headOfDepartmentId?: string;
   headOfDepartment?: User;
+  businessUnitId?: string;
+  businessUnit?: BusinessUnit;
   createdAt: string;
   updatedAt: string;
 }
@@ -47,6 +51,8 @@ export interface BusinessUnit {
   description?: string;
   status: BusinessUnitStatus;
   budgetAmount?: number;
+  unitManagerId?: string;
+  departments?: Department[];
   createdAt: string;
   updatedAt: string;
 }
@@ -126,6 +132,8 @@ export interface RequisitionSlip {
   project?: Project;
   businessUnitId?: string;
   businessUnit?: BusinessUnit;
+  type: RequisitionType;
+  processOwnerDeptCode?: string;
   dateRequested: string;
   dateNeeded: string;
   purpose: string;

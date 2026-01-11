@@ -40,6 +40,32 @@ enum ProjectStatus {
   COMPLETED
 }
 
+// Approval Level hierarchy for standardized RBAC
+enum ApprovalLevel {
+  DEPARTMENT_MANAGER   // Level 1: Dept Manager / Asst. Manager
+  UNIT_MANAGER         // Level 2: Business Unit Manager
+  GENERAL_MANAGER      // Level 3: GM - Final approval
+}
+
+// Requisition Type - determines process owner/routing
+enum RequisitionType {
+  PURCHASE_REQUEST        // Supplies, tools, equipment
+  REFUND_LIQUIDATION      // PO for refund/liquidation
+  SUBCON_SERVICES         // External service providers
+  CLEANING_MAINTENANCE    // Janitorial, repairs
+  REPAIR_TROUBLESHOOTING  // IT, Technical repairs
+  TRAINING                // Employee training programs
+  PERMITS_LICENSES        // Government compliance
+  LAB_TESTING             // Reagents, laboratory tests
+  BORROW_ITEMS            // Vehicles, tools borrowing
+  INSTALLATION_SETUP      // Set-up services
+  FUEL                    // Gasoline/Diesel
+  DOCUMENTS_RECORDS       // Retrieving files/records
+  FACILITIES_USAGE        // Conference rooms, facilities
+  ALLOWANCES              // Meals, load, hazard pay
+  OTHER                   // Catch-all for other requests
+}
+
 model User {
   id            String    @id @default(uuid()) @db.Uuid
   email         String    @unique
@@ -72,12 +98,14 @@ model User {
 }
 
 model Department {
-  id                  String    @id @default(uuid()) @db.Uuid
-  name                String    @unique
-  code                String    @unique
-  headOfDepartmentId  String?   @map("head_of_department_id") @db.Uuid
-  createdAt           DateTime  @default(now()) @map("created_at")
-  updatedAt           DateTime  @updatedAt @map("updated_at")
+  id                  String        @id @default(uuid()) @db.Uuid
+  name                String        @unique
+  code                String        @unique
+  headOfDepartmentId  String?       @map("head_of_department_id") @db.Uuid
+  businessUnitId      String?       @map("business_unit_id") @db.Uuid
+  businessUnit        BusinessUnit? @relation("DepartmentBusinessUnit", fields: [businessUnitId], references: [id])
+  createdAt           DateTime      @default(now()) @map("created_at")
+  updatedAt           DateTime      @updatedAt @map("updated_at")
 
   // Relations
   users               User[]
@@ -89,6 +117,7 @@ model Department {
 
   @@map("departments")
   @@index([code])
+  @@index([businessUnitId])
 }
 
 model BusinessUnit {
@@ -98,10 +127,12 @@ model BusinessUnit {
   description           String?
   status                BusinessUnitStatus  @default(ACTIVE)
   budgetAmount          Decimal?            @map("budget_amount") @db.Decimal(15, 2)
+  unitManagerId         String?             @map("unit_manager_id") @db.Uuid
   createdAt             DateTime            @default(now()) @map("created_at")
   updatedAt             DateTime            @updatedAt @map("updated_at")
 
   // Relations
+  departments           Department[]        @relation("DepartmentBusinessUnit")
   projects              Project[]
   costCenters           CostCenter[]
   requisitionSlips      RequisitionSlip[]
@@ -109,6 +140,7 @@ model BusinessUnit {
   @@map("business_units")
   @@index([unitCode])
   @@index([status])
+  @@index([unitManagerId])
 }
 
 model Project {
@@ -228,6 +260,8 @@ model RequisitionSlip {
   project               Project?            @relation(fields: [projectId], references: [id])
   businessUnitId        String?             @map("business_unit_id") @db.Uuid
   businessUnit          BusinessUnit?       @relation(fields: [businessUnitId], references: [id])
+  type                  RequisitionType     @default(PURCHASE_REQUEST) @map("requisition_type")
+  processOwnerDeptCode  String?             @map("process_owner_dept_code")
   dateRequested         DateTime            @map("date_requested") @db.Date
   dateNeeded            DateTime            @map("date_needed") @db.Date
   purpose               String
@@ -249,6 +283,7 @@ model RequisitionSlip {
   @@index([costCenterId])
   @@index([projectId])
   @@index([businessUnitId])
+  @@index([type])
   @@index([status])
 }
 

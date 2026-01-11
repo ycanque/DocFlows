@@ -138,3 +138,61 @@ export enum EmploymentType {
   CONTRACT = "CONTRACT",
   INTERNSHIP = "INTERNSHIP",
 }
+
+// ============================================
+// Foundation Phase - Organizational Hierarchy
+// ============================================
+
+// Approval Level hierarchy for standardized RBAC
+// This follows the company's 3-tier approval matrix
+export enum ApprovalLevel {
+  DEPARTMENT_MANAGER = "DEPARTMENT_MANAGER", // Level 1: Dept Manager / Asst. Manager
+  UNIT_MANAGER = "UNIT_MANAGER", // Level 2: Business Unit Manager
+  GENERAL_MANAGER = "GENERAL_MANAGER", // Level 3: GM - Final approval
+}
+
+// Numeric mapping for approval levels (used in currentApprovalLevel field)
+export const APPROVAL_LEVEL_MAP: Record<ApprovalLevel, number> = {
+  [ApprovalLevel.DEPARTMENT_MANAGER]: 1,
+  [ApprovalLevel.UNIT_MANAGER]: 2,
+  [ApprovalLevel.GENERAL_MANAGER]: 3,
+};
+
+// Requisition Type - determines process owner/routing
+// Based on company's Document Flow specifications
+export enum RequisitionType {
+  PURCHASE_REQUEST = "PURCHASE_REQUEST", // Supplies, tools, equipment
+  REFUND_LIQUIDATION = "REFUND_LIQUIDATION", // PO for refund/liquidation
+  SUBCON_SERVICES = "SUBCON_SERVICES", // External service providers
+  CLEANING_MAINTENANCE = "CLEANING_MAINTENANCE", // Janitorial, repairs
+  REPAIR_TROUBLESHOOTING = "REPAIR_TROUBLESHOOTING", // IT, Technical repairs
+  TRAINING = "TRAINING", // Employee training programs
+  PERMITS_LICENSES = "PERMITS_LICENSES", // Government compliance
+  LAB_TESTING = "LAB_TESTING", // Reagents, laboratory tests
+  BORROW_ITEMS = "BORROW_ITEMS", // Vehicles, tools borrowing
+  INSTALLATION_SETUP = "INSTALLATION_SETUP", // Set-up services
+  FUEL = "FUEL", // Gasoline/Diesel
+  DOCUMENTS_RECORDS = "DOCUMENTS_RECORDS", // Retrieving files/records
+  FACILITIES_USAGE = "FACILITIES_USAGE", // Conference rooms, facilities
+  ALLOWANCES = "ALLOWANCES", // Meals, load, hazard pay
+  OTHER = "OTHER", // Catch-all for other requests
+}
+
+// Human-readable labels for Requisition Types
+export const REQUISITION_TYPE_LABELS: Record<RequisitionType, string> = {
+  [RequisitionType.PURCHASE_REQUEST]: "Purchase Request",
+  [RequisitionType.REFUND_LIQUIDATION]: "Refund/Liquidation",
+  [RequisitionType.SUBCON_SERVICES]: "Subcontractor Services",
+  [RequisitionType.CLEANING_MAINTENANCE]: "Cleaning & Maintenance",
+  [RequisitionType.REPAIR_TROUBLESHOOTING]: "Repair & Troubleshooting",
+  [RequisitionType.TRAINING]: "Training",
+  [RequisitionType.PERMITS_LICENSES]: "Permits & Licenses",
+  [RequisitionType.LAB_TESTING]: "Laboratory Testing",
+  [RequisitionType.BORROW_ITEMS]: "Borrow Items",
+  [RequisitionType.INSTALLATION_SETUP]: "Installation & Setup",
+  [RequisitionType.FUEL]: "Fuel",
+  [RequisitionType.DOCUMENTS_RECORDS]: "Documents & Records",
+  [RequisitionType.FACILITIES_USAGE]: "Facilities Usage",
+  [RequisitionType.ALLOWANCES]: "Allowances",
+  [RequisitionType.OTHER]: "Other",
+};
