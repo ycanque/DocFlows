@@ -3,11 +3,12 @@
 import { Suspense, useEffect, useState, useMemo } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AxiosError } from 'axios';
-import { RequisitionSlip, RequisitionStatus, Department } from '@docflows/shared';
+import { RequisitionSlip, RequisitionStatus, Department, RequisitionType, REQUISITION_TYPE_LABELS } from '@docflows/shared';
 import { getRequisitions } from '@/services/requisitionService';
 import { FileText, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import RichTextDisplay from '@/components/RichTextDisplay';
 import { useAuth } from '@/contexts/AuthContext';
@@ -251,10 +252,13 @@ function RequisitionsContent() {
                     Requisition #
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Requester
+                    Type
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
-                    Department
+                    Process Owner
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
+                    Requester
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-zinc-500 dark:text-zinc-400 uppercase tracking-wider">
                     Purpose
@@ -273,7 +277,7 @@ function RequisitionsContent() {
               <tbody className="bg-white dark:bg-zinc-950 divide-y divide-zinc-200 dark:divide-zinc-800">
               {filteredRequisitions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
+                  <td colSpan={8} className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
                     {filters.searchQuery || filters.status || filters.departmentId || 
                      filters.dateNeededFrom || filters.dateNeededTo || filters.createdFrom || filters.createdTo
                       ? 'No requisitions found matching your criteria'
@@ -290,13 +294,22 @@ function RequisitionsContent() {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600 dark:text-blue-400">
                       {requisition.requisitionNumber}
                     </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      {requisition.type ? (
+                        <Badge variant="outline" className="text-xs">
+                          {REQUISITION_TYPE_LABELS[requisition.type]}
+                        </Badge>
+                      ) : (
+                        <span className="text-xs text-zinc-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
+                      {requisition.receivingDepartment?.name || <span className="text-zinc-400">—</span>}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
                       {requisition.requester
                         ? `${requisition.requester.firstName} ${requisition.requester.lastName}`
                         : 'Unknown'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-100">
-                      {requisition.department?.name || 'N/A'}
                     </td>
                     <td className="px-6 py-4 text-sm text-gray-900 dark:text-gray-100 max-w-xs">
                       <div className="truncate">

@@ -1,9 +1,16 @@
 import api from "../lib/api";
-import { RequisitionSlip, RequestItem, ApprovalRecord } from "@docflows/shared";
+import {
+  RequisitionSlip,
+  RequestItem,
+  ApprovalRecord,
+  RequisitionType,
+} from "@docflows/shared";
 
 export interface CreateRequisitionDto {
   requesterId: string;
   departmentId: string;
+  receivingDepartmentId?: string; // Process owner department (filtered by type)
+  type?: RequisitionType; // Requisition type for routing
   costCenterId?: string;
   projectId?: string;
   businessUnitId?: string;
@@ -20,6 +27,8 @@ export interface CreateRequisitionDto {
 
 export interface UpdateRequisitionDto {
   departmentId?: string;
+  receivingDepartmentId?: string; // Process owner department
+  type?: RequisitionType; // Requisition type
   costCenterId?: string;
   projectId?: string;
   businessUnitId?: string;

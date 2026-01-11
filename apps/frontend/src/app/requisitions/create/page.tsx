@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { AxiosError } from 'axios';
-import { Department, CostCenter } from '@docflows/shared';
+import { Department, CostCenter, RequisitionType, REQUISITION_TYPE_LABELS } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { createRequisition, CreateRequisitionDto } from '@/services/requisitionService';
 import { getDepartments } from '@/services/departmentService';
 import { getCostCenters } from '@/services/costCenterService';
-import { ArrowLeft, Plus, Trash2, FileText, Paperclip } from 'lucide-react';
+import { ArrowLeft, Plus, Trash2, FileText, Paperclip, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +16,7 @@ import { NumericInput } from '@/components/ui/numeric-input';
 import { useAuth } from '@/contexts/AuthContext';
 import FileAttachments from '@/components/FileAttachments';
 import RichTextEditor from '@/components/RichTextEditor';
+import { REQUEST_TYPE_MAPPING } from '@/lib/constants';
 import type { UploadedFile } from '@/services/uploadService';
 
 // Unit of measure categories
@@ -83,7 +84,9 @@ export default function CreateRequisitionPage() {
   const [costCenters, setCostCenters] = useState<CostCenter[]>([]);
   const [attachedFiles, setAttachedFiles] = useState<UploadedFile[]>([]);
   const [formData, setFormData] = useState({
-    departmentId: '',
+    type: '' as RequisitionType | '', // Request type for routing
+    departmentId: '', // Requester's department (auto-filled, read-only)
+    receivingDepartmentId: '', // Process owner department (filtered by type)
     costCenterId: '',
     currency: 'PHP',
     dateRequested: '',
@@ -97,6 +100,21 @@ export default function CreateRequisitionPage() {
   const [error, setError] = useState<string | null>(null);
   const [loadingDepartments, setLoadingDepartments] = useState(true);
   const [loadingCostCenters, setLoadingCostCenters] = useState(true);
+
+  // Filter receiving departments based on request type
+  const filteredReceivingDepartments = useMemo(() => {
+    if (!formData.type) return [];
+    const allowedCodes = REQUEST_TYPE_MAPPING[formData.type as RequisitionType];
+    // Empty array means any department can be selected
+    if (allowedCodes.length === 0) return departments;
+    // Filter departments by allowed codes
+    return departments.filter(dept => allowedCodes.includes(dept.code));
+  }, [formData.type, departments]);
+
+  // Get requester's department name for display
+  const requesterDepartment = useMemo(() => {
+    return departments.find(d => d.id === formData.departmentId);
+  }, [departments, formData.departmentId]);
 
   useEffect(() => {
     // Initialize dates on client side to avoid timezone issues
@@ -171,8 +189,16 @@ export default function CreateRequisitionPage() {
   }
 
   function validateForm(): boolean {
+    if (!formData.type) {
+      setError('Please select a request type');
+      return false;
+    }
     if (!formData.departmentId) {
-      setError('Please select a department');
+      setError('Your department must be set. Please contact IT support.');
+      return false;
+    }
+    if (!formData.receivingDepartmentId) {
+      setError('Please select a receiving department');
       return false;
     }
     if (!formData.dateRequested) {
@@ -220,6 +246,8 @@ export default function CreateRequisitionPage() {
       const dto: CreateRequisitionDto = {
         requesterId: user.id,
         departmentId: formData.departmentId,
+        receivingDepartmentId: formData.receivingDepartmentId || undefined,
+        type: formData.type as RequisitionType || undefined,
         costCenterId: formData.costCenterId || undefined,
         currency: formData.currency,
         dateRequested: formData.dateRequested,
@@ -301,33 +329,99 @@ export default function CreateRequisitionPage() {
           </CardHeader>
           <CardContent>
             <div className="space-y-6">
-              {/* Row 1: Organization Info */}
+              {/* Row 1: Request Type */}
+              <div>
+                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                  Request Type <span className="text-red-500">*</span>
+                </label>
+                <select
+                  value={formData.type}
+                  onChange={(e) => {
+                    const newType = e.target.value as RequisitionType | '';
+                    setFormData({ 
+                      ...formData, 
+                      type: newType,
+                      receivingDepartmentId: '' // Reset receiving department when type changes
+                    });
+                  }}
+                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
+                  required
+                >
+                  <option value="">Select request type</option>
+                  {Object.values(RequisitionType).map((type) => (
+                    <option key={type} value={type}>
+                      {REQUISITION_TYPE_LABELS[type]}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                  This determines which department will process your request
+                </p>
+              </div>
+
+              {/* Row 2: Requester Department (read-only) and Receiving Department */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                    Department <span className="text-red-500">*</span>
+                    Your Department
                   </label>
                   {loadingDepartments ? (
-                    <div className="text-sm text-zinc-500 dark:text-zinc-400">Loading departments...</div>
+                    <div className="text-sm text-zinc-500 dark:text-zinc-400">Loading...</div>
+                  ) : (
+                    <div className="px-3 py-2.5 bg-zinc-50 dark:bg-zinc-800/50 border border-zinc-200 dark:border-zinc-700 rounded-md">
+                      <span className="text-zinc-900 dark:text-zinc-50">
+                        {requesterDepartment?.name ?? 'Not assigned'}
+                      </span>
+                    </div>
+                  )}
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    Auto-filled from your profile (approvals route through here)
+                  </p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    Receiving Department <span className="text-red-500">*</span>
+                  </label>
+                  {!formData.type ? (
+                    <div className="px-3 py-2 border border-zinc-200 dark:border-zinc-700 rounded-md bg-zinc-50 dark:bg-zinc-800/50">
+                      <div className="flex items-center gap-2 text-zinc-500 dark:text-zinc-400 text-sm">
+                        <Info className="h-4 w-4" />
+                        <span>Select a request type first</span>
+                      </div>
+                    </div>
+                  ) : filteredReceivingDepartments.length === 0 ? (
+                    <div className="px-3 py-2 border border-amber-200 dark:border-amber-800 rounded-md bg-amber-50 dark:bg-amber-900/20">
+                      <div className="flex items-center gap-2 text-amber-700 dark:text-amber-400 text-sm">
+                        <Info className="h-4 w-4" />
+                        <span>No departments configured for this type</span>
+                      </div>
+                    </div>
                   ) : (
                     <select
-                      value={formData.departmentId}
+                      value={formData.receivingDepartmentId}
                       onChange={(e) =>
-                        setFormData({ ...formData, departmentId: e.target.value })
+                        setFormData({ ...formData, receivingDepartmentId: e.target.value })
                       }
                       className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
                       required
                     >
-                      <option value="">Select a department</option>
-                      {departments.map((dept) => (
+                      <option value="">Select receiving department</option>
+                      {filteredReceivingDepartments.map((dept) => (
                         <option key={dept.id} value={dept.id}>
-                          {dept.name}
+                          {dept.name} ({dept.code})
                         </option>
                       ))}
                     </select>
                   )}
+                  <p className="text-xs text-zinc-500 dark:text-zinc-400 mt-1">
+                    Department responsible for processing this request
+                  </p>
                 </div>
+              </div>
 
+              {/* Row 3: Cost Center */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                     Cost Center <span className="text-red-500">*</span>
@@ -352,9 +446,29 @@ export default function CreateRequisitionPage() {
                     </select>
                   )}
                 </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
+                    Currency <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formData.currency}
+                    onChange={(e) =>
+                      setFormData({ ...formData, currency: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
+                    required
+                  >
+                    <option value="PHP">₱ - Philippine Peso (PHP)</option>
+                    <option value="USD">$ - US Dollar (USD)</option>
+                    <option value="EUR">€ - Euro (EUR)</option>
+                    <option value="JPY">¥ - Japanese Yen (JPY)</option>
+                    <option value="GBP">£ - British Pound (GBP)</option>
+                  </select>
+                </div>
               </div>
 
-              {/* Row 2: Dates */}
+              {/* Row 4: Dates */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
@@ -397,28 +511,7 @@ export default function CreateRequisitionPage() {
                 </div>
               </div>
 
-              {/* Row 3: Currency and Purpose */}
-              <div>
-                <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
-                  Currency <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={formData.currency}
-                  onChange={(e) =>
-                    setFormData({ ...formData, currency: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-zinc-300 dark:border-zinc-600 rounded-md bg-white dark:bg-zinc-950 text-zinc-900 dark:text-zinc-50 focus:ring-2 focus:ring-zinc-900 dark:focus:ring-zinc-50 focus:border-transparent"
-                  required
-                >
-                  <option value="PHP">₱ - Philippine Peso (PHP)</option>
-                  <option value="USD">$ - US Dollar (USD)</option>
-                  <option value="EUR">€ - Euro (EUR)</option>
-                  <option value="JPY">¥ - Japanese Yen (JPY)</option>
-                  <option value="GBP">£ - British Pound (GBP)</option>
-                </select>
-              </div>
-
-              {/* Row 4: Purpose */}
+              {/* Row 5: Purpose */}
               <div>
                 <label className="block text-sm font-medium text-zinc-700 dark:text-zinc-300 mb-2">
                   Purpose <span className="text-red-500">*</span>

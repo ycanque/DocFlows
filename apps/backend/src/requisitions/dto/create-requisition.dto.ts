@@ -1,4 +1,4 @@
-import { RequisitionStatus } from '@prisma/client';
+import { RequisitionStatus, RequisitionType } from '@prisma/client';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -20,6 +20,10 @@ export class CreateRequisitionDto {
 
   @IsString()
   @IsOptional()
+  receivingDepartmentId?: string;
+
+  @IsString()
+  @IsOptional()
   costCenterId?: string;
 
   @IsString()
@@ -29,6 +33,10 @@ export class CreateRequisitionDto {
   @IsString()
   @IsOptional()
   businessUnitId?: string;
+
+  @IsEnum(RequisitionType)
+  @IsOptional()
+  type?: RequisitionType = RequisitionType.PURCHASE_REQUEST;
 
   @IsDateString()
   dateRequested!: string;

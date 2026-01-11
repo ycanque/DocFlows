@@ -258,7 +258,7 @@ async function main() {
   const gmUser = await prisma.user.create({
     data: {
       email: 'gm@mactan.com',
-      password: await bcrypt.hash('gm123', 10),
+      password: hashedPassword,
       firstName: 'General',
       lastName: 'Manager',
       role: UserRole.ADMIN,

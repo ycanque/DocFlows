@@ -10,7 +10,7 @@ import * as bcrypt from 'bcrypt';
  * Includes the user's organizational context (department, business unit)
  * for frontend form auto-filling and context-aware operations.
  */
-interface AuthUserResponse {
+export interface AuthUserResponse {
   id: string;
   email: string;
   firstName: string;

@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { AxiosError } from 'axios';
-import { RequisitionSlip, ApprovalRecord, RequisitionStatus, UserRole } from '@docflows/shared';
+import { RequisitionSlip, ApprovalRecord, RequisitionStatus, UserRole, REQUISITION_TYPE_LABELS } from '@docflows/shared';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
   getRequisition,
@@ -27,6 +27,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
 import StatusBadge from '@/components/requisitions/StatusBadge';
 import ItemsTable from '@/components/requisitions/ItemsTable';
 import ApprovalTimeline from '@/components/requisitions/ApprovalTimeline';
@@ -397,7 +398,14 @@ export default function RequisitionDetailsPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle>Requisition Information</CardTitle>
-                <StatusBadge status={requisition.status} />
+                <div className="flex items-center gap-2">
+                  {requisition.type && (
+                    <Badge variant="secondary" className="text-xs">
+                      {REQUISITION_TYPE_LABELS[requisition.type]}
+                    </Badge>
+                  )}
+                  <StatusBadge status={requisition.status} />
+                </div>
               </div>
             </CardHeader>
             <CardContent>
@@ -422,7 +430,7 @@ export default function RequisitionDetailsPage() {
                   </div>
                 </div>
 
-                {/* Requester and Department */}
+                {/* Requester and Departments */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pb-6 border-b border-zinc-200 dark:border-zinc-700">
                   <div>
                     <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
@@ -436,10 +444,26 @@ export default function RequisitionDetailsPage() {
                   </div>
                   <div>
                     <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
-                      Department
+                      Requesting Department
                     </label>
                     <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
                       {requisition.department?.name || 'N/A'}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Process Owner / To Dept
+                    </label>
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                      {requisition.receivingDepartment?.name || <span className="text-zinc-400">—</span>}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-zinc-500 dark:text-zinc-400 uppercase tracking-wide">
+                      Request Type
+                    </label>
+                    <p className="text-sm text-zinc-900 dark:text-zinc-50 mt-2">
+                      {requisition.type ? REQUISITION_TYPE_LABELS[requisition.type] : <span className="text-zinc-400">—</span>}
                     </p>
                   </div>
                 </div>
